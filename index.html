@@ -1,0 +1,1152 @@
+<title>Registre de l'imagerie</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Poste de saisie : fiche patient à gauche, examens en onglets colorés à droite (codes couleur du registre), liste du jour dessous */
+:root{
+  --bg:#eef2f5;--surface:#ffffff;--sunk:#f6f8fa;--ink:#16202a;--muted:#5a6671;--line:#d6dde3;
+  --accent:#0f5c8c;--accent-ink:#ffffff;--ok:#1d7a4f;--warn:#9a5800;--warn-soft:#fff1d6;--err:#b42318;
+  --f-echo:#c9ccd2;--fi-echo:#0b4fa8;--f-rx:#f1df1b;--fi-rx:#0b3f8a;--f-dop:#d81b60;--fi-dop:#ffffff;--f-spe:#6d2ff0;--fi-spe:#ffffff;--f-mam:#8fd6f2;--fi-mam:#0e2230;--f-scan:#2e6e73;--fi-scan:#ffffff;
+  --tint-ext:#eaf2fa;--tint-int:#e8f5ee;--tint-tot:#eef1f4;--line-strong:#9fb0bf;
+  --t-echo:#eceef2;--t-rx:#fbf5bd;--t-dop:#fbdce7;--t-spe:#e9defd;--t-mam:#dcf2fb;--t-scan:#dcefef;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;--f-body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f151b;--surface:#18212a;--sunk:#121a21;--ink:#e6edf3;--muted:#9aa8b5;--line:#2c3945;--accent:#5fa8dc;--accent-ink:#06121c;--ok:#4cc28a;--warn:#e3a849;--warn-soft:#3b2b10;--err:#f08077;
+  --tint-ext:#17283a;--tint-int:#163027;--tint-tot:#1d2731;--line-strong:#4a5d70;--t-echo:#2a3038;--t-rx:#3d3912;--t-dop:#4a1a2d;--t-spe:#2f2252;--t-mam:#163a4a;--t-scan:#163636;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f151b;--surface:#18212a;--sunk:#121a21;--ink:#e6edf3;--muted:#9aa8b5;--line:#2c3945;--accent:#5fa8dc;--accent-ink:#06121c;--ok:#4cc28a;--warn:#e3a849;--warn-soft:#3b2b10;--err:#f08077;
+  --tint-ext:#17283a;--tint-int:#163027;--tint-tot:#1d2731;--line-strong:#4a5d70;--t-echo:#2a3038;--t-rx:#3d3912;--t-dop:#4a1a2d;--t-spe:#2f2252;--t-mam:#163a4a;--t-scan:#163636;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.005em}
+h2{font-size:1.15rem}h3{font-size:1rem;margin-top:18px}
+.mono,td.n,.code,.stamp{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}.small{font-size:.85rem}.warnTxt{color:var(--warn)}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center}
+.brand{display:flex;flex-direction:column;min-width:0}
+.brand h1{font-size:1.2rem;font-weight:800}
+.brand span{font-size:.78rem;color:var(--muted)}
+nav.main{display:flex;flex-wrap:wrap;gap:4px}
+nav.main button{font:inherit;font-weight:600;font-size:.92rem;border:0;background:transparent;color:var(--muted);padding:7px 12px;border-radius:6px;cursor:pointer}
+nav.main button:hover{background:var(--sunk);color:var(--ink)}
+nav.main button.on{background:var(--accent);color:var(--accent-ink)}
+.demo{margin-left:auto;font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:var(--warn-soft);color:var(--warn);padding:4px 9px;border-radius:4px}
+main{padding-block:18px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1500px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.head{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
+.entry{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:900px){.entry{grid-template-columns:1fr}}
+.codeRow{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;border-bottom:1px dashed var(--line);padding-bottom:10px}
+.codeRow .lab,.lab{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.code{font-size:1.5rem;font-weight:600}
+.stamp{font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld>span{font-size:.8rem;font-weight:600;color:var(--muted)}.fld i{color:var(--err);font-style:normal}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0;width:100%}
+#fPrenom,#fNom{text-transform:uppercase}
+input:focus,select:focus,button:focus-visible,tr:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn{font:inherit;font-weight:700;font-size:.9rem;border:1px solid transparent;border-radius:7px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.ghost:hover{background:var(--sunk)}
+.btn.danger{background:transparent;border-color:var(--err);color:var(--err)}
+.btn.sm{padding:5px 10px;font-size:.82rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:3px solid var(--line)}
+.tab{font:inherit;font-family:var(--f-display);font-style:italic;font-weight:700;font-size:.9rem;border:0;border-radius:6px 6px 0 0;padding:8px 14px;cursor:pointer;opacity:.62;display:inline-flex;gap:6px;align-items:center}
+.tab.on{opacity:1;box-shadow:0 3px 0 0 currentColor inset}
+.tab .cnt{font-style:normal;font-family:var(--f-mono);font-size:.75rem;background:rgba(0,0,0,.18);padding:0 6px;border-radius:8px}
+.f-echo{background:var(--f-echo);color:var(--fi-echo)}.f-rx{background:var(--f-rx);color:var(--fi-rx)}.f-dop{background:var(--f-dop);color:var(--fi-dop)}.f-spe{background:var(--f-spe);color:var(--fi-spe)}.f-mam{background:var(--f-mam);color:var(--fi-mam)}.f-scan{background:var(--f-scan);color:var(--fi-scan)}
+.panel{border-radius:0 8px 8px 8px;padding:16px}
+.pgrid{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:16px}
+@media (max-width:640px){.pgrid{grid-template-columns:1fr}}
+.pick{display:flex;flex-direction:column;gap:8px;min-width:0}
+.plab{font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em}
+.addRow{display:flex;gap:8px}.addRow.wrap{flex-wrap:wrap}.addRow.wrap input{flex:1 1 180px;width:auto}
+.btn.onfam{background:var(--surface);color:var(--ink);border-color:rgba(0,0,0,.25)}
+.demande{list-style:decimal inside;margin:0;padding:8px;background:var(--surface);color:var(--ink);border-radius:6px;min-height:120px;display:flex;flex-direction:column;gap:4px}
+.demande li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.demande li span{flex:1}
+.demande li.empty{list-style:none;color:var(--muted);border:0;font-size:.88rem}
+.x{font:inherit;font-weight:700;border:1px solid var(--line);background:transparent;color:var(--err);border-radius:5px;width:28px;height:28px;cursor:pointer}
+.dates{display:flex;flex-direction:column;gap:12px}
+.dates input{background:var(--surface);color:var(--ink)}
+.summary{display:flex;flex-direction:column;gap:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.82rem;padding:3px 9px;border-radius:12px;color:var(--ink)}
+.t-echo{background:var(--t-echo)}.t-rx{background:var(--t-rx)}.t-dop{background:var(--t-dop)}.t-spe{background:var(--t-spe)}.t-mam{background:var(--t-mam)}.t-scan{background:var(--t-scan)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;border-top:1px dashed var(--line);padding-top:12px}
+.note{font-size:.88rem;background:var(--sunk);border-left:4px solid var(--accent);padding:8px 10px;border-radius:4px;margin:0;width:100%}
+.note.warn{background:var(--warn-soft);border-left-color:var(--warn)}
+.tw{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);background:var(--sunk);position:sticky;top:0;z-index:1;white-space:nowrap}
+td.n,th.n{text-align:right}.nw{white-space:nowrap}
+tr.click{cursor:pointer}tr.click:hover td{filter:brightness(.97)}
+table.list th.h-echo{box-shadow:inset 0 -3px var(--f-echo)}table.list th.h-rx{box-shadow:inset 0 -3px var(--f-rx)}table.list th.h-dop{box-shadow:inset 0 -3px var(--f-dop)}table.list th.h-spe{box-shadow:inset 0 -3px var(--f-spe)}table.list th.h-mam{box-shadow:inset 0 -3px var(--f-mam)}table.list th.h-scan{box-shadow:inset 0 -3px var(--f-scan)}
+td.c-echo.on{background:var(--t-echo)}td.c-rx.on{background:var(--t-rx)}td.c-dop.on{background:var(--t-dop)}td.c-spe.on{background:var(--t-spe)}td.c-mam.on{background:var(--t-mam)}td.c-scan.on{background:var(--t-scan)}
+td[class^="c-"]{min-width:120px;font-size:.82rem}
+.rdv{font-size:.74rem;font-weight:700;color:var(--warn)}
+.filters{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.filters .fld{min-width:170px}.filters .grow{flex:1 1 240px}
+.chk{display:flex;gap:6px;align-items:center;font-size:.88rem;cursor:pointer}.chk input{width:auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;color:var(--ink)}
+.kpi b{font-family:var(--f-mono);font-size:1.3rem;font-weight:600}
+.pager{display:flex;gap:10px;align-items:center}
+.mrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.mchip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:4px 10px;font-family:var(--f-mono);font-size:.82rem;cursor:pointer}
+.mchip input{width:auto}
+.pv td{padding:5px 8px;vertical-align:middle}
+.pv.wide{width:auto;min-width:100%}
+.pv.wide td,.pv.wide th{padding:3px 3px;font-size:.68rem;white-space:nowrap;letter-spacing:0}
+.pv.wide th{text-transform:none}
+.pv.wide th.tc{white-space:normal;min-width:36px;max-width:56px;line-height:1.15}
+.pv.wide td.n{min-width:24px}
+.pv.wide th.n:not(.grp):not(.tc){min-width:22px;font-size:.6rem;padding:3px 2px;text-align:center}
+.pv .lcol{position:sticky;left:0;z-index:2;background:var(--surface);max-width:170px;min-width:120px;white-space:normal!important;box-shadow:1px 0 0 var(--line)}
+.pv thead .lcol{z-index:3;background:var(--sunk)}
+.pv tr.pv-g .lcol{background:var(--surface)}
+.pv th.grp{text-align:center;border-left:2px solid var(--line);border-bottom:1px solid var(--line)}
+
+.mbg{position:fixed;inset:0;background:rgba(8,14,20,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--surface);color:var(--ink);border-radius:10px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.toast{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:7px;z-index:120;font-size:.9rem;max-width:380px}
+.store{color:var(--err);font-size:.85rem}
+
+.note.ok{border-left-color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,var(--surface))}
+.exHead{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:8px 10px;border-radius:7px;background:color-mix(in srgb,var(--ok) 9%,var(--surface));border-left:4px solid var(--ok)}
+.exams{scroll-margin-top:96px}
+.exams.pulse{outline:3px solid var(--ok);outline-offset:2px;transition:outline-color .4s}
+.fld.sm{min-width:120px!important}
+.fld.invalid input{border-color:var(--err);background:color-mix(in srgb,var(--err) 7%,var(--surface))}
+.err{color:var(--err);font-weight:600;font-size:.8rem}
+.sugg{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--sunk)}
+.sp{display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:space-between;align-items:center;padding:6px;border-radius:6px;background:var(--surface)}
+.spId{min-width:0}
+.rdv.st-prevu{color:var(--warn)}.rdv.st-retard{color:var(--err)}.rdv.st-realise{color:var(--ok)}.rdv.st-annule{color:var(--muted);text-decoration:line-through}
+tr.has-rdv td:first-child{box-shadow:inset 4px 0 var(--warn)}
+.pill{display:inline-block;font-size:.75rem;font-weight:700;padding:2px 9px;border-radius:10px;background:var(--sunk);color:var(--muted)}
+.pill.st-prevu{background:var(--warn-soft);color:var(--warn)}.pill.st-retard{background:color-mix(in srgb,var(--err) 14%,var(--surface));color:var(--err)}.pill.st-realise{background:color-mix(in srgb,var(--ok) 15%,var(--surface));color:var(--ok)}.pill.st-annule{text-decoration:line-through}
+.kpi.st-prevu b{color:var(--warn)}.kpi.st-retard b{color:var(--err)}.kpi.st-realise b{color:var(--ok)}.kpi.st-annule b{color:var(--muted)}
+.rdvBox{border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;color:var(--ink)}
+.rdvAct{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.inl{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}.inl input{width:auto;padding:5px 8px}
+.hist{margin:0;padding-left:18px;font-size:.8rem;color:var(--muted)}
+
+/* Tableaux du rapport : lecture par blocs Externe / Interne */
+.report h3{font-size:1.02rem;margin-top:26px;padding-top:14px;border-top:1px solid var(--line)}
+.report h3:first-of-type{border-top:0;padding-top:0}
+.pv{border:1px solid var(--line);border-collapse:separate;border-spacing:0}
+.pv th{background:var(--sunk);color:var(--ink);text-transform:none;letter-spacing:0;font-size:.78rem;font-weight:700;border-bottom:1px solid var(--line)}
+.pv td{border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.pv tbody tr.pv-r:nth-child(even) td{background:color-mix(in srgb,var(--sunk) 55%,var(--surface))}
+.pv tbody tr.pv-r:hover td{background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.pv tr.pv-g td{background:var(--surface);color:var(--accent);font-weight:700;font-size:.8rem;padding-top:10px;border-bottom:1px solid var(--accent)}
+.pv tr.pv-s td{font-weight:700;font-style:normal;background:var(--tint-tot)}
+.pv tr.pv-t td{font-weight:800;border-top:2px solid var(--ink);background:var(--tint-tot)}
+.pv th.o-EXT{background:var(--tint-ext)}.pv th.o-INT{background:var(--tint-int)}.pv th.o-T{background:var(--tint-tot)}
+.pv th.h0{font-size:.82rem;letter-spacing:.06em;text-transform:uppercase}
+.pv th.h0.tc{text-transform:none;letter-spacing:0;font-size:.7rem}
+.pv .b0{border-left:2px solid var(--line-strong)}.pv .b1{border-left:1px solid var(--line)}
+.pv td.tc{background:color-mix(in srgb,var(--tint-tot) 70%,transparent);font-weight:700}
+.pv td.o-T{font-weight:800}
+.pv.wide td{padding:4px 3px}
+
+/* Modèle RADIOLOGIE : grille fine à la manière du tableur */
+.mwrap{overflow-x:auto;max-width:100%}
+.mmonth{font-weight:800;font-family:var(--f-display);margin:0 0 6px}
+table.model{width:auto;min-width:min(100%,560px);border-collapse:collapse;font-size:.86rem;background:var(--surface)}
+table.model th,table.model td{border:1px solid var(--line-strong);padding:4px 10px;text-align:center;vertical-align:middle}
+table.model th{background:var(--sunk);color:var(--ink);font-size:.8rem;text-transform:none;letter-spacing:0;position:static}
+table.model th.nb{border:0;background:transparent}
+table.model th.mtit{font-family:var(--f-display);font-size:.9rem;letter-spacing:.06em}
+table.model td:first-child,table.model th.lft{text-align:left;min-width:210px}
+table.model td:not(:first-child){font-family:var(--f-mono);min-width:84px}
+table.model tr.m-sec td{font-weight:800;letter-spacing:.05em;background:var(--tint-tot);text-align:center!important}
+table.model tr.m-sys td{font-weight:700;background:var(--tint-ext);text-align:center!important;font-size:.82rem}
+table.model tr.m-st td{font-weight:700}
+.demande .cl{display:inline-flex;gap:4px;align-items:center;font-size:.78rem;color:var(--muted)}
+.demande .cl input{width:64px;padding:3px 6px}
+.linkbtn{font:inherit;border:0;background:none;color:var(--accent);text-decoration:underline;cursor:pointer;padding:0}
+.injRow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.injOpt{display:inline-flex;gap:6px;align-items:center;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:.85rem;font-weight:600;cursor:pointer}
+.injOpt.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}.injOpt input{width:auto}
+.demande .injSel{width:auto;padding:3px 6px;font-size:.8rem}
+.panel .fld>span{color:inherit}
+.pv.wide th{position:static}
+table.model td.inj{font-family:var(--f-mono);font-weight:700;min-width:64px!important;text-align:center!important}
+.demande li{flex-wrap:wrap}
+.pxg{display:inline-flex;gap:6px;align-items:center}.pxg label{display:inline-flex;gap:4px;align-items:center;font-size:.76rem;color:var(--muted)}.pxg input{width:86px;padding:3px 6px}
+.money{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:baseline;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--sunk)}
+.money>span{display:flex;flex-direction:column}.money b{font-family:var(--f-mono);font-size:1.1rem}.money b.pay{color:var(--ok)}
+table.fin td.n{font-family:var(--f-mono);white-space:nowrap}
+table.plist td{text-align:left}.tagDemo{font-size:10px;padding:1px 5px;border-radius:4px;background:var(--tint-int);color:var(--muted,#667);margin-left:4px;text-transform:uppercase;letter-spacing:.04em}.pxg input.bad{border-color:#c0392b;background:#fdecea}table.plist td.acts{white-space:normal;min-width:220px;font-size:12px}table.plist td.n{text-align:right}table.plist tr.click:hover td{background:var(--tint-ext)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+<header class="top"><div class="brand"><h1>Registre de l’imagerie</h1><span>CHR El Hadji Ahmadou Sakhir Ndiéguène de Thiès · service d’imagerie médicale</span></div>
+<nav class="main" aria-label="Navigation">
+<button type="button" data-act="nav" data-nav-btn data-v="saisie">Saisie</button>
+<button type="button" data-act="nav" data-nav-btn data-v="liste">Liste des examens</button>
+<button type="button" data-act="nav" data-nav-btn data-v="rapport">Rapport mensuel</button>
+<button type="button" data-act="nav" data-nav-btn data-v="params">Paramètres</button></nav>
+<span class="demo" id="demoTag">Démonstration · noms fictifs</span><span class="store" id="store"></span></header>
+<main id="view"></main>
+<div id="modalRoot"></div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script>
+const Y=365;
+const norm=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+/* ===== Imagerie : catalogue et registre (modèle du classeur FEV_MARS) ===== */
+const IMG_FAM_DEF=[['rx','Radiographie standard','radio'],['spe','Examens spéciaux (avec préparation)','radio'],['mam','Mammographie','radio'],['echo','Échographie','echo'],['dop','Doppler','echo']];
+const IMG_SYS_DEF=['Osseux','Respiratoire','Digestif'];
+const TARIF_DEF={rx:10000,spe:25000,mam:20000,echo:15000,dop:25000};
+/* Types d'examen et systèmes : référentiels configurables (Paramètres ou saisie), reconstruits depuis l'état */
+const IMG_FAM={},IMG_SYS=[];
+function imgSyncRef(noState){const st=noState?null:S;Object.keys(IMG_FAM).forEach(k=>delete IMG_FAM[k]);
+  (st&&st.imgTypes||IMG_FAM_DEF.map(([id,l,svc])=>({id,l,svc}))).forEach(t=>IMG_FAM[t.id]={l:t.l,svc:t.svc});
+  IMG_SYS.length=0;IMG_SYS.push(...(st&&st.imgSys||IMG_SYS_DEF))}
+imgSyncRef(true);
+
+/* [id, libellé, famille, système (radiographie), abréviations et variantes du registre, poids fictif mensuel] */
+const IMG_DEF=[
+ ['r_avbras','Avant-bras','rx','Osseux','avant bras',84],['r_bassin','Bassin','rx','Osseux','',138],['r_blondeau','Blondeau','rx','Osseux','',3],['r_bras','Bras','rx','Osseux','',31],
+ ['r_cheville','Cheville','rx','Osseux','',114],['r_coude','Coude','rx','Osseux','',84],['r_crane','Crâne','rx','Osseux','crane',2],['r_dfp','Défilé fémoro-patellaire','rx','Osseux','defile femoro patellaire, DFP',2],
+ ['r_epaule','Épaule','rx','Osseux','epaule',84],['r_facebasse','Face basse','rx','Osseux','',4],['r_femur','Fémur','rx','Osseux','femur',76],['r_genou','Genou','rx','Osseux','',170],
+ ['r_hanche','Hanche','rx','Osseux','',60],['r_jambe','Jambe','rx','Osseux','',158],['r_main','Main','rx','Osseux','',94],['r_maxdef','Maxillaire défilé','rx','Osseux','maxillaire defile',34],
+ ['r_opn','Os propres du nez (OPN)','rx','Osseux','os propre du nez, OPN',2],['r_pied','Pied','rx','Osseux','',112],['r_poignet','Poignet','rx','Osseux','',106],['r_rcerv','Rachis cervical','rx','Osseux','',22],
+ ['r_rdors','Rachis dorsal','rx','Osseux','',3],['r_rdl','Rachis dorso-lombaire','rx','Osseux','rachis dorsolombaire, rachis dorsolomabire',5],['r_rlomb','Rachis lombaire','rx','Osseux','',23],['r_squel','Squelette','rx','Osseux','',1],
+ ['r_talon','Talon (calcanéum)','rx','Osseux','talon calcaneum, calcaneum',1],
+ ['r_thorax','Thorax','rx','Respiratoire','radiographie pulmonaire, RP, poumons, rx poumons',329],['r_cavum','Cavum','rx','Respiratoire','',16],['r_sinus','Sinus','rx','Respiratoire','',1],
+ ['r_asp','ASP (abdomen sans préparation)','rx','Digestif','ASP, abdomen sans preparation',32],
+ ['s_hsg','Hystérosalpingographie (HSG)','spe','','HSG',44],['s_lb','Lavement baryté','spe','','lavement baryte, LB',6],['s_ucr','Urétrocystographie rétrograde (UCR)','spe','','UCR',5],
+ ['s_togd','Transit œso-gastro-duodénal (TOGD)','spe','','TOGD, TOGD',2],['s_uiv','Urographie intraveineuse (UIV)','spe','','UIV',0],
+ ['m_mammo','Mammographie','mam','','mammo',0],
+ ['e_ap','Abdomino-pelvienne','echo','','abdomino pelvienne, abdo pelvienne',196],['e_abd','Abdominale','echo','','',5],['e_pelv','Pelvienne','echo','','',16],['e_ren','Rénale','echo','','renale',3],
+ ['e_au','Arbre urinaire','echo','','',10],['e_rvp','RVP (reins, vessie, prostate)','echo','','RVP',30],['e_cerv','Cervicale','echo','','',45],['e_mam','Mammaire','echo','','',35],
+ ['e_bourses','Bourses','echo','','scrotale',29],['e_masse','Masse','echo','','',21],['e_pm','Parties molles','echo','','',9],['e_etf','Transfontanellaire (ETF)','echo','','ETF',3],
+ ['e_obst','Obstétricale (trimestre non précisé)','echo','','obstetricale',9],['e_t1','Obstétricale — 1er trimestre','echo','','premier trim, premier trimestre',0],
+ ['e_t2','Obstétricale — 2e trimestre','echo','','deuxieme trim, deuxieme trimestre',1],['e_t3','Obstétricale — 3e trimestre','echo','','troisieme trim, troisieme trimestre',1],
+ ['d_tsa','Doppler des troncs supra-aortiques (TSA)','dop','','TSA',8],['d_av','Doppler artério-veineux','dop','','doppler arterio veineux',8],['d_mi','Doppler des membres inférieurs','dop','','doppler des membres inf',8],
+ ['d_ven','Doppler veineux','dop','','dopller veineux, doppler veineux',8],['d_art','Doppler artériel','dop','','doppler arteriel, doppler arterielle',6],['d_ren','Doppler rénal','dop','','doppler renale, doppler renal',1],
+ ['d_fav','Doppler de fistule artério-veineuse (FAV)','dop','','FAV',0]
+];
+const defaultImgCat=()=>IMG_DEF.map(([id,lib,fam,sys,syn,w])=>({id,lib,fam,sys,syn,w,prix:TARIF_DEF[fam]??0,actif:true}));
+const IMG_AGES=()=>({nom:'Imagerie (tranches du registre)',groups:[{l:'0–5 ans',min:0,max:6*Y-1},{l:'6–15 ans',min:6*Y,max:16*Y-1},{l:'16–25 ans',min:16*Y,max:26*Y-1},{l:'26–40 ans',min:26*Y,max:41*Y-1},{l:'41–50 ans',min:41*Y,max:51*Y-1},{l:'51–60 ans',min:51*Y,max:61*Y-1},{l:'Plus de 60 ans',min:61*Y,max:null}]});
+const hasImgCat=s=>!!s&&s.type==='imag'&&(s.imag==='radio'||s.imag==='echo');
+const imgCat=()=>(S&&S.imgCat)||defaultImgCat();
+const catOfSvc=svcImag=>imgCat().filter(x=>IMG_FAM[x.fam]&&IMG_FAM[x.fam].svc===svcImag);
+const SXK=['F','M','X'];
+const emptyImg=()=>({ex:{},org:{EXT:0,INT:0,X:0},age:{},anr:{F:0,M:0,X:0}});
+const cnt3=o=>o?(+o.F||0)+(+o.M||0)+(+o.X||0):0;
+function imgTotals(img,svcImag){const t={ex:0,dem:0,demAge:0,fam:{}};if(!img)return t;
+  for(const[id,v]of Object.entries(img.ex||{})){const it=imgCat().find(x=>x.id===id);if(svcImag&&it&&IMG_FAM[it.fam].svc!==svcImag)continue;const n=cnt3(v);t.ex+=n;if(it)t.fam[it.fam]=(t.fam[it.fam]||0)+n}
+  t.dem=(+img.org?.EXT||0)+(+img.org?.INT||0)+(+img.org?.X||0);
+  t.demAge=Object.values(img.age||{}).reduce((a,v)=>a+cnt3(v),0)+cnt3(img.anr);return t}
+function addImg(dst,src){if(!src)return dst;
+  for(const[id,v]of Object.entries(src.ex||{})){const d=dst.ex[id]=dst.ex[id]||{F:0,M:0,X:0};SXK.forEach(k=>d[k]+=+v[k]||0)}
+  ['EXT','INT','X'].forEach(k=>dst.org[k]+=+src.org?.[k]||0);
+  for(const[i,v]of Object.entries(src.age||{})){const d=dst.age[i]=dst.age[i]||{F:0,M:0,X:0};SXK.forEach(k=>d[k]+=+v[k]||0)}
+  SXK.forEach(k=>dst.anr[k]+=+src.anr?.[k]||0);
+  if(src.combo){dst.combo=dst.combo||{};for(const[c,v]of Object.entries(src.combo)){const d=dst.combo[c]=dst.combo[c]||{F:0,M:0,X:0};SXK.forEach(k=>d[k]+=+v[k]||0)}}
+  if(src.mt){dst.mt=dst.mt||{};dst.mtn=dst.mtn||{};for(const[k,v]of Object.entries(src.mt))dst.mt[k]=(dst.mt[k]||0)+(+v||0);for(const[k,v]of Object.entries(src.mtn||{}))dst.mtn[k]=(dst.mtn[k]||0)+(+v||0)}
+  if(src.vide){dst.vide=dst.vide||{F:0,M:0,X:0};SXK.forEach(k=>dst.vide[k]+=+src.vide[k]||0)}
+  return dst}
+
+/* --- Lecture du registre (classeur Excel ligne par ligne). Aucun nom ni téléphone n'est conservé : seuls des effectifs sont calculés. --- */
+const MOIS_RX=[['JANVIER',1],['JANV',1],['JAN',1],['FEVRIER',2],['FEVR',2],['FEV',2],['MARS',3],['MAR',3],['AVRIL',4],['AVR',4],['MAI',5],['JUIN',6],['JUILLET',7],['JUIL',7],['AOUT',8],['SEPTEMBRE',9],['SEPT',9],['SEP',9],['OCTOBRE',10],['OCT',10],['NOVEMBRE',11],['NOV',11],['DECEMBRE',12],['DEC',12]];
+function parseMois(v,stamp){
+  const s=String(v??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const sy=stamp instanceof Date&&!isNaN(stamp)?stamp.getFullYear():null;
+  for(const[k,m]of MOIS_RX){if(s.startsWith(k)){const rest=s.slice(k.length);if(rest===''&&sy)return sy+'-'+String(m).padStart(2,'0');
+      if(/^\d{2}$/.test(rest))return(2000+ +rest)+'-'+String(m).padStart(2,'0');if(/^\d{4}$/.test(rest))return rest+'-'+String(m).padStart(2,'0');break}}
+  return null}
+function imgMatcher(){const map=new Map();
+  imgCat().forEach(it=>{const keys=[it.lib,it.lib.replace(/\(.*?\)/g,''),...String(it.syn||'').split(',')];
+    keys.forEach(k=>{const n=norm(k);if(n){const key=it.fam+'|'+n;if(!map.has(key))map.set(key,it.id);if(it.fam==='spe'||it.fam==='mam'){if(!map.has('*|'+n))map.set('*|'+n,it.id)}}})});
+  return(fam,label)=>{const n=norm(label);return map.get(fam+'|'+n)||map.get(fam+'|'+norm(label.replace(/\(.*?\)/g,'')))||null}}
+const SYS_RX=/\s*_\s*(Osseux|Respiratoire|Digestif)\s*/gi;
+function splitCell(v,rx){if(v===null||v===undefined)return[];let s=String(v);
+  if(rx)s=s.replace(SYS_RX,(m,g)=>' _'+g+'\n');
+  return s.split(/[\n\r]+/).map(x=>x.replace(/^[^A-Za-zÀ-ÿ0-9]+/,'').trim()).filter(x=>x&&x!=='_')}
+function ageGroupOf(v,groups){
+  if(v===null||v===undefined||String(v).trim()==='')return null;const s=String(v).toUpperCase();
+  if(/\+/.test(s)||/PLUS/.test(s))return groups.length-1;
+  let n=null;const m=s.match(/^\s*(\d+)\s*-\s*(\d+)/);if(m)n=+m[1];else if(/^\s*\d+(\.\d+)?\s*$/.test(s))n=Math.floor(+s);
+  if(n===null||n>120)return null;const d=n*Y;const i=groups.findIndex(g=>d>=g.min&&(g.max===null||d<=g.max));return i<0?null:i}
+function parseRegister(rows){
+  /* rows : tableau d'objets {colonne:valeur} ; retourne des effectifs par mois et par service */
+  const match=imgMatcher(),groups=(S&&S.ages&&S.ages.img?S.ages.img:IMG_AGES()).groups;
+  const out={months:{},unknown:{},numeric:0,noMonth:0,lines:0,sexBad:0,orgBad:0};
+  const col=(r,name)=>{if(name in r)return r[name];const k=Object.keys(r).find(x=>norm(x)===norm(name));return k?r[k]:undefined};
+  rows.forEach(r=>{
+    const stamp=col(r,'Horodatage de modification');const ym=parseMois(col(r,'MOIS'),stamp instanceof Date?stamp:null);
+    if(!ym){out.noMonth++;return}out.lines++;
+    const M=out.months[ym]=out.months[ym]||{radio:emptyImg(),echo:emptyImg(),all:emptyImg(),lines:0,sexBad:0,orgBad:0,numeric:0,unknown:{}};M.lines++;
+    const unk=(fam,t)=>{if(/^[\d\s+]+$/.test(t)){out.numeric++;M.numeric++;return}const k=IMG_FAM[fam].l+' : '+t.slice(0,40);out.unknown[k]=(out.unknown[k]||0)+1;M.unknown[k]=(M.unknown[k]||0)+1};
+    const sxv=String(col(r,'SEXE')??'').trim().toUpperCase();const sx=sxv==='F'||sxv==='M'?sxv:'X';if(sx==='X'&&sxv){out.sexBad++;M.sexBad++}
+    const ov=String(col(r,'ORIGINE')??'').trim().toUpperCase();const og=ov==='EXTERNE'?'EXT':ov==='INTERNE'?'INT':'X';if(og==='X'&&ov){out.orgBad++;M.orgBad++}
+    const ag=ageGroupOf(col(r,'AGE'),groups);
+    const found={radio:[],echo:[]},rxSeq=[];
+    const take=(fam,cell,rx)=>splitCell(cell,rx).forEach(t=>{let lab=t,f=fam;if(rx){const m=t.match(/^(.*?)\s*_(Osseux|Respiratoire|Digestif)$/i);if(m)lab=m[1]}
+      const id=match(f,lab)||(rx?match('*',lab):null);if(!id){unk(fam,t);return}const it=imgCat().find(x=>x.id===id);found[IMG_FAM[it.fam].svc].push(id);if(rx)rxSeq.push(id)});
+    take('rx',col(r,'demanderx'),true);
+    const pr=col(r,'Prestations');take('echo',pr!==null&&pr!==undefined&&String(pr).trim()!==''?pr:col(r,'Demande'),false);
+    take('dop',col(r,'DEMANDE DOPPLER'),false);take('spe',col(r,'DEMANDE EXAMENS SPECIAUX'),false);take('mam',col(r,'DEMANDE MAMMO'),false);
+    const dem=img=>{img.org[og]++;if(ag===null)img.anr[sx]++;else{const a=img.age[ag]=img.age[ag]||{F:0,M:0,X:0};a[sx]++}};
+    ['radio','echo'].forEach(sv=>{if(!found[sv].length)return;const img=M[sv];dem(img);found[sv].forEach(id=>{const e=img.ex[id]=img.ex[id]||{F:0,M:0,X:0};e[sx]++})});
+    dem(M.all);
+    /* combinaisons de régions telles que présentées par le tableau croisé du classeur */
+    const R=M.radio;R.combo=R.combo||{};R.vide=R.vide||{F:0,M:0,X:0};
+    if(rxSeq.length){const k=rxSeq.join('+');const c=R.combo[k]=R.combo[k]||{F:0,M:0,X:0};c[sx]++}else R.vide[sx]++;
+  });
+  return out}
+/* --- Données fictives d'imagerie (pondérations arrondies, aucune donnée réelle) --- */
+const IMG_FSHARE={s_hsg:1,e_pelv:1,e_obst:1,e_t1:1,e_t2:1,e_t3:1,e_mam:.97,m_mammo:.99,e_rvp:0,e_bourses:0,s_ucr:.1};
+function genImg(svcImag,R,factor){
+  const img=emptyImg(),cat=catOfSvc(svcImag);let tot=0;
+  cat.forEach(it=>{const w=it.w||0;const n=w?Math.max(0,Math.round(w*factor*(0.85+R()*0.3))):0;const fs=IMG_FSHARE[it.id]??(0.4+R()*0.12);const F=Math.round(n*fs);img.ex[it.id]={F,M:n-F,X:0};tot+=n});
+  const dem=Math.round(tot/(svcImag==='radio'?1.2+R()*0.04:1.01));
+  const INT=Math.round(dem*(0.03+R()*0.04));img.org={EXT:dem-INT,INT,X:0};
+  const W=[1249,1624,2561,2664,1489,985,2064],groups=(S&&S.ages&&S.ages.img?S.ages.img:IMG_AGES()).groups;let left=dem;const sw=W.slice(0,groups.length).reduce((a,b)=>a+b,0)||1;
+  groups.forEach((g,i)=>{const n=i===groups.length-1?left:Math.min(left,Math.round(dem*(W[i]||sw/groups.length)/sw*(0.9+R()*0.2)));left-=n;const F=Math.round(n*(svcImag==='echo'?0.55+R()*0.1:0.38+R()*0.1));img.age[i]={F,M:n-F,X:0}});
+  return img}
+/* --- Tableaux du rapport (structure commune : écran, CSV, Excel, PDF) --- */
+function imgGroups(svcImag){const cat=catOfSvc(svcImag),out=[];
+  Object.entries(IMG_FAM).filter(([f,o])=>o.svc===svcImag).forEach(([f,o])=>{const items=cat.filter(x=>x.fam===f);if(!items.length)return;
+    const syss=[...new Set(items.map(x=>x.sys||''))];
+    if(syss.some(Boolean)){const order=[...IMG_SYS.filter(y=>syss.includes(y)),...syss.filter(y=>y&&!IMG_SYS.includes(y)),...(syss.includes('')?['']:[])];
+      order.forEach(sy=>out.push({key:f+'_'+(norm(sy).replace(/ /g,'_')||'autres'),fam:f,sys:sy,label:o.l+' — '+(sy||'sans système'),short:sy||'Sans système',items:items.filter(x=>(x.sys||'')===sy),multi:order.length>1}))}
+    else out.push({key:f,fam:f,sys:'',label:o.l,short:o.l,items,multi:false})});
+  return out}
+const SXH=['F','M','(vide)','Total général'];
+const row4=(l,o,k='r')=>({l,v:[+o.F||0,+o.M||0,+o.X||0,cnt3(o)],k});
+const sum3=list=>list.reduce((a,o)=>({F:a.F+(+o.F||0),M:a.M+(+o.M||0),X:a.X+(+o.X||0)}),{F:0,M:0,X:0});
+function famTable(img,fams,title,id,keepZero){
+  const rows=[],tot=[];const groups=imgGroups(IMG_FAM[fams[0]]?.svc).filter(g=>fams.includes(g.fam));
+  groups.forEach(g=>{const items=g.items.filter(it=>it.actif!==false||cnt3(img.ex[it.id]));const vals=items.map(it=>img.ex[it.id]||{F:0,M:0,X:0});
+    const show=items.map((it,i)=>[it,vals[i]]).filter(([it,v])=>keepZero||cnt3(v));
+    if(g.multi){rows.push({l:g.short,v:['','','',''],k:'g'});show.forEach(([it,v])=>rows.push(row4(it.lib,v)));rows.push(row4('Sous-total '+g.short,sum3(vals),'s'))}
+    else show.forEach(([it,v])=>rows.push(row4(it.lib,v)));tot.push(...vals)});
+  rows.push(row4('Total général',sum3(tot),'t'));
+  return{id,title,measure:'Nombre d’examens',head:SXH,rows}}
+function comboTable(img){const cat=imgCat();const lab=k=>k.split('+').map(id=>cat.find(x=>x.id===id)?.lib||id).join(' + ');
+  const rows=Object.entries(img.combo||{}).map(([k,v])=>row4(lab(k),v)).sort((a,b)=>a.l.localeCompare(b.l,'fr'));
+  const vide=img.vide||{F:0,M:0,X:0};rows.push(row4('(vide)',vide));
+  rows.push(row4('Total général',sum3([...Object.values(img.combo||{}),vide]),'t'));
+  return{id:'combo',blankZero:true,title:'Radiographies par région(s) demandée(s) et par sexe — présentation du classeur',measure:'Nombre de Clé primaire (demandes)',head:SXH,rows,note:'Une ligne = une combinaison de régions demandées ensemble sur une même demande, comme dans le tableau croisé du classeur. « (vide) » : demandes de la période sans radiographie (échographie, doppler, examens spéciaux).'}}
+function orgTable(list){return{id:'org',title:'Demandes (patients-passages) par origine',measure:'Nombre de demandes',head:['Externe','Interne','(vide)','Total général'],
+  rows:list.map(([l,img])=>({l,v:[+img.org.EXT||0,+img.org.INT||0,+img.org.X||0,(+img.org.EXT||0)+(+img.org.INT||0)+(+img.org.X||0)],k:'r'}))}}
+function ageTable(l,img,id){const groups=(S&&S.ages&&S.ages.img?S.ages.img:IMG_AGES()).groups;const vals=groups.map((g,i)=>img.age[i]||{F:0,M:0,X:0});
+  const rows=groups.map((g,i)=>row4(g.l,vals[i]));rows.push(row4('Âge non renseigné',img.anr||{F:0,M:0,X:0}));rows.push(row4('Total général',sum3([...vals,img.anr||{}]),'t'));
+  return{id,title:'Demandes par tranche d’âge et par sexe — '+l,measure:'Nombre de demandes',head:SXH,rows}}
+
+/* --- Saisie par patient : un passage = une demande, avec un ou plusieurs actes --- */
+function passToImg(pass){const img=emptyImg();img.mt={};img.mtn={};
+  (pass||[]).forEach(p=>{const sx=p.sx==='F'||p.sx==='M'?p.sx:'X',og=p.org==='EXT'||p.org==='INT'?p.org:'X';img.org[og]++;
+    if(p.age===null||p.age===undefined||p.age==='')img.anr[sx]++;else{const a=img.age[p.age]=img.age[p.age]||{F:0,M:0,X:0};a[sx]++}
+    (p.actes||[]).forEach(a=>{if(!a.id)return;const e=img.ex[a.id]=img.ex[a.id]||{F:0,M:0,X:0};e[sx]++;if(a.prix!==null&&a.prix!==''&&!isNaN(+a.prix)){img.mt[a.id]=(img.mt[a.id]||0)+(+a.prix);img.mtn[a.id]=(img.mtn[a.id]||0)+1}})});
+  return img}
+function genPass(svcImag,R,factor,ym){const base=genImg(svcImag,R,factor),units=[];const cat=catOfSvc(svcImag);
+  Object.entries(base.ex).forEach(([id,v])=>{const it=cat.find(x=>x.id===id);['F','M'].forEach(sx=>{for(let i=0;i<v[sx];i++)units.push({id,sx,prix:it?.prix||0})})});
+  for(let i=units.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[units[i],units[j]]=[units[j],units[i]]}
+  const groups=(S&&S.ages&&S.ages.img?S.ages.img:IMG_AGES()).groups,W=[1249,1624,2561,2664,1489,985,2064],sw=W.slice(0,groups.length).reduce((a,b)=>a+b,0);
+  const pickAge=()=>{let x=R()*sw;for(let i=0;i<groups.length;i++){x-=W[i]||0;if(x<=0)return i}return groups.length-1};
+  const D=daysIn(ym),pass=[];let n=0;
+  for(let i=0;i<units.length;i++){const u=units[i],actes=[{id:u.id,prix:u.prix}];
+    while(i+1<units.length&&units[i+1].sx===u.sx&&R()<(svcImag==='radio'?0.17:0.01)){i++;actes.push({id:units[i].id,prix:units[i].prix})}
+    if(R()<0.04)actes.forEach(a=>a.prix=0);
+    pass.push({n:++n,d:ym+'-'+String(1+Math.floor(R()*D)).padStart(2,'0'),num:'',age:pickAge(),sx:u.sx,org:R()<0.05?'INT':'EXT',actes})}
+  pass.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0).forEach((p,i)=>p.n=i+1);return pass}
+
+/* ===== Registre de l'imagerie — application ===== */
+const STORE='registre-imagerie-chrt-v1';
+const FAMS=[['echo','Échographie','Prestations'],['rx','Radiographie','Radiographie'],['dop','Doppler','Doppler'],['spe','Examens spéciaux','Examens spéciaux'],['mam','Mammographie','Mammographie'],['scan','Scanner','Scanner']];
+if(!IMG_FAM_DEF.some(x=>x[0]==='scan'))IMG_FAM_DEF.push(['scan','Scanner','scan']);
+/* Scanner : [id, libellé, groupe, injection imposée par l'intitulé ('C' sans, '+C' avec, '' au choix), poids fictif] */
+const SCAN_DEF=[['sc_abd','ABDOMEN SANS IV','','C',8],['sc_abd2','ABDOMEN 2 TEMPS','','+C',6],['sc_abd3','ABDOMEN 3 TEMPS','','+C',3],['sc_abd4','ABDOMEN 4 TEMPS','','+C',1],
+ ['sc_uro','URO-TDM SANS IV','','C',2],['sc_urol','URO-TDM AVEC IV + LASILIX','','+C',2],['sc_colo','COLOSCANNER','','',1],['sc_thx','THORAX','','',9],['sc_angp','ANGIOPULMONAIRE','','+C',2],
+ ['sc_aorte','ANGIO TDM AORTE','','+C',1],['sc_angmi','ANGIO MI','','+C',1],['sc_angtsa','ANGIO TSA','','+C',1],['sc_corp','COROS-TDM PONTAGE','','+C',0],['sc_cors','COROS-TDM STANDARD','','+C',1],
+ ['sc_crs','CRANE SANS IV','','C',14],['sc_cra','CRANE AVEC IV','','+C',4],['sc_mf','MASSIF FACIAL','','',2],['sc_roch','ROCHER','','',1],['sc_dent','DENTASCANNER','','C',1],['sc_cou','COU ORL BIPHASIQUE','','+C',1],
+ ['sc_tagt','TAGT','Extrémités','C',0],['sc_coxo','COXOMETRIE','Extrémités','C',0],['sc_gen','GENOU','Extrémités','',1],['sc_epa','EPAULE','Extrémités','',1],['sc_poi','POIGNET','Extrémités','',1],['sc_che','CHEVILLE','Extrémités','',1],
+ ['sc_arthro','ARTHROSCANNER','','',1],['sc_rcerv','RACHIS CERVICAL','Rachis','',3],['sc_rdors','RACHIS DORSAL','Rachis','',1],['sc_rlomb','RACHIS LOMBAIRE','Rachis','',4],['sc_bassin','BASSIN','','',2],['sc_pelvi','PELVIMETRIE','','C',1]];
+const SCAN_TARIF={C:50000,P:65000};
+function demoPay(R){const u=R();return u<0.7?'paf':u<0.82?'lg':u<0.88?'social':u<0.93?'gratuit':'perso'}
+const scanCat=()=>SCAN_DEF.map(([id,lib,sys,inj,w])=>({id,lib,fam:'scan',sys,syn:id==='sc_urol'?'uro tdm avec iv lasilex':'',inj,w,prix:SCAN_TARIF.C,prixP:SCAN_TARIF.P,actif:true}));
+/* --- Paiement : types, tarifs, parts --- */
+const PAY_DEF=[['paf','PAF',100],['lg','LG',0],['social','SOCIAL',0],['gratuit','GRATUIT',0],['perso','PERSONNEL',100]];
+const payById=id=>(S.payTypes||[]).find(p=>p.id===id);
+const tarifOf=(id,inj)=>{const it=catById(id);if(!it)return 0;return it.fam==='scan'&&inj==='+C'?(+it.prixP||+it.prix||0):(+it.prix||0)};
+const DEMO_PCT=Object.fromEntries(PAY_DEF.map(([id,,p])=>[id,p]));
+const ppOf=(px,pay)=>pay in DEMO_PCT?Math.round((+px||0)*DEMO_PCT[pay]/100):'';/* parts fictives des données de démonstration uniquement */
+function fixPrices(e,f,pay){e.px=e.px||[];e.pp=e.pp||[];e.ids.forEach((id,i)=>{if(e.px[i]===undefined||e.px[i]===''||e.px[i]===null)e.px[i]=tarifOf(id,f==='scan'?(e.inj?.[i]||catById(id)?.inj||'C'):'');if(pay)e.pp[i]=ppOf(e.px[i],pay)})}
+const sumArr=a=>(a||[]).reduce((s,x)=>s+(+x||0),0);
+function passMoney(ex){let px=0,pp=0,n=0;FAMS.forEach(([k])=>{const e=ex[k];if(!e)return;n+=e.ids.length;px+=sumArr(e.px);pp+=sumArr(e.pp)});return{n,px,pp,pec:px-pp}}
+const fcfa=v=>fmt(Math.round(+v||0))+' F';
+
+const INJ_L={C:'C — sans injection','+C':'+C — avec injection'};
+const FAML=Object.fromEntries(FAMS.map(([k,l])=>[k,l]));
+const AGES=[['0-5 ANS',0,5],['6-15 ANS',6,15],['16-25 ANS',16,25],['26-40 ANS',26,40],['41-50 ANS',41,50],['51-60 ANS',51,60],['60 ANS +',61,null]];
+const MOIS_C=['JANV','FEV','MARS','AVRIL','MAI','JUIN','JUILLET','AOUT','SEPT','OCT','NOV','DEC'];
+const MOIS_L=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const PIN=['e_rvp','e_abd','e_au','e_t1','e_t2','e_t3'];
+const moisCode=ym=>{const[y,m]=ym.split('-');return MOIS_C[+m-1]+y.slice(2)};
+const moisLong=ym=>{const[y,m]=ym.split('-');return MOIS_L[+m-1]+' '+y};
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=v=>typeof v==='number'&&!isNaN(v)?v.toLocaleString('fr-FR'):'—';
+const pad=n=>String(n).padStart(2,'0');
+const nowLocal=()=>{const d=new Date();return`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
+const today=()=>nowLocal().slice(0,10);
+const frDate=d=>d?d.slice(0,10).split('-').reverse().join('/'):'';
+const $=s=>document.querySelector(s);
+const clone=o=>JSON.parse(JSON.stringify(o));
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const daysIn=ym=>{const[y,m]=ym.split('-').map(Number);return new Date(y,m,0).getDate()};
+
+function appCat(){const c=[...defaultImgCat(),...scanCat()];
+  const ren={e_t1:'Premier trimestre',e_t2:'Deuxième trimestre',e_t3:'Troisième trimestre',e_obst:'Obstétricale (trimestre non précisé)',m_mammo:'Mammographie bilatérale'};
+  c.forEach(x=>{if(ren[x.id])x.lib=ren[x.id]});c.find(x=>x.id==='m_mammo').syn='mammographie, mammo, mammographie bilaterale';return c}
+const ageGroups=()=>({nom:'Tranches du registre',groups:AGES.map(([l,a,b])=>({l,min:a*Y,max:b===null?null:(b+1)*Y-1}))});
+const catById=id=>S.imgCat.find(x=>x.id===id);
+const exLabel=id=>{const it=catById(id);if(!it)return'?';return it.fam==='rx'&&it.sys?`${it.lib} · ${it.sys}`:it.lib};
+const emptyEx=()=>Object.fromEntries(FAMS.map(([k])=>[k,{ids:[],date:'',rdv:''}]));
+
+/* --- Données de démonstration (noms fictifs, aucun téléphone) --- */
+const PRENOMS_F=['AWA','FATOU','AMINATA','MARIAMA','KHADY','NDEYE','COUMBA','ASTOU','SEYNABOU','ROKHAYA','BINETA','DIARRA','MAIMOUNA','ADJA','SOKHNA'];
+const PRENOMS_M=['MOUSSA','MAMADOU','IBRAHIMA','CHEIKH','OUSMANE','ABDOULAYE','MODOU','BABACAR','PAPE','ALIOU','SALIOU','DEMBA','LAMINE','SERIGNE','ALASSANE'];
+const NOMS=['DIOP','NDIAYE','FALL','SOW','BA','GUEYE','FAYE','SARR','DIALLO','CISSE','MBAYE','SECK','THIAM','KANE','DIOUF','SY','NDAO','MBENGUE','WADE','NIANG'];
+function buildDemo(asOf){const lim=asOf||nowLocal();
+  const st={v:1,recs:[],imgSys:[...IMG_SYS_DEF,'Extrémités','Rachis'],imgCat:appCat(),ages:{img:ageGroups()},seq:52001,demo:true};S=st;
+  const R=rng(20261023),pick=a=>a[Math.floor(R()*a.length)];
+  const cat=st.imgCat,byFam=f=>cat.filter(x=>x.fam===f&&x.w>0);
+  const wpick=list=>{const t=list.reduce((a,x)=>a+x.w,0);let r=R()*t;for(const x of list){r-=x.w;if(r<=0)return x}return list[list.length-1]};
+  const AW=[1249,1624,2561,2664,1489,985,2064],aw=AW.reduce((a,b)=>a+b,0);const pickAge=()=>{let r=R()*aw;for(let i=0;i<AW.length;i++){r-=AW[i];if(r<=0)return i}return 6};
+  const FONLY=['s_hsg','e_pelv','e_obst','e_t1','e_t2','e_t3','e_mam','m_mammo'],MONLY=['e_rvp','e_bourses','s_ucr'];
+  const end=today(),nowTs=nowLocal();
+  for(let d=new Date(2026,8,1);;d.setDate(d.getDate()+1)){const ds=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;if(ds>end)break;if(d.getDay()===0)continue;
+    const n=Math.round((d.getDay()===6?38:82)*(0.85+R()*0.3));
+    for(let i=0;i<n;i++){const ex=emptyEx();const u=R();let sexe=R()<0.46?'F':'M';
+      const add=(f,it)=>{ex[f].ids.push(it.id);if(f!=='echo'&&f!=='dop'){ex[f].cl=ex[f].cl||[];ex[f].cl.push(f==='rx'?1+(R()<0.35?1:0):f==='spe'?3+Math.floor(R()*4):4)}if(FONLY.includes(it.id))sexe='F';if(MONLY.includes(it.id))sexe='M'};
+      if(u<0.72||u>=0.98){if(R()<0.035)add('spe',wpick(byFam('spe')));else{const k=R()<0.83?1:R()<0.8?2:3;for(let j=0;j<k;j++)add('rx',wpick(byFam('rx')))}}
+      if(u>=0.72){if(R()<0.09)add('dop',wpick(byFam('dop')));else add('echo',wpick(byFam('echo')))}
+      const h=8+Math.floor(R()*8),mi=Math.floor(R()*60),se=Math.floor(R()*60);const ts=`${ds}T${pad(h)}:${pad(mi)}:${pad(se)}`;if(ts>lim)continue;
+      FAMS.forEach(([f])=>{if(!ex[f].ids.length||f==='scan')return;if((f==='echo'||f==='dop')&&R()<0.35){const r=new Date(d);r.setDate(r.getDate()+1+Math.floor(R()*9));if(r.getDay()===0)r.setDate(r.getDate()+1);ex[f].rdv=`${r.getFullYear()}-${pad(r.getMonth()+1)}-${pad(r.getDate())}`;ex[f].date=''}else ex[f].date=ds});
+      st.recs.push({cle:'',cree:ts,modif:ts,prenom:pick(sexe==='F'?PRENOMS_F:PRENOMS_M),nom:pick(NOMS),sexe,age:pickAge(),origine:R()<0.05?'INTERNE':'EXTERNE',mois:ds.slice(0,7),tel:'',ex})}
+    const ns=Math.round((d.getDay()===6?4:11)*(0.8+R()*0.4));for(let i=0;i<ns;i++){const ex=emptyEx(),sc=ex.scan;sc.inj=[];const k=R()<0.8?1:R()<0.7?2:3;
+      for(let j=0;j<k;j++){const it=wpick(byFam('scan'));sc.ids.push(it.id);sc.inj.push(it.inj||(R()<0.45?'+C':'C'))}
+      const h=8+Math.floor(R()*9),mi=Math.floor(R()*60);const ts=`${ds}T${pad(h)}:${pad(mi)}:${pad(Math.floor(R()*60))}`;if(ts>lim)continue;
+      if(R()<0.5){const r=new Date(d);r.setDate(r.getDate()+1+Math.floor(R()*6));if(r.getDay()===0)r.setDate(r.getDate()+1);sc.rdv=`${r.getFullYear()}-${pad(r.getMonth()+1)}-${pad(r.getDate())}`}else sc.date=ds;
+      const sexe=R()<0.47?'F':'M';st.recs.push({cle:'',cree:ts,modif:ts,prenom:pick(sexe==='F'?PRENOMS_F:PRENOMS_M),nom:pick(NOMS),sexe,age:pickAge(),origine:R()<0.22?'INTERNE':'EXTERNE',mois:ds.slice(0,7),tel:'',ex})}}
+  st.payTypes=PAY_DEF.map(([id,l])=>({id,l}));st.payDemo=1;st.recs.forEach(r=>{r.pay=demoPay(R);FAMS.forEach(([k])=>fixPrices(r.ex[k],k,r.pay))});
+  st.recs.sort((a,b)=>a.cree<b.cree?-1:1).forEach(r=>{r.cle='IMG_'+(st.seq++);r.demo=1});st.demoMarked=1;
+  const td=today();st.recs.forEach(r=>FAMS.forEach(([k])=>{const e=r.ex[k];if(!e.rdv||e.rdv>=td)return;const u=R();
+    if(u<0.88){e.rdvSt='realise';e.date=e.rdv;e.hist=[{d:e.rdv+'T10:00:00',a:'Rendez-vous réalisé'}]}else if(u<0.94){e.rdvSt='annule';e.motif=pick(['Patient absent','Annulé par le prescripteur','Appareil en panne']);e.hist=[{d:e.rdv+'T09:00:00',a:'Rendez-vous annulé : '+e.motif}]}}));
+  return st}
+
+/* Repère les fiches fictives d’une démonstration créée avant le marquage : on régénère la démo à la même heure et on compare code + horodatage. */
+function markDemo(){const keep=S,recs=[...S.recs].filter(r=>/^IMG_\d+$/.test(r.cle)).sort((a,b)=>+a.cle.slice(4)-+b.cle.slice(4));let found=0;
+  try{for(let k=recs.length;k>0&&recs.length-k<300;k--){const D=buildDemo(recs[k-1].cree);S=keep;if(D.recs.length!==k)continue;
+      if(D.recs.every((d,i)=>d.cle===recs[i].cle&&d.cree===recs[i].cree)){for(let i=0;i<k;i++)recs[i].demo=1;found=k;break}}}finally{S=keep}return found}
+/* --- État --- */
+let S=null,persisted=true;
+function load(){try{const raw=localStorage.getItem(STORE);if(raw){const o=JSON.parse(raw);if(o&&o.v===1)return o}}catch(e){persisted=false}return null}
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));persisted=true;return true}catch(e){persisted=false;toast('Le stockage de ce navigateur est plein ou bloqué : exportez le registre (Paramètres) puis supprimez les mois anciens.');return false}}
+S=load();if(!S){S=buildDemo();save()}
+{let ch=false;if(!S.imgCat.some(x=>x.fam==='scan')){S.imgCat.push(...scanCat());ch=true}
+  const sy=S.imgSys||[...IMG_SYS_DEF];['Extrémités','Rachis'].forEach(y=>{if(!sy.includes(y)){sy.push(y);ch=true}});S.imgSys=sy;
+  S.recs.forEach(r=>FAMS.forEach(([k])=>{if(!r.ex[k]){r.ex[k]={ids:[],date:'',rdv:''};ch=true}}));
+  if(!S.payTypes){S.payTypes=PAY_DEF.map(([id,l])=>({id,l}));ch=true}
+  S.imgCat.forEach(x=>{if(x.fam==='scan'&&!x.prix){x.prix=SCAN_TARIF.C;x.prixP=SCAN_TARIF.P;ch=true}});
+  if(S.demo&&!S.payDemo){S.payDemo=1;ch=true;const R=rng(1023);S.recs.forEach(r=>{if(r.pay)return;r.pay=demoPay(R);FAMS.forEach(([k])=>fixPrices(r.ex[k],k,r.pay))})}
+  if(S.demo&&!S.demoMarked){S.demoMarked=1;ch=true;markDemo()}
+  if(ch)save()}
+imgSyncRef(true);
+const UI={view:'saisie',f:null,ferr:{},jour:null,liste:null,fin:{q:'',pay:'',fam:'',org:'',sexe:'',age:'',d1:'',d2:'',page:0,src:S.recs.some(r=>!r.demo)&&S.recs.some(r=>r.demo)?'reel':''},rap:{months:[],svc:'all',mode:'exam',zero:false,cols:'sx_age',org:true},imp:null,confirmDup:null,confirmDel:null};
+function blankForm(){UI.ferr={};return{edit:null,prenom:'',nom:'',sexe:'',age:'',origine:'EXTERNE',mois:today().slice(0,7),tel:'',pay:'',tab:UI.f?.tab||'echo',ex:emptyEx(),sel:{}}}
+UI.f=blankForm();UI.jour=defFilt('jour','cree');UI.liste=defFilt('liste','cree');
+{const ms=[...new Set(S.recs.map(r=>r.mois))].sort();const full=ms.filter(m=>m<today().slice(0,7));UI.rap.months=[full[full.length-1]||ms[ms.length-1]].filter(Boolean)}
+
+function toast(t){document.querySelectorAll('.toast').forEach(x=>x.remove());const el=document.createElement('div');el.className='toast';el.setAttribute('role','status');el.textContent=t;document.body.appendChild(el);setTimeout(()=>el.remove(),3200)}
+function modal(html){$('#modalRoot').innerHTML=`<div class="mbg" data-act="closeBg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`}
+function closeModal(){$('#modalRoot').innerHTML=''}
+
+/* --- Saisie --- */
+function itemsOf(f){const l=S.imgCat.filter(x=>x.fam===f&&x.actif!==false);if(f==='scan')return l;
+  return f==='echo'?[...PIN.map(id=>l.find(x=>x.id===id)).filter(Boolean),...l.filter(x=>!PIN.includes(x.id)).sort((a,b)=>a.lib.localeCompare(b.lib,'fr'))]:l.sort((a,b)=>a.lib.localeCompare(b.lib,'fr'))}
+function selectHtml(f){const items=itemsOf(f),sel=UI.f.sel[f]||'';
+  if(f==='rx'){const sys=[...new Set(items.map(x=>x.sys||''))];return sys.map(sy=>`<optgroup label="${esc(sy||'Sans système')}">${items.filter(x=>(x.sys||'')===sy).map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.lib)}</option>`).join('')}</optgroup>`).join('')}
+  if(f==='scan'){const gs=[...new Set(items.map(x=>x.sys||''))];return gs.map(g=>`<optgroup label="${esc(g||'Examens')}">${items.filter(x=>(x.sys||'')===g).map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.lib)}${x.inj?' ('+x.inj+')':''}</option>`).join('')}</optgroup>`).join('')}
+  if(f==='echo'){const p=items.filter(x=>PIN.includes(x.id)),o=items.filter(x=>!PIN.includes(x.id));return`<optgroup label="Prestations courantes">${p.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.lib)}</option>`).join('')}</optgroup><optgroup label="Autres prestations">${o.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.lib)}</option>`).join('')}</optgroup>`}
+  return items.map(x=>`<option value="${x.id}" ${x.id===sel?'selected':''}>${esc(x.lib)}</option>`).join('')}
+function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null;
+  const months=[];{const d=new Date();d.setMonth(d.getMonth()-11);for(let i=0;i<13;i++){months.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}`);d.setMonth(d.getMonth()+1)}}
+  if(!months.includes(f.mois))months.unshift(f.mois);
+  const code=ed?ed.cle:'IMG_'+S.seq,ts=ed?ed.modif:null,tab=f.tab,cur=f.ex[tab],nTot=FAMS.reduce((a,[k])=>a+f.ex[k].ids.length,0);
+  const opt=(v,l,s)=>`<option value="${esc(v)}" ${String(s)===String(v)?'selected':''}>${esc(l)}</option>`;
+  return`<section class="entry">
+  <form class="card patient" id="pForm" autocomplete="off">
+    <div class="codeRow"><div><span class="lab">Code patient</span><span class="code mono">${esc(code)}</span></div><div class="stamp mono">${ts?frDate(ts)+' '+ts.slice(11,19):'nouveau passage'}</div></div>
+    ${ed?`<div class="note warn">Modification de la fiche ${esc(ed.cle)} enregistrée le ${frDate(ed.cree)} à ${ed.cree.slice(11,16)}.</div>`:''}
+    <label class="fld ${UI.ferr.prenom?'invalid':''}"><span>Prénom <i>*</i></span><input id="fPrenom" autocomplete="off" data-f="prenom" value="${esc(f.prenom)}" autocapitalize="characters" required aria-required="true" aria-invalid="${!!UI.ferr.prenom}">${UI.ferr.prenom?`<small class="err">${esc(UI.ferr.prenom)}</small>`:''}</label>
+    <label class="fld ${UI.ferr.nom?'invalid':''}"><span>Nom <i>*</i></span><input id="fNom" autocomplete="off" data-f="nom" value="${esc(f.nom)}" autocapitalize="characters" required aria-required="true" aria-invalid="${!!UI.ferr.nom}">${UI.ferr.nom?`<small class="err">${esc(UI.ferr.nom)}</small>`:''}</label>
+    <div class="two"><label class="fld"><span>Sexe <i>*</i></span><select id="fSexe" data-f="sexe">${opt('','—',f.sexe)}${opt('F','F',f.sexe)}${opt('M','M',f.sexe)}</select></label>
+    <label class="fld"><span>Âge <i>*</i></span><select id="fAge" data-f="age">${opt('','—',f.age)}${AGES.map(([l],i)=>opt(i,l,f.age)).join('')}</select></label></div>
+    <div class="two"><label class="fld"><span>Origine <i>*</i></span><select id="fOrigine" data-f="origine">${opt('EXTERNE','EXTERNE',f.origine)}${opt('INTERNE','INTERNE',f.origine)}</select></label>
+    <label class="fld"><span>Mois <i>*</i></span><select id="fMois" data-f="mois">${months.map(m=>opt(m,moisCode(m),f.mois)).join('')}</select></label></div>
+    <label class="fld ${UI.ferr.pay?'invalid':''}"><span>Type de paiement <i>*</i></span><select id="fPay" data-act="pay"><option value="">— choisir —</option>${(S.payTypes||[]).map(p=>`<option value="${p.id}" ${f.pay===p.id?'selected':''}>${esc(p.l)}</option>`).join('')}<option value="__new">+ Nouveau type de paiement…</option></select>${UI.ferr.pay?`<small class="err">${esc(UI.ferr.pay)}</small>`:''}</label>
+    <label class="fld"><span>Téléphone</span><input id="fTel" autocomplete="off" data-f="tel" value="${esc(f.tel)}" inputmode="tel" placeholder="9 chiffres, ex. 77 123 45 67"></label>
+    ${f.edit?'':`<p class="muted small" style="margin:0">Tapez au moins 2 lettres du prénom ou du nom, ou 4 chiffres du téléphone : les patients déjà enregistrés s’affichent ci-dessous.</p>`}<div id="sugg" aria-live="polite">${suggHtml()}</div>
+  </form>
+  <div class="card exams">
+    ${f.from&&!ed?`<div class="exHead" id="exHead"><span class="lab">Nouveau passage</span><b>${esc(f.prenom)} ${esc(f.nom)}</b> <span class="muted small">· ${esc(AGES[f.age]?.[0]||'')} · ${esc(f.sexe)} · ${esc(f.origine)}</span></div>`:''}
+    <div class="tabs" role="tablist">${FAMS.map(([k,l])=>`<button type="button" role="tab" class="tab f-${k} ${k===tab?'on':''}" data-act="tab" data-v="${k}" aria-selected="${k===tab}">${esc(l)}${f.ex[k].ids.length?`<b class="cnt">${f.ex[k].ids.length}</b>`:''}</button>`).join('')}</div>
+    <div class="panel f-${tab}" role="tabpanel">
+      <div class="pgrid">
+        <div class="pick"><label class="plab" for="exSel">${esc(FAMS.find(x=>x[0]===tab)[2])}</label>
+          <div class="addRow"><select id="exSel" data-act="sel" data-v="${tab}"><option value="">— choisir —</option>${selectHtml(tab)}</select><button type="button" class="btn onfam" data-act="addEx" data-v="${tab}">Ajouter</button></div>
+          ${tab==='scan'?(()=>{const it=catById(f.sel.scan||''),fix=it&&it.inj,cur2=fix||f.injSel||'C';return`<div class="injRow" role="radiogroup" aria-label="Injection"><span class="plab">Injection</span>${['C','+C'].map(j=>`<label class="injOpt ${cur2===j?'on':''}"><input type="radio" name="injSel" data-act="injSel" value="${j}" ${cur2===j?'checked':''} ${fix&&fix!==j?'disabled':''}> ${esc(INJ_L[j])}</label>`).join('')}${fix?'<span class="small">imposée par l’intitulé</span>':''}</div>`})():''}
+          <span class="plab">Demande</span>
+          <ol class="demande">${cur.ids.map((id,i)=>`<li><span>${esc(exLabel(id))}</span>${tab==='scan'?(()=>{const it=catById(id),j=cur.inj?.[i]||it?.inj||'C';return`<select class="injSel" data-act="inj" data-v="scan|${i}" aria-label="Injection pour ${esc(exLabel(id))}" ${it&&it.inj?'disabled':''}>${['C','+C'].map(x=>`<option value="${x}" ${x===j?'selected':''}>${x==='C'?'C (sans)':'+C (avec)'}</option>`).join('')}</select>`})():''}${['rx','spe','mam'].includes(tab)?`<label class="cl">Clichés <input type="number" min="0" step="1" data-act="cl" data-v="${tab}|${i}" value="${esc(cur.cl?.[i]??'')}" aria-label="Nombre de clichés pour ${esc(exLabel(id))}"></label>`:''}<span class="pxg"><label>Prix <input type="number" min="0" step="500" data-act="px" data-v="${tab}|${i}" value="${esc(cur.px?.[i]??'')}" aria-label="Prix de ${esc(exLabel(id))}"></label><label>Patient <input type="number" min="0" step="500" data-act="pp" data-v="${tab}|${i}" value="${esc(cur.pp?.[i]??'')}" aria-label="Part patient pour ${esc(exLabel(id))}"></label></span><button type="button" class="x" data-act="rmEx" data-v="${tab}|${i}" aria-label="Retirer ${esc(exLabel(id))}">×</button></li>`).join('')||'<li class="empty">Aucun examen demandé dans cet onglet.</li>'}</ol></div>
+        <div class="dates"><label class="fld"><span class="plab">Date d’examen</span><input type="date" id="exDate" data-act="exDate" data-v="${tab}" value="${esc(cur.date)}"></label>
+          <label class="fld"><span class="plab">Date de RDV</span><input type="date" id="exRdv" data-act="exRdv" data-v="${tab}" value="${esc(cur.rdv)}"></label>${rdvBadge(cur)}</div>
+      </div></div>
+    ${nTot?`<div class="money" id="moneyBox">${moneyInner(f)}</div>`:''}
+    <div class="summary"><span class="lab">Examens de ce passage (${nTot})</span><div class="chips">${FAMS.flatMap(([k])=>f.ex[k].ids.map((id,i)=>`<span class="chip t-${k}">${esc(exLabel(id))}${k==='scan'?' '+esc(f.ex.scan.inj?.[i]||'C'):''}</span>`)).join('')||'<span class="muted">Ajoutez au moins un examen dans un onglet.</span>'}</div></div>
+    <div class="actions">${UI.confirmDup?`<div class="note warn">${esc(UI.confirmDup)} <b>Cliquez à nouveau sur Enregistrer pour confirmer.</b></div>`:''}
+      <button type="button" class="btn primary" data-act="saveRec">${ed?'Enregistrer les modifications':'Enregistrer le passage'}</button>
+      <button type="button" class="btn ghost" data-act="newRec">${ed?'Annuler':'Nouveau patient'}</button>
+      ${ed?`<button type="button" class="btn danger" data-act="delRec">Supprimer la fiche</button>`:''}</div>
+  </div></section>
+  ${listBlock('jour')}`}
+function listTable(rows){
+  return`<div class="tw"><table class="list"><thead><tr><th>Code</th><th>Heure</th><th>Prénom</th><th>Nom</th><th>Âge</th><th>Sexe</th><th>Tél.</th><th>Origine</th>${FAMS.map(([k,l])=>`<th class="h-${k}">${k==='spe'?'Exam. spéc.':k==='mam'?'Mammo':k==='echo'?'Écho':k==='rx'?'Radio':k==='scan'?'Scanner':'Doppler'}</th>`).join('')}</tr></thead><tbody>
+  ${rows.map(r=>`<tr class="click ${pendingRdv(r)?'has-rdv':''}" data-act="open" data-v="${r.cle}" tabindex="0" title="${openRdv(r)?'Gérer le rendez-vous':'Ouvrir la fiche'}"><td class="mono">${esc(r.cle)}</td><td class="mono">${r.cree.slice(11,16)}</td><td>${esc(r.prenom)}</td><td>${esc(r.nom)}</td><td class="nw">${esc(AGES[r.age]?.[0]||'—')}</td><td>${esc(r.sexe||'—')}</td><td class="mono nw">${esc(r.tel||'—')}</td><td class="small">${esc(r.origine)}</td>
+   ${FAMS.map(([k])=>{const e=r.ex[k];return`<td class="c-${k} ${e.ids.length?'on':''}">${e.ids.map((id,i)=>esc(exLabel(id))+(k==='scan'?' <b>'+esc(e.inj?.[i]||'C')+'</b>':'')).join('<br>')}${rdvBadge(e)}</td>`}).join('')}</tr>`).join('')||`<tr><td colspan="14" class="muted">Aucun passage.</td></tr>`}</tbody></table></div>`}
+function readForm(){const f=UI.f;document.querySelectorAll('[data-f]').forEach(el=>{f[el.dataset.f]=el.value})}
+function telOk(t){const d=t.replace(/\D/g,'');return!d||/^(7[05678]|3[03])\d{7}$/.test(d)}
+function saveRec(){readForm();const f=UI.f,err=[];
+  UI.ferr={};const ep=nameErr(f.prenom),en=nameErr(f.nom);if(ep){UI.ferr.prenom=ep;err.push('le prénom')}if(en){UI.ferr.nom=en;err.push('le nom')}if(!f.sexe)err.push('le sexe');if(f.age==='')err.push('l’âge');if(!f.pay){UI.ferr.pay='Obligatoire.';err.push('le type de paiement')}
+  const n=FAMS.reduce((a,[k])=>a+f.ex[k].ids.length,0);if(!n)err.push('au moins un examen');
+  if(err.length){render();toast('À compléter : '+err.join(', ')+'.');(ep?$('#fPrenom'):en?$('#fNom'):null)?.focus();return}
+  if(!telOk(f.tel)){toast('Téléphone : 9 chiffres commençant par 70, 75, 76, 77, 78, 30 ou 33.');return}
+  const prenom=f.prenom.trim().toUpperCase(),nom=f.nom.trim().toUpperCase(),tel=f.tel.replace(/\D/g,'');
+  if(!f.edit){const dup=S.recs.find(r=>r.cree.slice(0,10)===today()&&r.prenom===prenom&&r.nom===nom&&(r.tel||'')===tel);
+    const key=dup?dup.cle:null;if(dup&&UI.confirmDup!==`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`){UI.confirmDup=`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`;render();return}}
+  const now=nowLocal(),ex=clone(f.ex);
+  if(f.edit){const r=S.recs.find(x=>x.cle===f.edit);Object.assign(r,{prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,modif:now});if(save())toast(`Fiche ${r.cle} mise à jour`)}
+  else{const cle='IMG_'+(S.seq++);S.recs.push({cle,cree:now,modif:now,prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex});if(save())toast(`Passage ${cle} enregistré`)}
+  UI.confirmDup=null;UI.f=blankForm();render();window.scrollTo(0,0)}
+function openRec(cle){const r=S.recs.find(x=>x.cle===cle);if(!r)return;
+  UI.f={edit:r.cle,prenom:r.prenom,nom:r.nom,sexe:r.sexe,age:String(r.age??''),origine:r.origine,mois:r.mois,tel:r.tel||'',pay:r.pay||'',tab:FAMS.find(([k])=>r.ex[k].ids.length)?.[0]||'echo',ex:clone(r.ex),sel:{}};
+  UI.view='saisie';UI.confirmDup=null;UI.ferr={prenom:nameErr(r.prenom),nom:nameErr(r.nom)};if(!UI.ferr.prenom)delete UI.ferr.prenom;if(!UI.ferr.nom)delete UI.ferr.nom;render();window.scrollTo(0,0)}
+
+/* --- Liste --- */
+function viewListe(){return listBlock('liste')}
+
+/* --- Recherche, filtres et rendez-vous --- */
+const RDV_ST={prevu:'Prévu',retard:'Dépassé',realise:'Réalisé',annule:'Annulé'};
+const rdvState=e=>!e||!e.rdv||!e.ids.length?null:(e.rdvSt==='realise'||e.rdvSt==='annule')?e.rdvSt:(e.rdv<today()?'retard':'prevu');
+const hasRdv=r=>FAMS.some(([k])=>rdvState(r.ex[k]));
+const openRdv=r=>FAMS.some(([k])=>['prevu','retard','annule'].includes(rdvState(r.ex[k])));
+const pendingRdv=r=>FAMS.filter(([k])=>['prevu','retard'].includes(rdvState(r.ex[k]))).length;
+function defFilt(key,mode){return{key,mode,date:today(),q:'',sexe:'',age:'',org:'',fam:'',rst:'',page:0}}
+function filtRows(F){const q=norm(F.q),qd=F.q.replace(/\D/g,''),d=F.key==='jour'?today():F.date;let rows=S.recs;
+  if(F.mode==='cree')rows=rows.filter(r=>r.cree.slice(0,10)===d);else if(F.mode==='rdv')rows=rows.filter(r=>FAMS.some(([k])=>r.ex[k].rdv===d&&r.ex[k].ids.length));
+  if(q){const ws=q.split(' ');rows=rows.filter(r=>{const h=norm(r.cle+' '+r.prenom+' '+r.nom);return ws.every(w=>h.includes(w))||(qd.length>=4&&(r.tel||'').includes(qd))})}
+  if(F.sexe)rows=rows.filter(r=>(r.sexe||'X')===F.sexe);
+  if(F.age!=='')rows=rows.filter(r=>String(r.age)===F.age);
+  if(F.org)rows=rows.filter(r=>r.origine===F.org);
+  const fams=F.fam?[F.fam]:FAMS.map(x=>x[0]);if(F.fam)rows=rows.filter(r=>r.ex[F.fam].ids.length);
+  if(F.rst)rows=rows.filter(r=>F.rst==='none'?!fams.some(k=>rdvState(r.ex[k])):fams.some(k=>rdvState(r.ex[k])===F.rst));
+  return F.mode==='rdv'?[...rows].sort((a,b)=>(a.nom+a.prenom).localeCompare(b.nom+b.prenom,'fr')):[...rows].sort((a,b)=>a.cree<b.cree?1:-1)}
+const filtActive=F=>!!(F.q||F.sexe||F.age!==''||F.org||F.fam||F.rst);
+function filtBar(F){const k=F.key,opt=(v,l,s)=>`<option value="${esc(v)}" ${String(s)===String(v)?'selected':''}>${esc(l)}</option>`;
+  return`<div class="filters">
+   <label class="fld grow"><span>Rechercher un patient (prénom, nom, téléphone ou code)</span><input type="search" id="q_${k}" data-filt="${k}|q" value="${esc(F.q)}" placeholder="ex. ASTOU DIOUF · 775351493 · IMG_55278"></label>
+   <label class="fld"><span>Afficher</span><select id="m_${k}" data-filt="${k}|mode">${opt('cree',k==='jour'?'Passages d’aujourd’hui':'Passages du',F.mode)}${opt('rdv',k==='jour'?'RDV d’aujourd’hui':'RDV prévus le',F.mode)}${opt('all','Tout le registre',F.mode)}</select></label>
+   ${k==='liste'&&F.mode!=='all'?`<label class="fld"><span>Date</span><input type="date" id="d_${k}" data-filt="${k}|date" value="${esc(F.date)}"></label>`:''}
+   <label class="fld sm"><span>Sexe</span><select id="s_${k}" data-filt="${k}|sexe">${opt('','Tous',F.sexe)}${opt('F','F',F.sexe)}${opt('M','M',F.sexe)}${opt('X','Non renseigné',F.sexe)}</select></label>
+   <label class="fld sm"><span>Âge</span><select id="a_${k}" data-filt="${k}|age">${opt('','Tous',F.age)}${AGES.map(([l],i)=>opt(String(i),l,F.age)).join('')}</select></label>
+   <label class="fld sm"><span>Origine</span><select id="o_${k}" data-filt="${k}|org">${opt('','Toutes',F.org)}${opt('EXTERNE','EXTERNE',F.org)}${opt('INTERNE','INTERNE',F.org)}</select></label>
+   <label class="fld"><span>Type d’examen</span><select id="f_${k}" data-filt="${k}|fam">${opt('','Tous',F.fam)}${FAMS.map(([v,l])=>opt(v,l,F.fam)).join('')}</select></label>
+   <label class="fld"><span>Rendez-vous</span><select id="r_${k}" data-filt="${k}|rst">${opt('','Tous',F.rst)}${opt('prevu','Prévu',F.rst)}${opt('retard','Dépassé, non réalisé',F.rst)}${opt('realise','Réalisé',F.rst)}${opt('annule','Annulé',F.rst)}${opt('none','Sans RDV',F.rst)}</select></label>
+   ${filtActive(F)?`<button type="button" class="btn ghost sm" data-act="fReset" data-v="${k}">Effacer les filtres</button>`:''}</div>`}
+function listBlock(k){const F=UI[k],rows=filtRows(F),per=k==='jour'?15:50,pages=Math.max(1,Math.ceil(rows.length/per));F.page=Math.min(F.page,pages-1);
+  const fams=F.fam?[F.fam]:FAMS.map(x=>x[0]),st={prevu:0,retard:0,realise:0,annule:0};rows.forEach(r=>fams.forEach(f=>{const s=rdvState(r.ex[f]);if(s)st[s]++}));
+  const title=k==='jour'?(F.mode==='rdv'?'Rendez-vous du jour':F.mode==='all'?'Recherche dans tout le registre':'Liste des examens du jour'):(F.mode==='rdv'?'Rendez-vous prévus le '+frDate(F.date):F.mode==='all'?'Tout le registre':'Passages du '+frDate(F.date));
+  return`<section class="card" id="lb_${k}"><div class="head"><h2>${esc(title)}</h2><span class="muted">${F.mode!=='all'?frDate(k==='jour'?today():F.date)+' · ':''}${fmt(rows.length)} passage(s)${filtActive(F)?' correspondant aux filtres':''}</span>${k==='jour'?`<button type="button" class="btn ghost sm" data-act="nav" data-v="liste">Liste complète</button>`:''}</div>
+   ${filtBar(F)}
+   <div class="kpis"><div class="kpi"><span class="lab">Passages</span><b>${fmt(rows.length)}</b></div>${Object.entries(st).map(([s,n])=>`<div class="kpi st-${s}"><span class="lab">RDV ${RDV_ST[s].toLowerCase()}${s==='retard'?'s':s==='prevu'?'s':'s'}</span><b>${fmt(n)}</b></div>`).join('')}</div>
+   ${listTable(rows.slice(F.page*per,F.page*per+per))}
+   ${pages>1?`<div class="pager"><button type="button" class="btn ghost sm" data-act="pg" data-v="${k}|-1" ${F.page?'':'disabled'}>Précédent</button><span>Page ${F.page+1} / ${pages}</span><button type="button" class="btn ghost sm" data-act="pg" data-v="${k}|1" ${F.page<pages-1?'':'disabled'}>Suivant</button></div>`:''}
+   <p class="muted small">Cliquez sur une ligne : tant qu’un rendez-vous n’est pas réalisé (prévu, dépassé ou annulé), la gestion du RDV s’ouvre (réaliser, reporter, annuler, supprimer) ; sinon la fiche s’ouvre pour modification.</p></section>`}
+function refreshBlock(k,focusId){const el=document.getElementById('lb_'+k);if(!el){render();return}const a=document.activeElement,pos=a&&a.id===focusId&&a.selectionStart!=null?a.selectionStart:null;
+  el.outerHTML=listBlock(k);if(focusId){const n=document.getElementById(focusId);if(n){n.focus();if(pos!=null)try{n.setSelectionRange(pos,pos)}catch(e){}}}}
+const rdvBadge=e=>{const st=rdvState(e);if(!st)return'';return`<div class="rdv st-${st}">${st==='realise'?'RDV réalisé le '+frDate(e.date||e.rdv):st==='annule'?'RDV annulé ('+frDate(e.rdv)+')':st==='retard'?'RDV dépassé '+frDate(e.rdv):'RDV '+frDate(e.rdv)}</div>`};
+function openRow(cle){const r=S.recs.find(x=>x.cle===cle);if(!r)return;if(openRdv(r)){UI.delRdv=null;UI.delFiche=false;rdvModal(cle)}else openRec(cle)}
+function rdvModal(cle){const r=S.recs.find(x=>x.cle===cle);if(!r){closeModal();return}UI.rdvCle=cle;const t=today();
+  modal(`<div class="head"><h2>${esc(r.prenom)} ${esc(r.nom)}</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
+  <p class="small" style="margin:0"><span class="mono">${esc(r.cle)}</span> · ${esc(AGES[r.age]?.[0]||'âge non renseigné')} · ${esc(r.sexe||'sexe non renseigné')} · ${esc(r.origine||'')} · tél. <span class="mono">${esc(r.tel||'—')}</span> · passage du ${frDate(r.cree)}</p>
+  ${FAMS.filter(([k])=>r.ex[k].ids.length).map(([k,l])=>{const e=r.ex[k],st=rdvState(e);
+    return`<div class="rdvBox t-${k}"><div class="head"><b>${esc(l)}</b>${st?`<span class="pill st-${st}">RDV ${RDV_ST[st].toLowerCase()}</span>`:'<span class="pill">Sans RDV</span>'}</div>
+    <div>${e.ids.map(id=>esc(exLabel(id))).join(' · ')}</div>
+    <div class="small">${e.rdv?`Rendez-vous le <b>${frDate(e.rdv)}</b>`:'Pas de rendez-vous'}${e.date&&st==='realise'?` · réalisé le <b>${frDate(e.date)}</b>`:e.date?` · examen du ${frDate(e.date)}`:''}${st==='annule'&&e.motif?` · motif : ${esc(e.motif)}`:''}</div>
+    ${st?`<div class="rdvAct">
+      ${st==='prevu'||st==='retard'?`<button type="button" class="btn primary sm" data-act="rdvDo" data-v="${k}">Réaliser aujourd’hui</button>`:''}
+      <span class="inl"><input type="date" id="rp_${k}" min="${t}" aria-label="Nouvelle date de rendez-vous ${esc(l)}"><button type="button" class="btn ghost sm" data-act="rdvMove" data-v="${k}">${st==='prevu'||st==='retard'?'Reporter':'Reprogrammer'}</button></span>
+      ${st==='prevu'||st==='retard'?`<span class="inl"><input id="ra_${k}" placeholder="Motif d’annulation" aria-label="Motif d’annulation ${esc(l)}"><button type="button" class="btn ghost sm" data-act="rdvCancel" data-v="${k}">Annuler le RDV</button></span>`:''}
+      <button type="button" class="btn danger sm" data-act="rdvDel" data-v="${k}">${UI.delRdv===k?'Confirmer la suppression du RDV':'Supprimer le RDV'}</button></div>`:''}
+    ${(e.hist||[]).length?`<ul class="hist">${[...e.hist].reverse().map(h=>`<li><span class="mono">${frDate(h.d)} ${h.d.slice(11,16)}</span> ${esc(h.a)}</li>`).join('')}</ul>`:''}</div>`}).join('')}
+  <div class="btns"><button type="button" class="btn ghost" data-act="openFiche">Ouvrir la fiche pour la modifier</button><button type="button" class="btn danger" data-act="delFiche">${UI.delFiche?'Confirmer la suppression de la fiche':'Supprimer la fiche'}</button></div>`)}
+function rdvAct(k,fn,msg){const r=S.recs.find(x=>x.cle===UI.rdvCle);if(!r)return;const e=r.ex[k];const res=fn(e);if(res===false)return;e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:msg});r.modif=nowLocal();
+  if(UI.f.edit===r.cle)UI.f.ex[k]=clone(e);save();UI.delRdv=null;render();rdvModal(r.cle);toast(msg)}
+/* --- Retrouver un patient pendant la saisie --- */
+function findPatients(prenom,nom,tel){
+  /* Chaque champ suffit à lui seul : un patient est proposé dès qu'un critère correspond ; ceux qui correspondent à plusieurs critères passent en tête */
+  const tk=v=>norm(v).split(' ').filter(w=>w.length>=2),tp=tk(prenom),tn=tk(nom),t=String(tel||'').replace(/\D/g,'');
+  const code=(norm(prenom+' '+nom+' '+tel).match(/img \d{3,}/)||[null])[0];
+  if(!tp.length&&!tn.length&&t.length<4&&!code)return{total:0,list:[],searched:false};
+  const map=new Map();S.recs.forEach(r=>{const words=norm(r.prenom+' '+r.nom).split(' '),has=ws=>ws.length&&ws.every(w=>words.some(x=>x.startsWith(w)));
+    let sc=0;if(has(tp))sc++;if(has(tn))sc++;if(t.length>=4&&String(r.tel||'').replace(/\D/g,'').includes(t))sc+=2;if(code&&norm(r.cle).includes(code))sc+=3;if(!sc)return;
+    const key=r.prenom+'|'+r.nom+'|'+(r.tel||'');let g=map.get(key);if(!g){g={prenom:r.prenom,nom:r.nom,tel:r.tel,recs:[],sc:0};map.set(key,g)}g.recs.push(r);g.sc=Math.max(g.sc,sc)});
+  const all=[...map.values()].map(g=>{g.recs.sort((a,b)=>a.cree<b.cree?1:-1);g.rdv=g.recs.reduce((a,r)=>a+pendingRdv(r),0);return g}).sort((a,b)=>b.sc-a.sc||b.rdv-a.rdv||(a.recs[0].cree<b.recs[0].cree?1:-1));
+  return{total:all.length,list:all.slice(0,6),searched:true}}
+function suggHtml(){const f=UI.f;if(f.edit)return'';
+  if(f.from)return`<div class="note ok"><b>Nouveau passage pour ${esc(f.prenom)} ${esc(f.nom)}</b><br><span class="small">Identité reprise de ${esc(f.from.cle)} (${f.from.n} passage(s) précédent(s), dernier le ${frDate(f.from.last)}). Vérifiez l’âge et l’origine, choisissez les examens à droite puis cliquez sur « Enregistrer le passage ».</span><div class="btns" style="margin-top:6px"><button type="button" class="btn ghost sm" data-act="unFrom">Changer de patient</button></div></div>`;const g=findPatients(f.prenom,f.nom,f.tel);UI.spList=g.list;if(!g.searched)return'';if(!g.list.length)return`<div class="sugg"><span class="lab">Aucun patient déjà enregistré ne correspond</span><span class="small muted">Vérifiez l’orthographe ou cherchez avec le téléphone. Sinon, c’est un nouveau patient : complétez la fiche.</span></div>`;
+  return`<div class="sugg"><span class="lab">Patients déjà enregistrés · ${g.total>6?'6 premiers sur '+fmt(g.total):fmt(g.total)}</span>${g.list.map((p,i)=>`<div class="sp"><div class="spId"><b>${esc(p.prenom)} ${esc(p.nom)}</b> <span class="mono small">${esc(p.tel||'')}</span>
+   <div class="small muted">${p.recs.length} passage(s) · dernier le ${frDate(p.recs[0].cree)} (${esc(p.recs[0].cle)})${p.rdv?` · <b class="warnTxt">${p.rdv} RDV en attente</b>`:''}</div></div>
+   <div class="btns"><button type="button" class="btn ghost sm" data-act="spUse" data-v="${i}">Reprendre l’identité</button>${p.rdv?`<button type="button" class="btn primary sm" data-act="spRdv" data-v="${i}">Gérer le RDV</button>`:`<button type="button" class="btn ghost sm" data-act="spAll" data-v="${i}">Voir les passages</button>`}</div></div>`).join('')}</div>`}
+const nameErr=v=>{const s=String(v||'').trim();if(!s)return'Obligatoire.';if(s.replace(/[^A-Za-zÀ-ÿ]/g,'').length<2)return'Au moins 2 lettres.';if(/\d/.test(s))return'Sans chiffres.';return''};
+
+/* --- Rapport mensuel (présentation du classeur FEV_MARS) --- */
+function recsToMonths(recs){const out={months:{}};
+  recs.forEach(r=>{const ym=r.mois;if(!ym)return;const M=out.months[ym]=out.months[ym]||{radio:emptyImg(),echo:emptyImg(),scan:emptyImg(),all:emptyImg(),lines:0,cube:{radio:{},echo:{},scan:{}},ccube:{},vcube:{}};M.lines++;
+    const sx=r.sexe==='F'||r.sexe==='M'?r.sexe:'X',og=r.origine==='EXTERNE'?'EXT':r.origine==='INTERNE'?'INT':'X',ag=r.age===''||r.age==null?null:+r.age;
+    const found={radio:[],echo:[],scan:[]},rxSeq=[];
+    FAMS.forEach(([f])=>(r.ex[f]?.ids||[]).forEach((id,i)=>{const it=catById(id);if(!it||!IMG_FAM[it.fam])return;const sv=IMG_FAM[it.fam].svc;(found[sv]=found[sv]||[]).push({id,rk:it.fam==='scan'?id+'|'+(r.ex[f].inj?.[i]||it.inj||'C'):id});if(it.fam==='rx')rxSeq.push(id)}));
+    const dem=img=>{img.org[og]++;if(ag===null)img.anr[sx]++;else{const a=img.age[ag]=img.age[ag]||{F:0,M:0,X:0};a[sx]++}};
+    const kk=(ag===null?'nr':ag)+'|'+sx+'|'+og,inc=(o,k)=>{o[k]=(o[k]||0)+1};
+    ['radio','echo','scan'].forEach(sv=>{if(!found[sv].length)return;dem(M[sv]);found[sv].forEach(({id,rk})=>{const e=M[sv].ex[id]=M[sv].ex[id]||{F:0,M:0,X:0};e[sx]++;inc(M.cube[sv][rk]=M.cube[sv][rk]||{},kk)})});dem(M.all);
+    if(rxSeq.length)inc(M.ccube[rxSeq.join('+')]=M.ccube[rxSeq.join('+')]||{},kk);else inc(M.vcube,kk);
+    const R=M.radio;R.combo=R.combo||{};R.vide=R.vide||{F:0,M:0,X:0};if(rxSeq.length){const k=rxSeq.join('+');(R.combo[k]=R.combo[k]||{F:0,M:0,X:0})[sx]++}else R.vide[sx]++});
+  return out}
+const TITLES={rx:'Radiographies standard par région et par sexe',spe:'Examens spéciaux par type et par sexe',mam:'Mammographies par sexe',echo:'Échographies par prestation et par sexe',dop:'Doppler par type et par sexe'};
+const SVCN={radio:'Radiologie (radiographie, examens spéciaux, mammographie)',echo:'Échographie et doppler',scan:'Scanner',all:'Imagerie (ensemble)'};
+const SVCS={radio:'Radiologie',echo:'Échographie et doppler',scan:'Scanner'};
+
+/* --- Étiquettes de colonnes : sexe, sexe × tranche d'âge, tranche d'âge × sexe --- */
+const COLMODES={sx:'Sexe (comme le classeur)',sx_age:'Sexe, subdivisé par tranche d’âge',age_sx:'Tranche d’âge, subdivisée par sexe'};
+const csum=list=>{const o={};list.forEach(c=>Object.entries(c||{}).forEach(([k,n])=>o[k]=(o[k]||0)+n));return o};
+const mergeCube=(dst,src)=>{Object.entries(src||{}).forEach(([id,c])=>{const d=dst[id]=dst[id]||{};Object.entries(c).forEach(([k,n])=>d[k]=(d[k]||0)+n)})};
+const shortAge=v=>v==='nr'?'Âge N.R.':AGES[+v][0].replace(' ANS +','+').replace(' ANS','');
+const kparts=k=>{const[age,sx,org]=k.split('|');return{age,sx,org}};
+const DIML={org:v=>({EXT:'EXTERNE',INT:'INTERNE',X:'Origine non renseignée'}[v]),sx:v=>({F:'F',M:'M',X:'(vide)'}[v]),age:v=>v==='nr'?'Âge non renseigné':AGES[+v][0]};
+function levelsOf(o){return[...(o.org?['org']:[]),...({sx:['sx'],sx_age:['sx','age'],age_sx:['age','sx']}[o.cols||'sx_age'])]}
+function colSpec(levels,cells){const used={age:new Set(),sx:new Set(),org:new Set()};cells.forEach(c=>Object.entries(c||{}).forEach(([k,n])=>{if(!n)return;const p=kparts(k);used.age.add(p.age);used.sx.add(p.sx);used.org.add(p.org)}));
+  const vals={age:[...AGES.map((a,i)=>String(i)),...(used.age.has('nr')?['nr']:[])],sx:levels.length===1&&levels[0]==='sx'?['F','M','X']:used.sx.has('X')?['M','F','X']:['M','F'],org:['EXT','INT',...(used.org.has('X')?['X']:[])]};
+  const L=levels.length,cols=[];
+  (function rec(i,path){if(i===L){cols.push({path,depth:L,kind:'c'});return}vals[levels[i]].forEach(v=>rec(i+1,{...path,[levels[i]]:v}));if(i>0)cols.push({path,depth:i,kind:'s'})})(0,{});
+  cols.push({path:{},depth:0,kind:'t'});
+  cols.forEach(c=>{c.fn=k=>{const p=kparts(k);return Object.entries(c.path).every(([d,v])=>p[d]===v)}});
+  const lab=(c,r)=>levels[r]==='age'&&L>1?shortAge(c.path.age):levels[r]==='sx'&&L>1?({M:'M',F:'F',X:'Sexe N.R.'}[c.path.sx]):DIML[levels[r]](c.path[levels[r]]),pre=(c,n)=>levels.slice(0,n).map(d=>c.path[d]).join('|');
+  const subLab=c=>{const d=levels[c.depth-1],v=c.path[d];return d==='sx'?(v==='X'?'(vide)':v):d==='age'?shortAge(v):DIML[d](v)};
+  const hrows=[];for(let r=0;r<L;r++){const cells=[];let j=0;while(j<cols.length){const c=cols[j];
+      if(r<c.depth){const p=pre(c,r+1);let k=j;while(k+1<cols.length&&cols[k+1].depth>r&&pre(cols[k+1],r+1)===p)k++;cells.push({l:lab(c,r),x:j,span:k-j+1,rs:1,grp:k>j||r<L-1});j=k+1}
+      else{if(r===c.depth)cells.push({l:c.depth===0?'Total général':'Total '+subLab(c),x:j,span:1,rs:L-c.depth,tot:true});j++}}hrows.push(cells)}
+  cols.forEach(c=>{c.lab=c.kind==='t'?'Total général':c.kind==='s'?'Total '+subLab(c):lab(c,L-1)});
+  cols.forEach((c,j)=>{const p=cols[j-1],cl=[];if(c.path.org)cl.push('o-'+c.path.org);if(c.kind==='t')cl.push('o-T');
+    if(j>0&&L>1){if(p.path[levels[0]]!==c.path[levels[0]])cl.push('b0');else if(L>2&&p.path[levels[1]]!==c.path[levels[1]])cl.push('b1')}c.cls=cl.join(' ')});
+  return{cols,hrows}}
+const cval=(cell,c)=>Object.entries(cell||{}).reduce((a,[k,n])=>a+(c.fn(k)?n:0),0);
+function cubeTable(id,title,measure,rowsC,levels,note,blankZero){const{cols,hrows}=colSpec(levels,rowsC.filter(r=>r.k==='r').map(r=>r.c));
+  return{id,title,measure,head:cols.map(c=>c.lab),hrows,levels,colCls:cols.map(c=>c.cls),colKinds:cols.map(c=>c.kind),note,blankZero:blankZero||levels.length>1,rows:rowsC.map(r=>({l:r.l,k:r.k,v:r.k==='g'?cols.map(()=>''):cols.map(c=>cval(r.c,c))}))}}
+function scanRowsC(cube){const rows=[],items=S.imgCat.filter(x=>x.fam==='scan'&&(x.actif!==false||Object.keys(cube).some(k=>k.startsWith(x.id+'|'))));let grp=null,gcells=[];const tot={C:[],'+C':[]};
+  const close=()=>{if(grp){rows.push({l:'Sous-total '+grp,c:csum(gcells),k:'s'});grp=null;gcells=[]}};
+  items.forEach(x=>{if((x.sys||'')!==(grp||'')){close();if(x.sys){grp=x.sys;rows.push({l:x.sys,c:{},k:'g'})}}
+    (x.inj?[x.inj]:['C','+C']).forEach(j=>{const c=cube[x.id+'|'+j]||{};rows.push({l:x.lib+(x.inj&&/(SANS|AVEC) IV/.test(x.lib)?'':' '+j),c,k:'r'});tot[j].push(c);if(grp)gcells.push(c)})});close();
+  rows.push({l:'Total sans injection (C)',c:csum(tot.C),k:'s'},{l:'Total avec injection (+C)',c:csum(tot['+C']),k:'s'},{l:'Total scanner',c:csum([...tot.C,...tot['+C']]),k:'t'});return rows}
+function famRowsC(cube,f,zero){const groups=imgGroups(IMG_FAM[f].svc).filter(g=>g.fam===f),rows=[],all=[];
+  groups.forEach(g=>{const items=g.items.filter(it=>it.actif!==false||cube[it.id]),vals=items.map(it=>cube[it.id]||{}),show=items.map((it,i)=>[it,vals[i]]).filter(([it,v])=>zero||Object.values(v).some(n=>n));
+    if(g.multi){rows.push({l:g.short,c:{},k:'g'});show.forEach(([it,v])=>rows.push({l:it.lib,c:v,k:'r'}));rows.push({l:'Sous-total '+g.short,c:csum(vals),k:'s'})}else show.forEach(([it,v])=>rows.push({l:it.lib,c:v,k:'r'}));all.push(...vals)});
+  rows.push({l:'Total général',c:csum(all),k:'t'});return rows}
+const DIMT={org:'origine',sx:'sexe',age:'tranche d’âge'};
+const colTitle=(t,lv)=>lv.length===1&&lv[0]==='sx'?t:t.replace(/ et par sexe$/,'').replace(/ par sexe$/,'')+', par '+lv.map(d=>DIMT[d]).join(', ').replace(/, ([^,]*)$/,' et $1');
+function buildReport(){const o=UI.rap,P=recsToMonths(S.recs),months=o.months.filter(m=>P.months[m]).sort();
+  const data={radio:emptyImg(),echo:emptyImg(),scan:emptyImg(),all:emptyImg()};months.forEach(m=>['radio','echo','scan','all'].forEach(k=>addImg(data[k],P.months[m][k])));
+  const scopes=o.svc==='all'?['radio','echo','scan']:[o.svc],tables=[];
+  const cube={radio:{},echo:{},scan:{}},cc={},vc={};months.forEach(m=>{const M=P.months[m];mergeCube(cube.radio,M.cube.radio);mergeCube(cube.echo,M.cube.echo);mergeCube(cube.scan,M.cube.scan);mergeCube(cc,M.ccube);Object.entries(M.vcube).forEach(([k,n])=>vc[k]=(vc[k]||0)+n)});
+  const cm=levelsOf(o);
+  scopes.forEach(sv=>Object.entries(IMG_FAM).filter(([f,x])=>x.svc===sv).forEach(([f,x])=>{
+    if(f==='rx'&&o.mode==='combo'){const lab=k=>k.split('+').map(id=>catById(id)?.lib||id).join(' + ');
+      const rows=Object.entries(cc).map(([k,c])=>({l:lab(k),c,k:'r'})).sort((p,q)=>p.l.localeCompare(q.l,'fr'));rows.push({l:'(vide)',c:vc,k:'r'});rows.push({l:'Total général',c:csum([...Object.values(cc),vc]),k:'t'});
+      tables.push(cubeTable('combo',colTitle('Radiographies par région(s) demandée(s) et par sexe',cm)+' — présentation du classeur','Nombre de Clé primaire (demandes)',rows,cm,'Une ligne = une combinaison de régions demandées ensemble sur une même demande, comme dans le tableau croisé du classeur. « (vide) » : demandes de la période sans radiographie.',true));return}
+    if(f==='scan'){tables.push(cubeTable('scan',colTitle('Examens de scanner sans injection (C) et avec injection (+C) par sexe',cm),'Nombre d’examens (un examen combiné compte pour chacun de ses examens)',scanRowsC(cube.scan),cm,'C = sans injection · +C = avec injection. Les examens imposant l’injection par leur intitulé n’ont qu’une ligne.'));return}
+    const has=imgTotals(data[sv]).fam[f];if(f==='mam'&&!has&&!o.zero)return;
+    tables.push(cubeTable(f,colTitle(TITLES[f]||x.l+' par sexe',cm),'Nombre d’examens',famRowsC(cube[sv],f,o.zero||f==='mam'),cm))}));
+  const fr=Object.entries(IMG_FAM).filter(([f,x])=>scopes.includes(x.svc)).map(([f,x])=>({l:x.l,c:csum(Object.entries(cube[x.svc]||{}).filter(([k])=>catById(k.split('|')[0])?.fam===f).map(([,c])=>c)),k:'r'}));
+  tables.push(cubeTable('recap',colTitle('Récapitulatif des examens par type et par sexe',cm),'Nombre d’examens',[...fr,{l:'Total des examens',c:csum(fr.map(r=>r.c)),k:'t'}],cm));
+  const ol=scopes.map(sv=>[SVCS[sv],data[sv]]);if(scopes.length>1)ol.push(['Imagerie — patients-passages distincts',data.all]);
+  const ot=orgTable(ol);if(scopes.length>1)ot.rows[ot.rows.length-1].k='t';tables.push(ot);
+  scopes.forEach(sv=>tables.push(ageTable(SVCS[sv],data[sv],'age_'+sv)));if(scopes.length>1)tables.push(ageTable('imagerie, passages distincts',data.all,'age_all'));
+  const lines=months.reduce((a,m)=>a+P.months[m].lines,0);
+  const notes=[`${fmt(lines)} passage(s) enregistré(s) pour la période (une ligne du registre = une demande = un passage de patient).`,
+    'Les examens (une région ou une prestation) et les demandes sont comptés séparément et ne s’additionnent pas.',
+    'Un passage qui comporte à la fois une radiographie et une échographie compte dans chaque service, et une seule fois dans la ligne « passages distincts ».',
+    ...(o.mode==='combo'&&scopes.includes('radio')?['Tableau des radiographies présenté comme le classeur : une ligne par combinaison de régions demandées ensemble ; « (vide) » = passages sans radiographie.']:[]),
+    'Tranches d’âge du registre : « 51-60 ANS » couvre jusqu’à 60 ans inclus et « 60 ANS + » commence à 61 ans.'];
+  const mL=months.map(moisCode);
+  return{tables,notes,months,lines,periodXl:months.length>1?'(Plusieurs éléments) : '+mL.join(', '):mL[0]||'',scopeLabel:SVCN[o.svc],slug:o.svc==='all'?'imagerie':o.svc==='radio'?'radiologie':'echographie',demo:!!S.demo}}
+function tableHtml(t,i){const long=t.rows.length>40,ck=j=>t.colKinds&&t.colKinds[j]!=='c'?' tc':'',L=t.hrows?t.hrows.length:1;
+  const thead=t.hrows?t.hrows.map((cells,r)=>`<tr>${r===0?`<th rowspan="${L}" class="lcol" style="top:0">Étiquettes de lignes</th>`:''}${cells.map(c=>`<th class="n${c.grp?' grp':''}${c.tot?' tc':''} ${t.colCls[c.x]} h${r}" colspan="${c.span}" rowspan="${c.rs}" style="top:${r*28}px">${esc(c.l)}</th>`).join('')}</tr>`).join('')
+    :`<tr><th>Étiquettes de lignes</th>${t.head.map((h,j)=>`<th class="n${ck(j)}">${esc(h)}</th>`).join('')}</tr>`;
+  const multi=t.levels&&t.levels.length>1;
+  return`<h3>${i+1}. ${esc(t.title)}</h3><p class="muted small">${esc(t.measure)} · étiquettes de colonnes : ${t.id==='org'?'origine':t.levels?t.levels.map(d=>DIMT[d]).join(' › ')+(t.levels.includes('age')?' (tranches d’âge en années)':''):'sexe'} · lignes : actes regroupés par système</p>
+  <div class="tw" ${long?'style="max-height:540px;overflow:auto"':''}><table class="pv ${multi?'wide':''}"><thead>${thead}</thead>
+  <tbody>${t.rows.map(r=>`<tr class="pv-${r.k}"><td class="lcol">${esc(r.l)}</td>${r.v.map((x,j)=>`<td class="n${ck(j)} ${t.colCls?t.colCls[j]:''}">${x===''||(t.blankZero&&r.k==='r'&&x===0)?'':fmt(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${t.note?`<p class="muted small">${esc(t.note)}</p>`:''}`}
+function viewDetail(){const o=UI.rap,P=recsToMonths(S.recs),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
+  let h=`<section class="card"><div class="head"><h2>Rapport mensuel de l’imagerie</h2><span class="muted">Présentation du tableau croisé du classeur : MOIS, étiquettes de lignes, colonnes par origine, sexe et tranche d’âge, Total général</span></div>
+   <div class="filters"><label class="fld"><span>Service</span><select id="rSvc" data-act="rSvc">${['all','radio','echo','scan'].map(k=>`<option value="${k}" ${o.svc===k?'selected':''}>${esc(SVCN[k])}</option>`).join('')}</select></label>
+   <label class="fld"><span>Présentation des radiographies</span><select id="rMode" data-act="rMode"><option value="combo" ${o.mode==='combo'?'selected':''}>Comme le classeur (combinaisons de régions)</option><option value="exam" ${o.mode==='exam'?'selected':''}>Par examen (une région = un examen)</option></select></label>
+   <label class="fld"><span>Étiquettes de colonnes</span><select id="rCols" data-act="rCols">${Object.entries(COLMODES).map(([k,l])=>`<option value="${k}" ${(o.cols||'sx_age')===k?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
+   <label class="chk"><input type="checkbox" id="rOrg" data-act="rOrg" ${o.org?'checked':''}> Subdiviser par origine (externe / interne)</label>
+   <label class="chk"><input type="checkbox" id="rZero" data-act="rZero" ${o.zero?'checked':''}> Afficher les examens sans activité</label></div>
+   <div class="mrow"><span class="lab">MOIS</span>${avail.map(m=>`<label class="mchip"><input type="checkbox" data-act="rMonth" data-v="${m}" ${o.months.includes(m)?'checked':''}> ${moisCode(m)} <span class="muted mono">${fmt(P.months[m].lines)}</span></label>`).join('')||'<span class="muted">Aucun passage enregistré.</span>'}</div></section>`;
+  if(!o.months.length)return h+`<p class="note">Cochez au moins un mois.</p>`;
+  const R=buildReport();UI.repLast=R;
+  h+=`<section class="card report" id="report"><div class="head"><div><h2>Registre de l’imagerie — ${esc(R.periodXl)}</h2><p class="muted small">${esc(R.scopeLabel)} · CHR El Hadji Ahmadou Sakhir Ndiéguène de Thiès · édité le ${frDate(today())}${R.demo?' · <b class="warnTxt">contient des données de démonstration</b>':''}</p></div>
+   <div class="btns"><button type="button" class="btn primary" data-act="xlsRep">Rapport Excel (.xlsx)</button><button type="button" class="btn ghost" data-act="xlsReg">Registre des mois (.xlsx)</button></div></div>
+   <div class="kpis"><div class="kpi"><span class="lab">Passages distincts</span><b>${fmt(R.lines)}</b></div>${R.tables.filter(t=>t.id==='recap').map(t=>t.rows.filter(r=>r.k==='r').map(r=>`<div class="kpi"><span class="lab">${esc(r.l)}</span><b>${fmt(r.v[r.v.length-1])}</b><span class="muted small">examens</span></div>`).join('')).join('')}</div>
+   ${R.tables.map(tableHtml).join('')}<h3>${R.tables.length+1}. Notes</h3><ul class="small">${R.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></section>`;
+  return h}
+
+/* --- Rapport financier --- */
+const finActive=G=>!!(G.q||G.pay||G.fam||G.org||G.sexe||G.age!==''||G.d1||G.d2||G.src);
+const nq=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/(\d)[\s\u00a0\u202f.]+(?=\d{3}\b)/g,'$1').replace(/[^a-z0-9+\/_]+/g,' ').trim();
+const qHit=(h,w)=>w.length<=2?h.includes(' '+w+' '):h.includes(w);
+function finRecs(months){const G=UI.fin,q=nq(G.q||''),qd=(G.q||'').replace(/\D/g,''),ws=q?q.split(' ').filter(Boolean):[];const out=[];
+  const byDate=!!(G.d1||G.d2);S.recs.forEach(r=>{if(!byDate&&!months.includes(r.mois))return;if(G.src==='reel'&&r.demo)return;if(G.src==='demo'&&!r.demo)return;const d=r.cree.slice(0,10);
+    if(G.pay&&(r.pay||'__none')!==G.pay)return;if(G.org&&r.origine!==G.org)return;if(G.sexe&&(r.sexe||'X')!==G.sexe)return;if(G.age!==''&&String(r.age)!==G.age)return;
+    const telHit=qd.length>=4&&qd.length===(G.q||'').replace(/\s/g,'').length&&(r.tel||'').replace(/\D/g,'').includes(qd);
+    const base=' '+nq([r.cle,r.prenom,r.nom,r.tel||'',frDate(d),d,r.origine||'',r.sexe||'',AGES[r.age]?.[0]||'',r.pay?(payById(r.pay)?.l||r.pay):'non renseigne'].join(' '))+' ';
+    const ex={};let n=0;FAMS.forEach(([f])=>{const e=r.ex[f];if(!e||!e.ids.length||(G.fam&&G.fam!==f))return;const fd=e.date||d;if(G.d1&&fd<G.d1)return;if(G.d2&&fd>G.d2)return;const keep=[];const famL=nq(FAMS.find(x=>x[0]===f)[1]+' '+FAMS.find(x=>x[0]===f)[2]);
+      e.ids.forEach((id,i)=>{if(!ws.length||telHit){keep.push(i);return}const it=catById(id),px=+(e.px&&e.px[i])||0,pp=+(e.pp&&e.pp[i])||0;
+        const h=base+' '+nq(frDate(fd)+' '+fd)+' '+famL+' '+nq((it?.lib||id)+' '+(it?.sys||'')+' '+(f==='scan'?(e.inj?.[i]||it?.inj||'C'):''))+' '+px+' '+pp+' '+(px-pp)+' ';
+        if(ws.every(w=>qHit(h,w)))keep.push(i)});
+      if(keep.length){ex[f]={...e,fd,ids:keep.map(i=>e.ids[i]),px:keep.map(i=>e.px?.[i]),pp:keep.map(i=>e.pp?.[i]),inj:keep.map(i=>e.inj?.[i])};n+=keep.length}});
+    if(n)out.push({...r,ex:{...Object.fromEntries(FAMS.map(([f])=>[f,{ids:[]}])),...ex}})});return out}
+function buildFinance(){const months=[...UI.rap.months].sort(),recs=finRecs(months);
+  const pays=[...(S.payTypes||[]).map(p=>p.id),''],P={},Fm={},A={},D={},FP={};let noPay=0,noPx=0;
+  const z=()=>({pass:0,n:0,px:0,pp:0});
+  recs.forEach(r=>{const pay=r.pay||'';if(!r.pay)noPay++;const ps=P[pay]=P[pay]||z();ps.pass++;const days=new Set();
+    FAMS.forEach(([f])=>{const e=r.ex[f];if(!e||!e.ids.length)return;const day=e.fd||r.cree.slice(0,10),ds=D[day]=D[day]||z();if(!days.has(day)){days.add(day);ds.pass++}const fs=Fm[f]=Fm[f]||z();const fp=FP[f]=FP[f]||{};
+      e.ids.forEach((id,i)=>{const px=+(e.px&&e.px[i])||0,pp=+(e.pp&&e.pp[i])||0;if(!(e.px&&e.px[i]!==undefined&&e.px[i]!==''))noPx++;
+        const key=f==='scan'?id+'|'+(e.inj?.[i]||catById(id)?.inj||'C'):id,as=A[key]=A[key]||{...z(),f,id};
+        [ps,fs,as,ds].forEach(o=>{o.n++;o.px+=px;o.pp+=pp});fp[pay]=(fp[pay]||0)+px})})});
+  const row=(l,o,k='r')=>({l,k,v:[o.pass??'',o.n,o.px,o.pp,o.px-o.pp]});
+  const tot=list=>list.reduce((a,o)=>({pass:(a.pass||0)+(o.pass||0),n:a.n+o.n,px:a.px+o.px,pp:a.pp+o.pp}),{pass:0,n:0,px:0,pp:0});
+  const t1={id:'pay',title:'Synthèse par type de paiement',head:['Passages','Actes','Montant des actes','Part patient','Prise en charge'],
+    rows:[...pays.filter(p=>P[p]||(p&&!finActive(UI.fin))).map(p=>row(p?payById(p).l:'Non renseigné',P[p]||z())),row('Total',tot(Object.values(P)),'t')]};
+  const famL=Object.fromEntries(FAMS.map(([k,l])=>[k,l]));
+  const t2={id:'fam',title:'Recettes par type d’examen',head:['','Actes','Montant des actes','Part patient','Prise en charge'],
+    rows:[...FAMS.filter(([f])=>Fm[f]).map(([f])=>({...row(famL[f],Fm[f]),v:['',Fm[f].n,Fm[f].px,Fm[f].pp,Fm[f].px-Fm[f].pp]})),{...row('Total',tot(Object.values(Fm)),'t'),v:['',...(o=>[o.n,o.px,o.pp,o.px-o.pp])(tot(Object.values(Fm)))]}]};
+  t2.head=t2.head.slice(1);t2.rows.forEach(r=>r.v=r.v.slice(1));
+  const usedPays=pays.filter(p=>Object.values(FP).some(o=>o[p]));
+  const t3={id:'croise',title:'Montant des actes par type d’examen et type de paiement',head:[...usedPays.map(p=>p?payById(p).l:'Non renseigné'),'Total'],
+    rows:[...FAMS.filter(([f])=>FP[f]).map(([f])=>({l:famL[f],k:'r',v:[...usedPays.map(p=>FP[f][p]||0),usedPays.reduce((a,p)=>a+(FP[f][p]||0),0)]}))]};
+  t3.rows.push({l:'Total',k:'t',v:t3.head.map((_,j)=>t3.rows.reduce((a,r)=>a+r.v[j],0))});
+  const t4={id:'actes',title:'Détail par acte',head:['Actes','Montant des actes','Part patient','Prise en charge'],rows:[]};
+  FAMS.forEach(([f])=>{const keys=Object.keys(A).filter(k=>A[k].f===f);if(!keys.length)return;t4.rows.push({l:famL[f],k:'g',v:['','','','']});
+    keys.sort((a,b)=>{const ia=S.imgCat.findIndex(x=>x.id===A[a].id),ib=S.imgCat.findIndex(x=>x.id===A[b].id);return ia-ib||a.localeCompare(b)}).forEach(k=>{const o=A[k],it=catById(o.id);t4.rows.push({l:(it?.lib||o.id)+(f==='scan'?' '+k.split('|')[1]:''),k:'r',v:[o.n,o.px,o.pp,o.px-o.pp]})});
+    const s=tot(keys.map(k=>A[k]));t4.rows.push({l:'Sous-total '+famL[f],k:'s',v:[s.n,s.px,s.pp,s.px-s.pp]})});
+  {const s=tot(Object.values(A));t4.rows.push({l:'Total',k:'t',v:[s.n,s.px,s.pp,s.px-s.pp]})}
+  const days=Object.keys(D).sort();const t5={id:'jours',title:'Recettes par jour',head:['Passages','Actes','Montant des actes','Part patient','Prise en charge'],rows:[...days.map(d=>row(frDate(d),D[d])),row('Total',tot(Object.values(D)),'t')]};
+  const T=tot(Object.values(P));const notes=['Montant des actes = prix de l’acte ; part patient = montant à payer par le patient ; prise en charge = montant (tarif) − part patient (LG, social, gratuité, personnel…).'];
+  if(noPay)notes.push(`${fmt(noPay)} passage(s) sans type de paiement (fiches enregistrées avant l’ajout du paiement ou importées).`);
+  if(noPx)notes.push(`${fmt(noPx)} acte(s) sans prix renseigné, comptés à 0 F.`);
+  const fdOf=r=>FAMS.map(([f])=>r.ex[f].ids.length?(r.ex[f].fd||r.cree.slice(0,10)):'').filter(Boolean).sort()[0]||r.cree.slice(0,10);
+  const pl=[...recs].sort((a,b)=>(fdOf(b)+b.cree).localeCompare(fdOf(a)+a.cree)).map(r=>{let n=0,px=0,pp=0;const acts=[];FAMS.forEach(([f])=>{const e=r.ex[f];e.ids.forEach((id,i)=>{n++;px+=+(e.px&&e.px[i])||0;pp+=+(e.pp&&e.pp[i])||0;acts.push((catById(id)?.lib||id)+(f==='scan'?' '+(e.inj?.[i]||catById(id)?.inj||'C'):''))})});
+    return{cle:r.cle,demo:!!r.demo,d:fdOf(r),pat:(r.prenom+' '+r.nom).trim(),org:r.origine||'',pay:r.pay?(payById(r.pay)?.l||r.pay):'Non renseigné',acts:acts.join(' ; '),n,px,pp}});
+  if(finActive(UI.fin))notes.push('Rapport filtré : '+finFiltTxt()+'.');
+  return{tables:[t1,t2,t3,t4,t5],pl,T,months,filt:finActive(UI.fin)?finFiltTxt():'',label:(UI.fin.d1||UI.fin.d2)?finPeriod():months.length>1?moisXl(months[0])+' à '+moisXl(months[months.length-1]):moisXl(months[0]),notes,demo:!!S.demo}}
+const finPeriod=()=>{const G=UI.fin;return G.d1&&G.d1===G.d2?'journée du '+frDate(G.d1):'du '+(G.d1?frDate(G.d1):'début')+' au '+(G.d2?frDate(G.d2):'fin')};
+function finFiltTxt(){const G=UI.fin,a=[];if(G.src)a.push(G.src==='reel'?'mes saisies uniquement (hors démonstration)':'données de démonstration uniquement');if(G.q)a.push('recherche « '+G.q+' »');if(G.d1||G.d2)a.push(finPeriod());
+  if(G.pay)a.push('paiement '+(G.pay==='__none'?'non renseigné':payById(G.pay)?.l||G.pay));if(G.fam)a.push(FAMS.find(x=>x[0]===G.fam)?.[1]);if(G.org)a.push(G.org);if(G.sexe)a.push('sexe '+(G.sexe==='X'?'non renseigné':G.sexe));if(G.age!=='')a.push(AGES[+G.age]?.[0]);return a.join(' · ')}
+function finFiltBar(){const G=UI.fin,opt=(v,l,s)=>`<option value="${esc(v)}" ${String(s)===String(v)?'selected':''}>${esc(l)}</option>`;
+  return`<div class="filters">
+   <label class="fld grow"><span>Rechercher dans le tableau (patient, code, téléphone, date, origine, paiement, examen, acte, montant)</span><input type="search" id="finQ" data-fin="q" value="${esc(G.q)}" placeholder="ex. LG · échographie thorax · 30/09/2026 · INTERNE · DIOUF" autocomplete="off"></label>
+   <label class="fld"><span>Données</span><select id="finSrc" data-fin="src">${opt('','Toutes',G.src)}${opt('reel','Mes saisies (hors démo)',G.src)}${opt('demo','Démonstration seulement',G.src)}</select></label>
+   <label class="fld sm"><span>Du (date d’examen)</span><input type="date" id="finD1" data-fin="d1" value="${esc(G.d1)}"></label>
+   <label class="fld sm"><span>Au (date d’examen)</span><input type="date" id="finD2" data-fin="d2" value="${esc(G.d2)}"></label>
+   <label class="fld"><span>Type de paiement</span><select id="finPay" data-fin="pay">${opt('','Tous',G.pay)}${(S.payTypes||[]).map(p=>opt(p.id,p.l,G.pay)).join('')}${opt('__none','Non renseigné',G.pay)}</select></label>
+   <label class="fld"><span>Type d’examen</span><select id="finFam" data-fin="fam">${opt('','Tous',G.fam)}${FAMS.map(([v,l])=>opt(v,l,G.fam)).join('')}</select></label>
+   <label class="fld sm"><span>Origine</span><select id="finOrg" data-fin="org">${opt('','Toutes',G.org)}${opt('EXTERNE','EXTERNE',G.org)}${opt('INTERNE','INTERNE',G.org)}</select></label>
+   <label class="fld sm"><span>Sexe</span><select id="finSx" data-fin="sexe">${opt('','Tous',G.sexe)}${opt('F','F',G.sexe)}${opt('M','M',G.sexe)}${opt('X','Non renseigné',G.sexe)}</select></label>
+   <label class="fld sm"><span>Âge</span><select id="finAge" data-fin="age">${opt('','Tous',G.age)}${AGES.map(([l],i)=>opt(String(i),l,G.age)).join('')}</select></label>
+   ${finActive(G)?`<button type="button" class="btn ghost sm" data-act="finReset">Effacer les filtres</button>`:''}</div>`}
+function finPassHtml(F,num){const G=UI.fin,per=50,pages=Math.max(1,Math.ceil(F.pl.length/per));G.page=Math.min(G.page,pages-1);const rows=F.pl.slice(G.page*per,G.page*per+per);
+  return`<h3>${num}. Liste des passages <span class="muted small">(${fmt(F.pl.length)})</span></h3>${F.pl.length?`<div class="tw"><table class="pv fin plist"><thead><tr><th>Date</th><th>Code</th><th>Patient</th><th>Origine</th><th>Paiement</th><th>Actes</th><th class="n">Montant des actes</th><th class="n">Part patient</th><th class="n">Prise en charge</th></tr></thead>
+   <tbody>${rows.map(r=>`<tr class="pv-r click" data-act="finOpen" data-v="${esc(r.cle)}" title="Ouvrir le passage"><td>${frDate(r.d)}</td><td class="mono">${esc(r.cle)}</td><td>${esc(r.pat)}${r.demo?' <span class="tagDemo">démo</span>':''}</td><td>${esc(r.org)}</td><td>${esc(r.pay)}</td><td class="acts">${esc(r.acts)}</td><td class="n">${fcfa(r.px)}</td><td class="n">${fcfa(r.pp)}</td><td class="n">${fcfa(r.px-r.pp)}</td></tr>`).join('')}</tbody></table></div>
+   ${pages>1?`<div class="pager"><button type="button" class="btn ghost sm" data-act="finPg" data-v="-1" ${G.page?'':'disabled'}>Précédent</button><span>Page ${G.page+1} / ${pages}</span><button type="button" class="btn ghost sm" data-act="finPg" data-v="1" ${G.page<pages-1?'':'disabled'}>Suivant</button></div>`:''}`:'<p class="muted">Aucun passage ne correspond.</p>'}`}
+const MONEY_COL=h=>/Montant|Part|Prise|Total|^[A-Z]/.test(h)&&!/Passages|Actes/.test(h);
+function finTableHtml(t,i){return`<h3>${i+1}. ${esc(t.title)}</h3><div class="tw"><table class="pv fin"><thead><tr><th>${t.id==='jours'?'Date':t.id==='actes'?'Acte':t.id==='pay'?'Type de paiement':'Type d’examen'}</th>${t.head.map(h=>`<th class="n">${esc(h)}</th>`).join('')}</tr></thead>
+  <tbody>${t.rows.map(r=>`<tr class="pv-${r.k}"><td>${esc(r.l)}</td>${r.v.map((x,j)=>`<td class="n">${x===''?'':MONEY_COL(t.head[j])?fcfa(x):fmt(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
+function viewFinance(){const o=UI.rap,P=recsToMonths(S.recs),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
+  let h=`<section class="card"><div class="head"><h2>Rapport financier</h2><span class="muted small">Montants des actes, part payée par les patients et prise en charge, par type de paiement</span></div>
+   <div class="mrow"><span class="lab">MOIS</span>${avail.map(m=>`<label class="mchip"><input type="checkbox" data-act="rMonth" data-v="${m}" ${o.months.includes(m)?'checked':''}> ${moisCode(m)}</label>`).join('')||'<span class="muted">Aucun passage enregistré.</span>'}</div></section>`;
+  if(!o.months.length&&!UI.fin.d1&&!UI.fin.d2)return h+`<p class="note">Cochez au moins un mois, ou choisissez des dates dans les filtres.</p>`+`<div id="finBox" hidden></div>`;
+  return h+`<div id="finBox">${finBox()}</div>`}
+function finBox(){const F=buildFinance();UI.finLast=F;
+  return`<section class="card"><div class="head"><h2>Recherche et filtres</h2><span class="muted small">${fmt(F.T.pass)} passage(s) · ${fmt(F.T.n)} acte(s)${F.filt?' correspondant aux filtres':''}</span></div>${finFiltBar()}${UI.fin.d1||UI.fin.d2?`<p class="muted small">Période choisie par dates d’examen (date d’enregistrement si l’examen n’a pas de date) : les mois cochés plus haut ne sont pas pris en compte.</p>`:''}</section>
+   ${F.filt?`<p class="note warn"><b>Rapport filtré</b> : ${esc(F.filt)}. Les totaux et l’export Excel ne portent que sur cette sélection.${!F.T.pass&&(UI.fin.d1||UI.fin.d2)?' Vérifiez que les dates choisies sont bien dans les mois cochés.':''}</p>`:''}
+   <section class="card report"><div class="head"><div><h2>Rapport financier — ${esc(F.label)}</h2><p class="muted small">CHR El Hadji Ahmadou Sakhir Ndiéguène de Thiès · service d’imagerie · édité le ${frDate(today())}${F.demo?' · <b class="warnTxt">données et tarifs de démonstration</b>':''}</p></div>
+   <div class="btns"><button type="button" class="btn primary" data-act="xlsFin">Rapport financier Excel (.xlsx)</button></div></div>
+   <div class="kpis"><div class="kpi"><span class="lab">Montant des actes</span><b>${fcfa(F.T.px)}</b></div><div class="kpi st-realise"><span class="lab">Part patient</span><b>${fcfa(F.T.pp)}</b></div><div class="kpi"><span class="lab">Prise en charge</span><b>${fcfa(F.T.px-F.T.pp)}</b></div><div class="kpi"><span class="lab">Passages · actes</span><b>${fmt(F.T.pass)} · ${fmt(F.T.n)}</b></div></div>
+   ${F.tables.map(finTableHtml).join('')}${finPassHtml(F,F.tables.length+1)}<h3>${F.tables.length+2}. Notes</h3><ul class="small">${F.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></section>`}
+function finRefresh(focusId){const el=document.getElementById('finBox');if(!el){render();return}const a=document.activeElement,pos=a&&a.id===focusId&&a.selectionStart!=null?a.selectionStart:null;
+  el.innerHTML=finBox();if(focusId){const n=document.getElementById(focusId);if(n){n.focus();if(pos!=null)try{n.setSelectionRange(pos,pos)}catch(e){}}}}
+function xlsFinance(F){if(!window.XLSX){toast('Module Excel non chargé : vérifiez la connexion puis rechargez.');return}
+  const thin={style:'thin',color:{rgb:'000000'}},B={top:thin,bottom:thin,left:thin,right:thin};
+  const st=(o={})=>({font:{name:'Arial',sz:10,...(o.bold?{bold:true}:{})},alignment:{horizontal:o.h||'center',vertical:'center',wrapText:true},border:o.nb?{}:B,...(o.fill?{fill:{fgColor:{rgb:o.fill}}}:{}),...(o.num?{numFmt:'#,##0'}:{})});
+  const wb=XLSX.utils.book_new();
+  const head=[['Rapport financier — service d’imagerie'],['Centre Hospitalier Régional El Hadji Ahmadou Sakhir Ndiéguène de Thiès'],['Période',F.label],...(F.filt?[['Filtres',F.filt]]:[]),['Édité le',frDate(today())],...(F.demo?[['Avertissement','Données et tarifs de démonstration']]:[]),[],['Montant des actes',F.T.px],['Part patient',F.T.pp],['Prise en charge',F.T.px-F.T.pp],['Passages',F.T.pass],['Actes',F.T.n],[],['Notes'],...F.notes.map(n=>[n])];
+  const w0=XLSX.utils.aoa_to_sheet(head);w0['!cols']=[{wch:30},{wch:40}];head.forEach((r,i)=>{const c=w0['B'+(i+1)];if(c&&typeof c.v==='number')c.z='#,##0'});XLSX.utils.book_append_sheet(wb,w0,'Synthèse');
+  const names={pay:'Par type de paiement',fam:'Par type d’examen',croise:'Examen x paiement',actes:'Détail par acte',jours:'Par jour'};
+  F.tables.forEach(t=>{const first=t.id==='jours'?'Date':t.id==='actes'?'Acte':t.id==='pay'?'Type de paiement':'Type d’examen';
+    const aoa=[[t.title],[F.label],[first,...t.head],...t.rows.map(r=>[r.l,...r.v.map(x=>x===''?null:x)])];const ws=XLSX.utils.aoa_to_sheet(aoa);
+    aoa.forEach((row,r)=>{if(r<2){const c=ws[XLSX.utils.encode_cell({r,c:0})];if(c)c.s=st({bold:r===0,h:'left',nb:true});return}
+      const k=r===2?'h':t.rows[r-3].k;row.forEach((v,c)=>{const ref=XLSX.utils.encode_cell({r,c});if(!ws[ref])ws[ref]={t:'s',v:''};ws[ref].s=st({bold:k!=='r',h:c===0?'left':r===2?'center':'right',num:c>0&&r>2,fill:k==='h'||k==='g'?'EEF1F4':k==='t'?'E2F4EA':null})})});
+    ws['!cols']=[{wch:34},...t.head.map(()=>({wch:16}))];XLSX.utils.book_append_sheet(wb,ws,names[t.id])});
+  {const hd=['Date','Code','Patient','Origine','Type de paiement','Actes','Nb actes','Montant des actes','Part patient','Prise en charge'];const aoa=[['Liste des passages'],[F.label+(F.filt?' — '+F.filt:'')],hd,...F.pl.map(r=>[frDate(r.d),r.cle,r.pat,r.org,r.pay,r.acts,r.n,r.px,r.pp,r.px-r.pp])];const ws=XLSX.utils.aoa_to_sheet(aoa);
+    aoa.forEach((row,r)=>{if(r<2){const c=ws[XLSX.utils.encode_cell({r,c:0})];if(c)c.s=st({bold:r===0,h:'left',nb:true});return}row.forEach((v,c)=>{const ref=XLSX.utils.encode_cell({r,c});if(!ws[ref])ws[ref]={t:'s',v:''};ws[ref].s=st({bold:r===2,h:r===2?'center':c>=6?'right':'left',num:c>=6&&r>2,fill:r===2?'EEF1F4':null})})});
+    ws['!cols']=[{wch:11},{wch:12},{wch:26},{wch:10},{wch:16},{wch:50},{wch:9},{wch:15},{wch:15},{wch:15}];XLSX.utils.book_append_sheet(wb,ws,'Liste des passages')}
+  saveFile(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:XLSX_T}),`Rapport-financier-imagerie-${UI.fin.d1||UI.fin.d2?[UI.fin.d1,UI.fin.d2].filter(Boolean).join('_au_'):F.months.map(moisCode).join('_')}.xlsx`)}
+function moneyInner(f){const m=passMoney(f.ex);return`<span><span class="lab">Montant des actes</span><b>${fcfa(m.px)}</b></span><span><span class="lab">Payé par le patient</span><b class="pay">${fcfa(m.pp)}</b></span><span><span class="lab">Prise en charge</span><b>${fcfa(m.pec)}</b></span>`}
+function newPayModal(){modal(`<div class="head"><h2>Nouveau type de paiement</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
+  <div class="fgrid"><label class="fld"><span>Libellé <i>*</i></span><input id="mpL" placeholder="ex. IPM, ASSURANCE"></label></div>
+  <div class="btns"><button type="button" class="btn primary" data-act="mpOk">Ajouter</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);setTimeout(()=>$('#mpL')?.focus(),0)}
+function addPayType(l,p){l=String(l||'').trim().toUpperCase();if(!l){toast('Saisissez le libellé.');return null}if((S.payTypes||[]).some(x=>norm(x.l)===norm(l))){toast('Ce type de paiement existe déjà.');return null}
+  const t={id:'p_'+Date.now().toString(36),l};S.payTypes.push(t);save();toast('Type de paiement ajouté');return t}
+/* --- Paramètres : types de paiement et tarifs --- */
+function payParamsHtml(){const used=id=>S.recs.filter(r=>r.pay===id).length;
+  return`<section class="card"><div class="head"><h2>Types de paiement</h2><span class="muted small">Liste proposée dans la fiche. Les montants (prix et part du patient) se saisissent acte par acte.</span></div>
+   <div class="tw"><table class="list"><thead><tr><th>Type de paiement</th><th class="n">Passages</th></tr></thead><tbody>
+   ${(S.payTypes||[]).map(p=>`<tr><td><input data-pay="${p.id}|l" value="${esc(p.l)}" aria-label="Libellé"></td><td class="n mono">${fmt(used(p.id))}</td></tr>`).join('')}</tbody></table></div>
+   <div class="addRow wrap"><input id="npL" placeholder="Nouveau type, ex. IPM, ASSURANCE, CMU" aria-label="Nouveau type de paiement"><button type="button" class="btn primary" data-act="addPay">Ajouter le type</button></div>
+   <p class="muted small">Exemples : PAF, LG (lettre de garantie), SOCIAL, GRATUIT, PERSONNEL, IPM, ASSURANCE… Le libellé est modifiable directement dans le tableau.</p></section>`}
+
+/* --- Rapport mensuel au format du modèle RADIOLOGIE --- */
+const MODEL=[
+ {sec:'SANS PRÉPARATION'},
+ {sys:'SYSTÈME OSSEUX',key:'Osseux',fam:'rx',ids:[['r_cheville','Rx cheville'],['r_avbras','Rx avant bras'],['r_bassin','Rx Bassin'],['r_poignet','Rx Poignet'],['r_facebasse','Face basse'],['r_bras','Rx Bras'],['r_femur','Rx Fémur'],['r_genou','Rx genou'],['r_main','Rx Main'],['r_jambe','Rx Jambe'],['r_hanche','Rx Hanche'],['r_rlomb','Rx Rachis Lombaire'],['r_blondeau','Rx Blondeau'],['r_pied','Rx Pied'],['r_coude','Rx Coude'],['r_opn','Rx Os propre du nez (OPN)'],['r_crane','Rx Crane'],['r_sinus','Rx Sinus'],['r_rdors','Rx Rachis Dorsal']]},
+ {sys:'SYSTÈME RESPIRATOIRE',key:'Respiratoire',fam:'rx',ids:[['r_cavum','Rx Cavum'],['r_thorax','Rx Thorax']]},
+ {sys:'SYSTÈME DIGESTIF',key:'Digestif',fam:'rx',ids:[['r_asp','ASP']]},
+ {sec:'MAMMOGRAPHIE',fam:'mam',ids:[['m_mammo','Mammographie']]},
+ {sec:'AVEC PRÉPARATION',fam:'spe',ids:[['s_togd','TOGD'],['s_lb','Lavement baryté'],['s_uiv','Urographie intra veineuse'],['s_ucr','UCR'],['s_hsg','Hystéro salpingographie']]},
+ {sec:'ÉCHOGRAPHIE',fam:'echo',agg:'Echographie'},
+ {sec:'ÉCHODOPPLER',fam:'dop',agg:'Echodoppler'}];
+const moisXl=ym=>{const[y,m]=ym.split('-');return['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][+m-1]+'-'+y.slice(2)};
+function modelStats(months){const st={},nr={n:0};
+  S.recs.forEach(r=>{if(!months.includes(r.mois))return;const og=r.origine==='EXTERNE'?'EXT':r.origine==='INTERNE'?'INT':'X';if(og==='X')nr.n++;
+    FAMS.forEach(([f])=>{const e=r.ex[f];(e.ids||[]).forEach((id,i)=>{const s=st[id]=st[id]||{EXT:0,INT:0,X:0,cl:0};s[og]++;s.cl+=+(e.cl&&e.cl[i])||0})})});
+  return{st,nr}}
+function buildModel(){const o=UI.rap,months=[...o.months].sort(),{st,nr}=modelStats(months),rows=[],used=new Set();
+  const line=(l,list)=>{const z={EXT:0,INT:0,X:0,cl:0};list.forEach(id=>{const s=st[id];if(s){z.EXT+=s.EXT;z.INT+=s.INT;z.X+=s.X;z.cl+=s.cl}});return{l,k:'r',ext:z.EXT,int:z.INT,tot:z.EXT+z.INT+z.X,cl:z.cl}};
+  const extras=(fam,pred)=>S.imgCat.filter(x=>x.fam===fam&&!used.has(x.id)&&pred(x)&&st[x.id]).sort((a,b)=>a.lib.localeCompare(b.lib,'fr'));
+  const rxName=x=>'Rx '+x.lib;
+  MODEL.forEach(b=>{
+    if(b.sec&&!b.fam){rows.push({l:b.sec,k:'sec'});return}
+    if(b.sys){rows.push({l:b.sys,k:'sys'});b.ids.forEach(([id,l])=>{used.add(id);rows.push(line(l,[id]))});return}
+    rows.push({l:b.sec,k:'sec'});
+    if(b.agg){const items=S.imgCat.filter(x=>x.fam===b.fam);items.forEach(x=>used.add(x.id));
+      if(o.detEcho){items.filter(x=>st[x.id]||x.actif!==false&&PIN.includes(x.id)).sort((a,c)=>(PIN.indexOf(a.id)+1||99)-(PIN.indexOf(c.id)+1||99)||a.lib.localeCompare(c.lib,'fr')).forEach(x=>rows.push(line(x.lib,[x.id])));rows.push({...line('Total '+b.agg.toLowerCase(),items.map(x=>x.id)),k:'st'})}
+      else rows.push(line(b.agg,items.map(x=>x.id)));return}
+    b.ids.forEach(([id,l])=>{used.add(id);rows.push(line(l,[id]))});extras(b.fam,()=>true).forEach(x=>{used.add(x.id);rows.push(line(x.lib,[x.id]))})});
+  /* actes du catalogue absents du modèle : placés dans leur système, après les lignes du modèle */
+  const rxExtra=extras('rx',()=>true);if(rxExtra.length){
+    MODEL.filter(b=>b.sys).forEach(b=>{const add=rxExtra.filter(x=>(x.sys||'')===b.key);if(!add.length)return;const idx=rows.findIndex(r=>r.k==='sys'&&r.l===b.sys);let end=idx+1;while(end<rows.length&&rows[end].k==='r')end++;
+      rows.splice(end,0,...add.map(x=>{used.add(x.id);return line(rxName(x),[x.id])}))});
+    const rest=rxExtra.filter(x=>!used.has(x.id));if(rest.length){const groups={};rest.forEach(x=>(groups[x.sys||'']=groups[x.sys||'']||[]).push(x));
+      const at=rows.findIndex(r=>r.k==='sec'&&r.l==='MAMMOGRAPHIE');const ins=[];Object.entries(groups).forEach(([sy,list])=>{ins.push({l:sy?'SYSTÈME '+sy.toUpperCase():'AUTRES RADIOGRAPHIES',k:'sys'});list.forEach(x=>{used.add(x.id);ins.push(line(rxName(x),[x.id]))})});rows.splice(at,0,...ins)}}
+  Object.entries(IMG_FAM).filter(([f])=>!['rx','spe','mam','echo','dop','scan'].includes(f)).forEach(([f,x])=>{const items=S.imgCat.filter(i=>i.fam===f&&st[i.id]);if(!items.length)return;rows.push({l:x.l.toUpperCase(),k:'sec'});items.forEach(i=>rows.push(line(i.lib,[i.id])))});
+  const notes=[];if(nr.n)notes.push(`${fmt(nr.n)} passage(s) sans origine renseignée : leurs examens sont comptés dans le TOTAL seulement.`);
+  const ex=rows.filter(r=>r.k==='r'&&!MODEL.some(b=>(b.ids||[]).some(([,l])=>l===r.l))&&!['Echographie','Echodoppler'].includes(r.l)&&!o.detEcho);
+  if(ex.length)notes.push('Actes du catalogue absents du modèle, ajoutés dans leur section : '+ex.map(r=>r.l).join(', ')+'.');
+  const anyCl=rows.some(r=>r.cl);if(!anyCl)notes.push('Nombre de clichés : non renseigné pour la période (à saisir dans la Demande de chaque acte).');
+  return{rows,months,notes,anyCl,label:months.length>1?moisXl(months[0])+' à '+moisXl(months[months.length-1]):moisXl(months[0]),demo:!!S.demo}}
+function modelHtml(M){const v=(n,blank)=>n?fmt(n):blank?'':'0';
+  return`<div class="mwrap"><p class="mmonth">${esc(M.label)}</p><table class="model"><thead>
+   <tr><th class="nb"></th><th colspan="3" class="mtit">RADIOLOGIE</th><th class="nb"></th></tr>
+   <tr><th rowspan="2" class="lft">Type examens</th><th colspan="3">Nbre examens</th><th rowspan="2">Nbre de clichés</th></tr>
+   <tr><th>EXTERNE</th><th>HOSPITALISÉS</th><th>TOTAL</th></tr></thead><tbody>
+   ${M.rows.map(r=>r.k==='sec'||r.k==='sys'?`<tr class="m-${r.k}"><td colspan="5">${esc(r.l)}</td></tr>`
+     :`<tr class="${r.k==='st'?'m-st':''}"><td>${esc(r.l)}</td><td>${v(r.ext,1)}</td><td>${v(r.int,1)}</td><td>${v(r.tot)}</td><td>${v(r.cl,1)}</td></tr>`).join('')}
+   </tbody></table></div>${M.notes.length?`<ul class="small muted">${M.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`:''}`}
+function xlsModel(M){if(!window.XLSX){toast('Module Excel non chargé : vérifiez la connexion puis rechargez.');return}
+  const thin={style:'thin',color:{rgb:'000000'}},B={top:thin,bottom:thin,left:thin,right:thin},font={name:'Arial',sz:10};
+  const st=(o={})=>({font:{...font,...(o.bold?{bold:true}:{})},alignment:{horizontal:o.h||'center',vertical:'center',wrapText:true},border:o.nb?{}:B});
+  const aoa=[],styles=[],merges=[];const push=(cells,sty)=>{aoa.push(cells);styles.push(sty)};
+  push([M.label,'','','',''],[st({bold:true,h:'left',nb:true}),st({nb:true}),st({nb:true}),st({nb:true}),st({nb:true})]);
+  push(['','RADIOLOGIE','','',''],[st({nb:true}),st({bold:true}),st({bold:true}),st({bold:true}),st({nb:true})]);merges.push({s:{r:1,c:1},e:{r:1,c:3}});
+  push(['Type examens','Nbre examens','','','Nbre de clichés'],[st(),st(),st(),st(),st()]);merges.push({s:{r:2,c:1},e:{r:2,c:3}},{s:{r:2,c:0},e:{r:3,c:0}},{s:{r:2,c:4},e:{r:3,c:4}});
+  push(['','EXTERNE','HOSPITALISES','TOTAL',''],[st(),st(),st(),st(),st()]);
+  M.rows.forEach(r=>{const i=aoa.length;if(r.k==='sec'||r.k==='sys'){const sb=st({bold:true});push([r.l,'','','',''],[sb,sb,sb,sb,sb]);merges.push({s:{r:i,c:0},e:{r:i,c:4}})}
+    else push([r.l,r.ext||null,r.int||null,r.tot,r.cl||null],[st({h:'left',bold:r.k==='st'}),st({bold:r.k==='st'}),st({bold:r.k==='st'}),st({bold:r.k==='st'}),st({bold:r.k==='st'})])});
+  if(M.notes.length||M.demo){aoa.push([]);styles.push([]);if(M.demo){aoa.push(['Contient des données de démonstration']);styles.push([st({nb:true,h:'left'})])}M.notes.forEach(n=>{aoa.push([n]);styles.push([st({nb:true,h:'left'})])})}
+  const ws=XLSX.utils.aoa_to_sheet(aoa);aoa.forEach((row,r)=>row.forEach((v,c)=>{const ref=XLSX.utils.encode_cell({r,c});if(!ws[ref])ws[ref]={t:'s',v:''};const s=styles[r]&&styles[r][c];if(s)ws[ref].s=s}));
+  ws['!merges']=merges;ws['!cols']=[{wch:30},{wch:11},{wch:14},{wch:9},{wch:15}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'RADIOLOGIE');
+  saveFile(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:XLSX_T}),`Rapport-radiologie-${M.months.map(moisCode).join('_')}.xlsx`)}
+function viewModel(){const o=UI.rap,P=recsToMonths(S.recs),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
+  let h=`<section class="card"><div class="head"><h2>Rapport mensuel — modèle RADIOLOGIE</h2><span class="muted small">Nombre d’examens par acte, externes et hospitalisés, et nombre de clichés</span></div>
+   <div class="mrow"><span class="lab">MOIS</span>${avail.map(m=>`<label class="mchip"><input type="checkbox" data-act="rMonth" data-v="${m}" ${o.months.includes(m)?'checked':''}> ${moisCode(m)} <span class="muted mono">${fmt(P.months[m].lines)}</span></label>`).join('')||'<span class="muted">Aucun passage enregistré.</span>'}</div>
+   <label class="chk"><input type="checkbox" id="rDet" data-act="rDet" ${o.detEcho?'checked':''}> Détailler les prestations d’échographie et de doppler</label></section>`;
+  if(!o.months.length)return h+`<p class="note">Cochez au moins un mois.</p>`;
+  const M=buildModel();UI.modelLast=M;
+  return h+`<section class="card"><div class="head"><div><h2>RADIOLOGIE — ${esc(M.label)}</h2><p class="muted small">CHR El Hadji Ahmadou Sakhir Ndiéguène de Thiès · édité le ${frDate(today())}${M.demo?' · <b class="warnTxt">contient des données de démonstration</b>':''}</p></div>
+   <div class="btns"><button type="button" class="btn primary" data-act="xlsModel">Rapport Excel (.xlsx)</button></div></div>${modelHtml(M)}</section>`}
+
+/* --- Rapport SCANNER au format du modèle (examens subdivisés en C et +C) --- */
+function scanModelStats(months){const st={};let nr=0;
+  S.recs.forEach(r=>{if(!months.includes(r.mois)||!r.ex.scan)return;const og=r.origine==='EXTERNE'?'EXT':r.origine==='INTERNE'?'INT':'X';const e=r.ex.scan;if(e.ids.length&&og==='X')nr++;
+    e.ids.forEach((id,i)=>{const it=catById(id);const k=id+'|'+(e.inj?.[i]||it?.inj||'C');const s=st[k]=st[k]||{EXT:0,INT:0,X:0};s[og]++})});return{st,nr}}
+function buildScanModel(){const months=[...UI.rap.months].sort(),{st,nr}=scanModelStats(months),rows=[],T={C:{EXT:0,INT:0,X:0},'+C':{EXT:0,INT:0,X:0}};
+  const items=S.imgCat.filter(x=>x.fam==='scan'&&(x.actif!==false||Object.keys(st).some(k=>k.startsWith(x.id+'|'))));let grp='';
+  items.forEach(x=>{if((x.sys||'')!==grp){grp=x.sys||'';if(grp)rows.push({l:grp.toUpperCase(),k:'sys'})}
+    const injs=x.inj?[x.inj]:['C','+C'];injs.forEach((j,n)=>{const s=st[x.id+'|'+j]||{EXT:0,INT:0,X:0};['EXT','INT','X'].forEach(o=>T[j][o]+=s[o]);
+      rows.push({l:x.lib,first:n===0,span:injs.length,inj:j,ext:s.EXT,int:s.INT,tot:s.EXT+s.INT+s.X,k:'r'})})});
+  const tr=(l,o)=>({l,first:true,span:1,inj:'',ext:o.EXT,int:o.INT,tot:o.EXT+o.INT+o.X,k:'t'});
+  rows.push(tr('Total sans injection (C)',T.C),tr('Total avec injection (+C)',T['+C']),tr('Total scanner',{EXT:T.C.EXT+T['+C'].EXT,INT:T.C.INT+T['+C'].INT,X:T.C.X+T['+C'].X}));
+  const notes=['C = sans injection · +C = avec injection. Un examen combiné compte pour chacun de ses examens. Les examens dont l’intitulé impose l’injection n’ont qu’une ligne.'];
+  if(nr)notes.push(`${fmt(nr)} passage(s) sans origine renseignée : leurs examens sont comptés dans le TOTAL seulement.`);
+  return{rows,months,notes,label:months.length>1?moisXl(months[0])+' à '+moisXl(months[months.length-1]):moisXl(months[0]),demo:!!S.demo}}
+function scanModelHtml(M){const v=(n,blank)=>n?fmt(n):blank?'':'0';
+  return`<div class="mwrap"><p class="mmonth">${esc(M.label)}</p><table class="model"><thead>
+   <tr><th class="nb" colspan="2"></th><th colspan="3" class="mtit">SCANNER</th></tr>
+   <tr><th rowspan="2" class="lft">Type examens</th><th rowspan="2">Injection</th><th colspan="3">Nbre examens</th></tr>
+   <tr><th>EXTERNE</th><th>HOSPITALISÉS</th><th>TOTAL</th></tr></thead><tbody>
+   ${M.rows.map(r=>r.k==='sys'?`<tr class="m-sys"><td colspan="5">${esc(r.l)}</td></tr>`
+     :r.k==='t'?`<tr class="m-sec"><td colspan="2" style="text-align:left!important">${esc(r.l)}</td><td>${v(r.ext,1)}</td><td>${v(r.int,1)}</td><td>${v(r.tot)}</td></tr>`
+     :`<tr>${r.first?`<td rowspan="${r.span}">${esc(r.l)}</td>`:''}<td class="inj">${esc(r.inj)}</td><td>${v(r.ext,1)}</td><td>${v(r.int,1)}</td><td>${v(r.tot)}</td></tr>`).join('')}
+   </tbody></table></div><ul class="small muted">${M.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`}
+function xlsScanModel(M){if(!window.XLSX){toast('Module Excel non chargé : vérifiez la connexion puis rechargez.');return}
+  const thin={style:'thin',color:{rgb:'000000'}},B={top:thin,bottom:thin,left:thin,right:thin};
+  const st=(o={})=>({font:{name:'Arial',sz:10,...(o.bold?{bold:true}:{})},alignment:{horizontal:o.h||'center',vertical:'center',wrapText:true},border:o.nb?{}:B});
+  const aoa=[],sty=[],merges=[],push=(c,s)=>{aoa.push(c);sty.push(s)},all=(n,o)=>Array(n).fill(0).map(()=>st(o));
+  push([M.label,'','','',''],[st({bold:true,h:'left',nb:true}),...all(4,{nb:true})]);
+  push(['','','SCANNER','',''],[...all(2,{nb:true}),...all(3,{bold:true})]);merges.push({s:{r:1,c:2},e:{r:1,c:4}});
+  push(['Type examens','Injection','Nbre examens','',''],all(5,{bold:true}));push(['','','EXTERNE','HOSPITALISES','TOTAL'],all(5,{bold:true}));
+  merges.push({s:{r:2,c:0},e:{r:3,c:0}},{s:{r:2,c:1},e:{r:3,c:1}},{s:{r:2,c:2},e:{r:2,c:4}});
+  M.rows.forEach(r=>{const i=aoa.length;
+    if(r.k==='sys'){push([r.l,'','','',''],all(5,{bold:true}));merges.push({s:{r:i,c:0},e:{r:i,c:4}});return}
+    if(r.k==='t'){push([r.l,'',r.ext||null,r.int||null,r.tot],[st({bold:true,h:'left'}),...all(4,{bold:true})]);merges.push({s:{r:i,c:0},e:{r:i,c:1}});return}
+    push([r.first?r.l:'',r.inj,r.ext||null,r.int||null,r.tot],[st({h:'left'}),...all(4)]);if(r.first&&r.span>1)merges.push({s:{r:i,c:0},e:{r:i+r.span-1,c:0}})});
+  aoa.push([]);sty.push([]);[...(M.demo?['Contient des données de démonstration']:[]),...M.notes].forEach(n=>{aoa.push([n]);sty.push([st({nb:true,h:'left'})])});
+  const ws=XLSX.utils.aoa_to_sheet(aoa);aoa.forEach((row,r)=>row.forEach((v,c)=>{const ref=XLSX.utils.encode_cell({r,c});if(!ws[ref])ws[ref]={t:'s',v:''};if(sty[r]&&sty[r][c])ws[ref].s=sty[r][c]}));
+  ws['!merges']=merges;ws['!cols']=[{wch:30},{wch:11},{wch:11},{wch:14},{wch:9}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'SCANNER');
+  saveFile(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:XLSX_T}),`Rapport-scanner-${M.months.map(moisCode).join('_')}.xlsx`)}
+function viewScanModel(){const o=UI.rap,P=recsToMonths(S.recs),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
+  let h=`<section class="card"><div class="head"><h2>Rapport mensuel — modèle SCANNER</h2><span class="muted small">Nombre d’examens par acte, sans (C) et avec injection (+C), externes et hospitalisés</span></div>
+   <div class="mrow"><span class="lab">MOIS</span>${avail.map(m=>`<label class="mchip"><input type="checkbox" data-act="rMonth" data-v="${m}" ${o.months.includes(m)?'checked':''}> ${moisCode(m)}</label>`).join('')||'<span class="muted">Aucun passage enregistré.</span>'}</div></section>`;
+  if(!o.months.length)return h+`<p class="note">Cochez au moins un mois.</p>`;
+  const M=buildScanModel();UI.scanModelLast=M;
+  return h+`<section class="card"><div class="head"><div><h2>SCANNER — ${esc(M.label)}</h2><p class="muted small">CHR El Hadji Ahmadou Sakhir Ndiéguène de Thiès · édité le ${frDate(today())}${M.demo?' · <b class="warnTxt">contient des données de démonstration</b>':''}</p></div>
+   <div class="btns"><button type="button" class="btn primary" data-act="xlsScanModel">Rapport Excel (.xlsx)</button></div></div>${scanModelHtml(M)}</section>`}
+
+const RAPTABS=()=>{const vw=UI.rap.view||'model',cur=vw==='model'||vw==='scanmodel'||vw==='finance'?vw:UI.rap.svc==='scan'?'scan':'detail';return`<div class="btns">${[['model','Modèle RADIOLOGIE'],['scanmodel','Modèle SCANNER'],['finance','Rapport financier'],['scan','Scanner détaillé (origine, sexe, âge)'],['detail','Tableaux détaillés (origine, sexe, âge)']].map(([k,l])=>`<button type="button" class="btn ${cur===k?'primary':'ghost'} sm" data-act="rView" data-v="${k}">${l}</button>`).join('')}</div>`};
+function viewRapport(){const vw=UI.rap.view||'model';return RAPTABS()+(vw==='model'?viewModel():vw==='scanmodel'?viewScanModel():vw==='finance'?viewFinance():viewDetail())}
+/* --- Excel --- */
+async function saveFile(blob,filename){let dl=null;try{dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null}catch(e){}
+  if(!dl){try{const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000);toast('Fichier enregistré : '+filename)}catch(e){toast('Téléchargement impossible dans ce navigateur.')}return}
+  try{await dl.save({filename,data:blob});toast('Fichier enregistré : '+filename)}catch(e){toast(e&&e.code==='declined'?'Téléchargement annulé.':'Téléchargement impossible ('+(e&&e.code||'erreur')+').')}}
+const XLSX_T='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const SHEETS={scan:'Scanner',age_scan:'Âge scanner',combo:'Radiographies (classeur)',rx:'Radiographies',spe:'Examens spéciaux',mam:'Mammographie',echo:'Échographies',dop:'Doppler',recap:'Récapitulatif',org:'Origine',age_radio:'Âge radiologie',age_echo:'Âge échographie',age_all:'Âge imagerie'};
+function xlsReport(R){if(!window.XLSX){toast('Module Excel non chargé : vérifiez la connexion puis rechargez.');return}
+  const wb=XLSX.utils.book_new(),used=new Set(['Synthèse']),names=R.tables.map(t=>{let b=(SHEETS[t.id]||IMG_FAM[t.id]?.l||t.id).replace(/[\[\]:*?\/\\]/g,' ').slice(0,28),n=b,i=2;while(used.has(n))n=b+' '+(i++);used.add(n);return n});
+  const meta=[['Registre de l’imagerie — rapport mensuel'],['Centre Hospitalier Régional El Hadji Ahmadou Sakhir Ndiéguène de Thiès'],[],['MOIS',R.periodXl],['SERVICE',R.scopeLabel],['PASSAGES',R.lines],['ÉDITÉ LE',frDate(today())],...(R.demo?[['AVERTISSEMENT','Contient des données de démonstration']]:[]),[],['Tableaux'],...R.tables.map((t,i)=>[String(i+1),t.title+' — feuille « '+names[i]+' »']),[],['Notes'],...R.notes.map(n=>['',n])];
+  const w0=XLSX.utils.aoa_to_sheet(meta);w0['!cols']=[{wch:18},{wch:110}];XLSX.utils.book_append_sheet(wb,w0,'Synthèse');
+  R.tables.forEach((t,i)=>{const hdr=[],merges=[];
+    if(t.hrows){const L=t.hrows.length,N=t.head.length;for(let r=0;r<L;r++)hdr.push(Array(N+1).fill(null));hdr[0][0]='Étiquettes de lignes';if(L>1)merges.push({s:{r:4,c:0},e:{r:4+L-1,c:0}});
+      t.hrows.forEach((cells,r)=>cells.forEach(c=>{hdr[r][c.x+1]=c.l;if(c.span>1||c.rs>1)merges.push({s:{r:4+r,c:c.x+1},e:{r:4+r+c.rs-1,c:c.x+c.span}})}))}
+    else hdr.push(['Étiquettes de lignes',...t.head]);
+    const aoa=[['MOIS',R.periodXl],['SERVICE',R.scopeLabel],[],[t.measure,'Étiquettes de colonnes'],...hdr,...t.rows.map(r=>[r.l,...r.v.map(x=>x===''||(t.blankZero&&r.k==='r'&&x===0)?null:x)])];if(t.note)aoa.push([],[t.note]);
+    const ws=XLSX.utils.aoa_to_sheet(aoa);if(merges.length)ws['!merges']=merges;ws['!cols']=[{wch:Math.min(70,Math.max(26,...t.rows.map(r=>r.l.length+2)))},...t.head.map(h=>({wch:Math.max(9,h.length+2)}))];XLSX.utils.book_append_sheet(wb,ws,names[i])});
+  saveFile(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:XLSX_T}),`Rapport-imagerie-${R.slug}-${R.months.map(moisCode).join('_')}.xlsx`)}
+const cellList=(ids,rx)=>ids.map(id=>{const it=catById(id);if(!it)return'';return rx?`${it.lib} _${it.sys||''}\n \n`:`${it.lib.toUpperCase()}\n_\n`}).join('');
+function regRows(recs){return recs.map(r=>({'AGE':AGES[r.age]?.[0]||'','Clé primaire':r.cle,'Demande':cellList(r.ex.echo.ids,false),'DEMANDE DOPPLER':cellList(r.ex.dop.ids,false),'DEMANDE EXAMENS SPECIAUX':cellList(r.ex.spe.ids,false),'DEMANDE MAMMO':cellList(r.ex.mam.ids,false),
+  'demanderx':cellList(r.ex.rx.ids,true),'EXAMEN_ECHO':frDate(r.ex.echo.date),'Horodatage de modification':frDate(r.modif)+' '+r.modif.slice(11,19),'MOIS':moisCode(r.mois),'NOM':r.nom,'ORIGINE':r.origine,'PRENOM':r.prenom,
+  'Prestations':r.ex.echo.ids.map(id=>(catById(id)?.lib||'').toUpperCase()).join('\n'),'RDV_ECHO':frDate(r.ex.echo.rdv),'SEXE':r.sexe,'TEL':r.tel,'EXAMEN_RX':frDate(r.ex.rx.date),'RDV_RX':frDate(r.ex.rx.rdv),'EXAMEN_DOPPLER':frDate(r.ex.dop.date),'RDV_DOPPLER':frDate(r.ex.dop.rdv),
+  'EXAMEN_EXAM SPEC':frDate(r.ex.spe.date),'RDV_EXAM SPEC':frDate(r.ex.spe.rdv),'EXAMEN_MAMMO':frDate(r.ex.mam.date),'RDV_MAMMO':frDate(r.ex.mam.rdv),'NBRE CLICHES RX':(r.ex.rx.cl||[]).reduce((a,x)=>a+(+x||0),0)||'','NBRE CLICHES EXAM SPEC':(r.ex.spe.cl||[]).reduce((a,x)=>a+(+x||0),0)||'','NBRE CLICHES MAMMO':(r.ex.mam.cl||[]).reduce((a,x)=>a+(+x||0),0)||'','DEMANDE SCANNER':(r.ex.scan?.ids||[]).map((id,i)=>`${catById(id)?.lib||''} ${r.ex.scan.inj?.[i]||'C'}\n_\n`).join(''),'EXAMEN_SCANNER':frDate(r.ex.scan?.date),'RDV_SCANNER':frDate(r.ex.scan?.rdv),'TYPE PAIEMENT':payById(r.pay)?.l||'','MONTANT ACTES':passMoney(r.ex).px||'','PART PATIENT':passMoney(r.ex).pp||''}))}
+function xlsRegister(months){if(!window.XLSX){toast('Module Excel non chargé.');return}const recs=S.recs.filter(r=>!months||months.includes(r.mois));
+  const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(regRows(recs));XLSX.utils.book_append_sheet(wb,ws,'REGISTRE');
+  saveFile(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:XLSX_T}),`Registre-imagerie-${months?months.map(moisCode).join('_'):'complet'}.xlsx`)}
+
+/* --- Import du registre existant (classeur ligne par ligne) --- */
+const toIso=v=>{if(v instanceof Date&&!isNaN(v))return`${v.getFullYear()}-${pad(v.getMonth()+1)}-${pad(v.getDate())}`;const m=String(v??'').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);return m?`${m[3]}-${pad(m[2])}-${pad(m[1])}`:''};
+async function readImport(file){if(!window.XLSX)throw new Error('Module Excel non chargé : vérifiez la connexion puis rechargez.');
+  const wb=XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:true});
+  const name=wb.SheetNames.find(n=>{const ws=wb.Sheets[n];if(!ws||!ws['!ref'])return false;const e=XLSX.utils.decode_range(ws['!ref']).e.c;const h=(XLSX.utils.sheet_to_json(ws,{header:1,range:{s:{r:0,c:0},e:{r:0,c:e}}})[0]||[]).map(norm);return h.includes('mois')&&h.includes('sexe')});
+  if(!name)throw new Error('Aucune feuille ne contient les colonnes MOIS et SEXE : ce fichier n’a pas la structure du registre.');
+  const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{defval:null}),match=imgMatcher(),recs=[],skipped={mois:0,cle:0};const unknown={};
+  const col=(r,n)=>{if(n in r)return r[n];const k=Object.keys(r).find(x=>norm(x)===norm(n));return k?r[k]:undefined};
+  const ageOf=v=>{const g=ageGroupOf(v,S.ages.img.groups);return g===null?'':g};
+  rows.forEach(r=>{const stamp=col(r,'Horodatage de modification'),ym=parseMois(col(r,'MOIS'),stamp instanceof Date?stamp:null);if(!ym){skipped.mois++;return}
+    const cle=String(col(r,'Clé primaire')??'').trim();if(!cle){skipped.cle++;return}
+    const ex=emptyEx();const take=(f,cell,rx)=>splitCell(cell,rx).forEach(t=>{let lab=t;if(rx){const m=t.match(/^(.*?)\s*_(Osseux|Respiratoire|Digestif)$/i);if(m)lab=m[1]}
+      const id=match(f,lab)||(rx?match('*',lab):null);if(!id){if(!/^[\d\s+]+$/.test(t))unknown[FAML[f]+' : '+t.slice(0,40)]=(unknown[FAML[f]+' : '+t.slice(0,40)]||0)+1;return}ex[catById(id).fam].ids.push(id)});
+    take('rx',col(r,'demanderx'),true);const pr=col(r,'Prestations');take('echo',pr!=null&&String(pr).trim()!==''?pr:col(r,'Demande'),false);
+    take('dop',col(r,'DEMANDE DOPPLER'),false);take('spe',col(r,'DEMANDE EXAMENS SPECIAUX'),false);take('mam',col(r,'DEMANDE MAMMO'),false);
+    ex.scan.inj=[];splitCell(col(r,'DEMANDE SCANNER'),false).forEach(t=>{const m=t.match(/^(.*?)\s+(\+C|C)$/i),lab=m?m[1]:t,j=m?m[2].toUpperCase():'';const it=S.imgCat.find(x=>x.fam==='scan'&&[x.lib,...String(x.syn||'').split(',')].map(norm).includes(norm(lab)));if(!it){unknown['Scanner : '+t.slice(0,40)]=(unknown['Scanner : '+t.slice(0,40)]||0)+1;return}ex.scan.ids.push(it.id);ex.scan.inj.push(it.inj||j||'C')});ex.scan.date=toIso(col(r,'EXAMEN_SCANNER'));ex.scan.rdv=toIso(col(r,'RDV_SCANNER'));
+    ex.echo.date=toIso(col(r,'EXAMEN_ECHO'));ex.echo.rdv=toIso(col(r,'RDV_ECHO'));ex.rx.date=toIso(col(r,'EXAMEN_RX'));ex.rx.rdv=toIso(col(r,'RDV_RX'));ex.dop.date=toIso(col(r,'EXAMEN DOPPLER')??col(r,'EXAMEN_DOPPLER'));ex.dop.rdv=toIso(col(r,'RDV_DOPPLER'));
+    ex.spe.date=toIso(col(r,'EXAMEN_EXAM SPEC'));ex.spe.rdv=toIso(col(r,'RDV_EXAM SPEC'));ex.mam.date=toIso(col(r,'EXAMEN_MAMMO'));ex.mam.rdv=toIso(col(r,'RDV_MAMMO'));
+    const ts=stamp instanceof Date&&!isNaN(stamp)?`${toIso(stamp)}T${pad(stamp.getHours())}:${pad(stamp.getMinutes())}:${pad(stamp.getSeconds())}`:ym+'-01T00:00:00';
+    const sx=String(col(r,'SEXE')??'').trim().toUpperCase(),og=String(col(r,'ORIGINE')??'').trim().toUpperCase();
+    recs.push({cle,cree:ts,modif:ts,prenom:String(col(r,'PRENOM')??'').trim().toUpperCase(),nom:String(col(r,'NOM')??'').trim().toUpperCase(),sexe:sx==='F'||sx==='M'?sx:'',age:ageOf(col(r,'AGE')),origine:og==='INTERNE'?'INTERNE':og==='EXTERNE'?'EXTERNE':'',mois:ym,tel:String(col(r,'TEL')??'').replace(/\D/g,''),ex})});
+  const months={};recs.forEach(r=>months[r.mois]=(months[r.mois]||0)+1);const noName=recs.filter(r=>!r.prenom||!r.nom).length;
+  return{file:file.name,sheet:name,recs,months,skipped,unknown,noName}}
+function importModal(){const I=UI.imp,ms=Object.keys(I.months).sort();
+  modal(`<div class="head"><h2>Importer le registre</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
+   <p>Fichier <b>${esc(I.file)}</b>, feuille « ${esc(I.sheet)} » : ${fmt(I.recs.length)} lignes lisibles. ${I.skipped.mois?fmt(I.skipped.mois)+' lignes sans MOIS exploitable et ':''}${I.skipped.cle?fmt(I.skipped.cle)+' sans clé primaire ':''}${I.skipped.mois||I.skipped.cle?'sont ignorées.':''}</p>
+   ${Object.keys(I.unknown).length?`<p class="note warn">Examens non reconnus (ignorés) : ${Object.entries(I.unknown).map(([k,n])=>esc(k)+' ('+n+')').join(' ; ')}. Ajoutez-les dans Paramètres puis relancez l’import si besoin.</p>`:''}
+   ${I.noName?`<p class="note warn">${fmt(I.noName)} ligne(s) sans prénom ou sans nom : elles sont importées, mais il faudra compléter le prénom et le nom avant toute modification de ces fiches.</p>`:''}
+   <p class="small">Choisissez les mois à importer. Une fiche dont le code patient existe déjà est remplacée. Les données (noms, téléphones) restent dans ce navigateur ; importez de préférence quelques mois à la fois.</p>
+   <div class="mrow">${ms.map(m=>`<label class="mchip"><input type="checkbox" class="impM" value="${m}" ${I.sel.includes(m)?'checked':''}> ${moisCode(m)} <span class="muted mono">${fmt(I.months[m])}</span></label>`).join('')}</div>
+   <label class="chk"><input type="checkbox" id="impDemo" ${S.demo?'checked':''}> Supprimer d’abord les données de démonstration</label>
+   <div class="btns"><button type="button" class="btn primary" data-act="doImport">Importer les mois cochés</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`)}
+function doImport(){const I=UI.imp,sel=[...document.querySelectorAll('.impM:checked')].map(x=>x.value);if(!sel.length){toast('Cochez au moins un mois.');return}
+  const backup=JSON.stringify(S);if($('#impDemo')?.checked&&S.demo){S.recs=[];S.demo=false}
+  const byCle=new Map(S.recs.map((r,i)=>[r.cle,i]));let add=0,rep=0;
+  I.recs.filter(r=>sel.includes(r.mois)).forEach(r=>{if(byCle.has(r.cle)){S.recs[byCle.get(r.cle)]=r;rep++}else{byCle.set(r.cle,S.recs.length);S.recs.push(r);add++}});
+  const mx=Math.max(S.seq-1,...S.recs.map(r=>+(String(r.cle).match(/(\d+)$/)||[0,0])[1]));S.seq=mx+1;
+  if(!save()){S=JSON.parse(backup);toast('Import annulé : le stockage du navigateur est plein. Importez moins de mois.');return}
+  UI.imp=null;closeModal();UI.rap.months=sel.slice(-1);render();toast(`${fmt(add)} fiche(s) ajoutée(s), ${fmt(rep)} remplacée(s).`)}
+
+/* --- Paramètres --- */
+function imgClash(keys,fam,exceptId){const sv=IMG_FAM[fam]?.svc,ks=keys.map(norm).filter(Boolean);
+  return S.imgCat.find(x=>x.id!==exceptId&&IMG_FAM[x.fam]?.svc===sv&&[x.lib,x.lib.replace(/\(.*?\)/g,''),...String(x.syn||'').split(',')].map(norm).some(k=>k&&ks.includes(k)))||null}
+
+function catTableHtml(k){const q=norm(UI.catQ||''),hit=x=>!q||q.split(' ').every(w=>norm([x.lib,x.syn,x.sys,IMG_FAM[x.fam]?.l].join(' ')).includes(w));
+  const items=S.imgCat.filter(x=>x.fam===k&&hit(x)),others=q?FAMS.filter(([f])=>f!==k).map(([f,l])=>[f,l,S.imgCat.filter(x=>x.fam===f&&hit(x)).length]).filter(o=>o[2]):[];
+  return`${q?`<p class="small" style="margin:0 0 6px">${fmt(items.length)} acte(s) dans cet onglet${others.length?` · aussi : ${others.map(([f,l,n])=>`<button type="button" class="linkbtn" data-act="ptab" data-v="${f}">${esc(l)} (${n})</button>`).join(' · ')}`:''}</p>`:''}
+   <div class="tw"><table class="list"><thead><tr><th>Libellé</th><th>${k==='scan'?'Groupe':'Système'}</th>${k==='scan'?'<th>Injection</th>':''}<th class="n">${k==='scan'?'Tarif C (F)':'Tarif (F)'}</th>${k==='scan'?'<th class="n">Tarif +C (F)</th>':''}<th>Abréviations et variantes</th><th class="n">Utilisations</th><th>Actif</th></tr></thead><tbody>
+   ${items.length?items.map(x=>{const n=S.recs.reduce((a,r)=>a+r.ex[k].ids.filter(i=>i===x.id).length,0);return`<tr><td><input data-item="${x.id}|lib" value="${esc(x.lib)}" aria-label="Libellé"></td><td><select data-item="${x.id}|sys" aria-label="Système"><option value="">— sans —</option>${IMG_SYS.map(y=>`<option ${x.sys===y?'selected':''}>${esc(y)}</option>`).join('')}</select></td>${k==='scan'?`<td><select data-item="${x.id}|inj" aria-label="Injection"><option value="" ${!x.inj?'selected':''}>Au choix (C ou +C)</option><option value="C" ${x.inj==='C'?'selected':''}>Toujours C (sans)</option><option value="+C" ${x.inj==='+C'?'selected':''}>Toujours +C (avec)</option></select></td>`:''}<td class="n"><input type="number" min="0" step="500" data-item="${x.id}|prix" value="${esc(x.prix??'')}" style="width:100px" aria-label="Tarif"></td>${k==='scan'?`<td class="n"><input type="number" min="0" step="500" data-item="${x.id}|prixP" value="${esc(x.prixP??'')}" style="width:100px" aria-label="Tarif avec injection"></td>`:''}<td><input data-item="${x.id}|syn" value="${esc(x.syn)}" aria-label="Abréviations" style="width:100%"></td><td class="n mono">${fmt(n)}</td><td><input type="checkbox" data-item="${x.id}|actif" ${x.actif!==false?'checked':''} aria-label="Actif"></td></tr>`}).join(''):`<tr><td colspan="8" class="muted">Aucun acte ne correspond à « ${esc(UI.catQ)} » dans cet onglet.</td></tr>`}</tbody></table></div>`}
+/* Actes semblables : même mot après retrait des préfixes (Rx, écho…) et des pluriels, inclusion ou orthographe proche */
+const ACT_STOP=new Set(['rx','radio','radiographie','echo','echographie','doppler','echodoppler','examen','de','du','des','la','le','les','d','l','et']);
+const stripAct=t=>norm(t).split(' ').filter(w=>w&&!ACT_STOP.has(w)).map(w=>w.length>3?w.replace(/(s|x)$/,''):w).join(' ');
+function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+function similarActs(lib,fam){const a=stripAct(lib);if(a.length<3)return[];const sv=IMG_FAM[fam]?.svc;
+  return S.imgCat.filter(x=>IMG_FAM[x.fam]?.svc===sv).map(x=>{let best=0;[x.lib,x.lib.replace(/\(.*?\)/g,''),...String(x.syn||'').split(',')].map(stripAct).filter(b=>b.length>=2).forEach(b=>{let sc=a===b?1:(a.length>=4&&b.length>=4&&(b.includes(a)||a.includes(b)))?.9:1-lev(a,b)/Math.max(a.length,b.length);if(sc>best)best=sc});return{x,sc:best}})
+    .filter(o=>o.sc>=.75).sort((p,q)=>q.sc-p.sc).slice(0,5)}
+function simHtml(lib,fam,strong){const sims=similarActs(lib,fam);if(!sims.length)return'';
+  return`<div class="note warn" style="margin-top:8px"><b>Un acte similaire existe déjà :</b> ${sims.map(o=>`« ${esc(o.x.lib)} » (${esc(IMG_FAM[o.x.fam].l)}${o.x.sys?' · '+esc(o.x.sys):''})`).join(', ')}.
+   ${strong?`<div class="btns" style="margin-top:6px"><button type="button" class="btn ghost sm" data-act="addItemForce" data-v="${fam}">Ajouter quand même</button><button type="button" class="btn ghost sm" data-act="simCancel">Ne pas ajouter</button></div>`:'<span class="small"> Vérifiez avant d’ajouter.</span>'}</div>`}
+function viewParams(){let used=0;try{used=(localStorage.getItem(STORE)||'').length}catch(e){}
+  return payParamsHtml()+`<section class="card"><div class="head"><h2>Listes des examens</h2><span class="muted small">Utilisées par les menus déroulants et par le rapport. Un examen ne peut exister qu’une fois, abréviations comprises.</span></div>
+  <div class="tabs" role="tablist">${FAMS.map(([k,l])=>`<button type="button" class="tab f-${k} ${UI.ptab===k||(!UI.ptab&&k==='echo')?'on':''}" data-act="ptab" data-v="${k}">${esc(l)}</button>`).join('')}</div>
+  ${(()=>{const k=UI.ptab||'echo',items=S.imgCat.filter(x=>x.fam===k);return`<div class="panel f-${k}"><div class="addRow wrap">
+   <input id="nLib" placeholder="Nouvel examen, ex. ${k==='rx'?'Rachis sacro-coccygien':k==='echo'?'Thyroïdienne':'…'}" aria-label="Libellé du nouvel examen"><select id="nSys" aria-label="Système"><option value="">— sans système —</option>${IMG_SYS.map(y=>`<option ${k==='rx'&&y==='Osseux'?'selected':''}>${esc(y)}</option>`).join('')}</select>${k==='scan'?`<select id="nInj" aria-label="Injection"><option value="">Injection au choix</option><option value="C">Toujours C (sans)</option><option value="+C">Toujours +C (avec)</option></select>`:''}<input id="nSyn" placeholder="Abréviations (virgules)" aria-label="Abréviations"><button type="button" class="btn onfam" data-act="addItem" data-v="${k}">Ajouter</button></div><div id="simBox"></div>
+   <div class="addRow wrap" style="margin-top:8px"><span class="small" style="align-self:center">Systèmes : ${IMG_SYS.map(esc).join(', ')}</span><input id="nSysNew" placeholder="Nouveau système, ex. Urinaire" aria-label="Nouveau système"><button type="button" class="btn onfam" data-act="addSys">Ajouter le système</button></div></div>
+   <p class="muted small">Le système regroupe les actes dans les tableaux du rapport (ex. Osseux, Respiratoire, Digestif). Il peut être attribué à tout type d’examen.</p>
+   <div class="filters" style="margin-top:12px"><label class="fld grow"><span>Rechercher un acte (libellé, abréviation ou système)</span><input type="search" id="catQ" value="${esc(UI.catQ||'')}" placeholder="ex. genou, rx poumons, osseux"></label></div>
+   <div id="catBox">${catTableHtml(k)}</div>`})()}</section>
+  <section class="card"><div class="head"><h2>Données</h2></div>
+   <p class="small">${fmt(S.recs.length)} fiche(s) dans ce navigateur · ${(used/1048576).toLocaleString('fr-FR',{maximumFractionDigits:1})} Mo utilisés${S.demo?' · <b class="warnTxt">données de démonstration (noms fictifs)</b>':''}. Prochain code : IMG_${S.seq}.</p>
+   <div class="btns"><label class="btn primary" style="cursor:pointer">Importer un registre (.xlsx)<input type="file" id="impFile" accept=".xlsx,.xls,.xlsm" hidden></label><button type="button" class="btn ghost" data-act="xlsAll">Exporter tout le registre (.xlsx)</button><button type="button" class="btn danger" data-act="reset">Réinitialiser la démonstration</button></div>
+   <p class="muted small">L’import lit un classeur au format de votre registre (colonnes Clé primaire, PRENOM, NOM, SEXE, AGE, ORIGINE, MOIS, TEL, demanderx, Prestations, DEMANDE DOPPLER, DEMANDE EXAMENS SPECIAUX, DEMANDE MAMMO et dates d’examen et de RDV). L’export produit le même format : il peut être relu ici ou par la maquette du SIM.</p>
+   <p class="muted small">Les fiches sont conservées dans ce navigateur uniquement : elles ne sont ni partagées entre postes ni sauvegardées ailleurs. Exportez le registre régulièrement.</p></section>`}
+
+/* --- Rendu et événements --- */
+const VIEWS={saisie:viewSaisie,liste:viewListe,rapport:viewRapport,params:viewParams};
+function render(){imgSyncRef();document.querySelectorAll('[data-nav-btn]').forEach(b=>{const on=b.dataset.v===UI.view;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
+  $('#view').innerHTML=VIEWS[UI.view]();$('#demoTag').hidden=!S.demo;$('#store').textContent=persisted?'':'Stockage indisponible : les saisies seront perdues à la fermeture.'}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act,v=t.dataset.v;
+  if(a==='closeBg'){if(e.target===t)closeModal();return}
+  if(a==='close'){closeModal();return}
+  if(a==='nav'){UI.view=v;render();window.scrollTo(0,0);return}
+  if(a==='tab'){readForm();UI.f.tab=v;render();return}
+  if(a==='addEx'){readForm();const id=UI.f.sel[v]||$('#exSel').value;if(!id){toast('Choisissez un examen dans la liste.');return}UI.f.ex[v].ids.push(id);if(v==='scan'){const e=UI.f.ex.scan;e.inj=e.inj||[];e.inj[e.ids.length-1]=catById(id)?.inj||document.querySelector('input[name=injSel]:checked')?.value||'C'}{const e=UI.f.ex[v],i=e.ids.length-1;e.px=e.px||[];e.pp=e.pp||[];e.px[i]=tarifOf(id,v==='scan'?e.inj[i]:'')||'';e.pp[i]=''}if(!UI.f.ex[v].date&&!UI.f.ex[v].rdv)UI.f.ex[v].date=today();UI.f.sel[v]='';UI.confirmDup=null;render();$('#exSel')?.focus();return}
+  if(a==='rmEx'){readForm();const[f,i]=v.split('|');UI.f.ex[f].ids.splice(+i,1);if(UI.f.ex[f].cl)UI.f.ex[f].cl.splice(+i,1);if(UI.f.ex[f].inj)UI.f.ex[f].inj.splice(+i,1);['px','pp'].forEach(k=>{if(UI.f.ex[f][k])UI.f.ex[f][k].splice(+i,1)});render();return}
+  if(a==='saveRec'){saveRec();return}
+  if(a==='newRec'){UI.f=blankForm();UI.confirmDup=null;render();return}
+  if(a==='delRec'){modal(`<h2>Supprimer la fiche ${esc(UI.f.edit)} ?</h2><p>Le passage et ses examens seront retirés du registre et du rapport.</p><div class="btns"><button type="button" class="btn danger" data-act="delOk">Supprimer</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);return}
+  if(a==='delOk'){S.recs=S.recs.filter(r=>r.cle!==UI.f.edit);save();toast(`Fiche ${UI.f.edit} supprimée`);UI.f=blankForm();closeModal();render();return}
+  if(a==='open'){openRow(v);return}
+  if(a==='pg'){const[k,d]=v.split('|');UI[k].page+=+d;refreshBlock(k);return}
+  if(a==='fReset'){const o=UI[v];UI[v]=defFilt(v,o.mode);UI[v].date=o.date;refreshBlock(v);return}
+  if(a==='rdvDo'){rdvAct(v,e=>{e.rdvSt='realise';e.date=today()},'Rendez-vous réalisé');return}
+  if(a==='rdvMove'){const d=$('#rp_'+v).value;if(!d||d<today()){toast('Choisissez une nouvelle date, aujourd’hui ou plus tard.');$('#rp_'+v).focus();return}
+    const old=S.recs.find(x=>x.cle===UI.rdvCle).ex[v].rdv;rdvAct(v,e=>{e.rdv=d;e.rdvSt='prevu';e.motif=''},`Rendez-vous reporté du ${frDate(old)} au ${frDate(d)}`);return}
+  if(a==='rdvCancel'){const m=$('#ra_'+v).value.trim();if(!m){toast('Indiquez le motif d’annulation.');$('#ra_'+v).focus();return}rdvAct(v,e=>{e.rdvSt='annule';e.motif=m},'Rendez-vous annulé : '+m);return}
+  if(a==='rdvDel'){if(UI.delRdv!==v){UI.delRdv=v;rdvModal(UI.rdvCle);return}const old=S.recs.find(x=>x.cle===UI.rdvCle).ex[v].rdv;rdvAct(v,e=>{e.rdv='';e.rdvSt='';e.motif=''},`Rendez-vous du ${frDate(old)} supprimé`);return}
+  if(a==='openFiche'){closeModal();openRec(UI.rdvCle);return}
+  if(a==='delFiche'){if(!UI.delFiche){UI.delFiche=true;rdvModal(UI.rdvCle);return}const c=UI.rdvCle;S.recs=S.recs.filter(r=>r.cle!==c);save();UI.delFiche=false;if(UI.f.edit===c)UI.f=blankForm();closeModal();render();toast(`Fiche ${c} supprimée`);return}
+  if(a==='spUse'){const p=UI.spList[+v],r=p.recs[0];Object.assign(UI.f,{prenom:r.prenom,nom:r.nom,tel:r.tel||'',sexe:r.sexe,age:String(r.age??''),origine:r.origine||'EXTERNE',pay:r.pay||'',ex:emptyEx(),sel:{},mois:today().slice(0,7),
+      tab:FAMS.find(([k])=>r.ex[k].ids.length)?.[0]||'echo',from:{cle:r.cle,n:p.recs.length,last:r.cree}});UI.ferr={};UI.confirmDup=null;render();
+    const card=$('.exams');if(card){card.classList.add('pulse');card.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>card.classList.remove('pulse'),1600)}setTimeout(()=>$('#exSel')?.focus({preventScroll:true}),350);
+    toast(`Nouveau passage pour ${r.prenom} ${r.nom} : choisissez les examens puis enregistrez.`);return}
+  if(a==='unFrom'){UI.f=blankForm();render();$('#fPrenom')?.focus();return}
+  if(a==='spRdv'){const p=UI.spList[+v],r=p.recs.find(x=>pendingRdv(x));if(r){UI.delRdv=null;UI.delFiche=false;rdvModal(r.cle)}return}
+  if(a==='spAll'){const p=UI.spList[+v];UI.liste=defFilt('liste','all');UI.liste.q=p.prenom+' '+p.nom;UI.view='liste';render();window.scrollTo(0,0);return}
+  if(a==='rView'){if(v==='scan'){UI.rap.view='detail';UI.rap.svc='scan'}else{UI.rap.view=v;if(v==='detail'&&UI.rap.svc==='scan')UI.rap.svc='all'}render();return}
+  if(a==='xlsModel'){xlsModel(UI.modelLast);return}
+  if(a==='xlsFin'){xlsFinance(UI.finLast);return}
+  if(a==='finReset'){UI.fin={q:'',pay:'',fam:'',org:'',sexe:'',age:'',d1:'',d2:'',page:0,src:''};finRefresh();return}
+  if(a==='finPg'){UI.fin.page+=+v;finRefresh();document.getElementById('finBox')?.querySelector('.plist')?.scrollIntoView({block:'start'});return}
+  if(a==='finOpen'){openRow(v);return}
+  if(a==='mpOk'){const t2=addPayType($('#mpL').value);if(!t2)return;closeModal();readForm();UI.f.pay=t2.id;delete UI.ferr.pay;render();return}
+  if(a==='addPay'){if(addPayType($('#npL').value))render();return}
+  if(a==='xlsScanModel'){xlsScanModel(UI.scanModelLast);return}
+  if(a==='xlsRep'){xlsReport(UI.repLast);return}
+  if(a==='xlsReg'){xlsRegister(UI.repLast.months);return}
+  if(a==='xlsAll'){xlsRegister(null);return}
+  if(a==='ptab'){UI.ptab=v;render();return}
+  if(a==='addSys'){const l=$('#nSysNew').value.trim();if(!l){toast('Saisissez le nom du système.');return}const cur=S.imgSys||[...IMG_SYS];if(cur.some(y=>norm(y)===norm(l))){toast('Ce système existe déjà.');return}S.imgSys=[...cur,l];imgSyncRef();save();render();toast('Système ajouté');return}
+  if(a==='simCancel'){$('#nLib').value='';$('#simBox').innerHTML='';$('#nLib').focus();return}
+  if(a==='addItem'||a==='addItemForce'){const lib=$('#nLib').value.trim(),syn=$('#nSyn').value.trim(),sys=$('#nSys').value;if(!lib){toast('Saisissez le libellé.');return}
+    const c=imgClash([lib,...syn.split(',')],v,null);if(c){$('#simBox').innerHTML=`<div class="note warn" style="margin-top:8px"><b>Cet acte existe déjà :</b> « ${esc(c.lib)} » (${esc(IMG_FAM[c.fam].l)}). Ajout refusé.</div>`;toast(`Doublon : correspond à « ${c.lib} ».`);return}
+    if(a==='addItem'&&similarActs(lib,v).length){$('#simBox').innerHTML=simHtml(lib,v,true);toast('Un acte similaire existe déjà : confirmez ou annulez.');return}
+    S.imgCat.push({id:'c_'+Date.now().toString(36),lib,fam:v,sys,syn,w:0,prix:0,actif:true,...(v==='scan'?{inj:$('#nInj')?.value||''}:{})});save();render();toast('Examen ajouté à la liste');return}
+  if(a==='reset'){modal(`<h2>Réinitialiser la démonstration ?</h2><p>Toutes les fiches de ce navigateur seront remplacées par les données fictives d’origine. Exportez d’abord le registre si vous avez saisi des données réelles.</p><div class="btns"><button type="button" class="btn danger" data-act="resetOk">Réinitialiser</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);return}
+  if(a==='resetOk'){S=buildDemo();save();UI.f=blankForm();closeModal();render();toast('Démonstration réinitialisée');return}
+  if(a==='doImport'){doImport();return}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.target.matches('tr[data-act="open"]'))openRow(e.target.dataset.v)});
+document.addEventListener('change',async e=>{const t=e.target,a=t.dataset.act,v=t.dataset.v;
+  if(a==='sel'){UI.f.sel[v]=t.value;if(v==='scan')render();return}
+  if(a==='injSel'){UI.f.injSel=t.value;render();return}
+  if(a==='inj'){const[f,i]=v.split('|');const e=UI.f.ex[f];e.inj=e.inj||[];e.inj[+i]=t.value;e.px=e.px||[];e.pp=e.pp||[];e.px[+i]=tarifOf(e.ids[+i],t.value)||e.px[+i];render();return}
+  if(a==='px'||a==='pp'){const[f,i]=v.split('|');const e=UI.f.ex[f];e.px=e.px||[];e.pp=e.pp||[];const val=t.value===''?'':Math.max(0,Math.round(+t.value));t.value=val;
+    if(a==='pp'&&val!==''&&e.px[+i]!==''&&e.px[+i]!=null&&val>+e.px[+i]){toast('Le montant payé par le patient dépasse le prix de l’acte : vérifiez.');t.classList.add('bad')}else t.classList.remove('bad');
+    e[a][+i]=val;const mb=$('#moneyBox');if(mb)mb.innerHTML=moneyInner(UI.f);return}
+  if(a==='pay'){if(t.value==='__new'){t.value=UI.f.pay||'';newPayModal();return}readForm();UI.f.pay=t.value;delete UI.ferr.pay;render();return}
+  if(a==='exDate'){UI.f.ex[v].date=t.value;return}
+  if(a==='exRdv'){const e=UI.f.ex[v];if(e.rdv!==t.value){e.rdv=t.value;e.rdvSt=t.value?'prevu':'';e.motif='';if(UI.f.edit){e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:t.value?'Date de RDV modifiée dans la fiche : '+frDate(t.value):'RDV retiré dans la fiche'})}}render();return}
+  if(t.dataset.f){UI.f[t.dataset.f]=t.value;UI.confirmDup=null;return}
+  if(t.dataset.filt){const[k,fld]=t.dataset.filt.split('|');if(fld==='q')return;UI[k][fld]=fld==='date'?(t.value||today()):t.value;UI[k].page=0;refreshBlock(k,t.id);return}
+  if(a==='rSvc'){UI.rap.svc=t.value;render();return}
+  if(a==='rMode'){UI.rap.mode=t.value;render();return}
+  if(a==='rZero'){UI.rap.zero=t.checked;render();return}
+  if(a==='rCols'){UI.rap.cols=t.value;render();return}
+  if(a==='rOrg'){UI.rap.org=t.checked;render();return}
+  if(a==='rDet'){UI.rap.detEcho=t.checked;render();return}
+  if(a==='cl'){const[f,i]=v.split('|');const e=UI.f.ex[f];e.cl=e.cl||[];e.cl[+i]=t.value===''?'':Math.max(0,Math.round(+t.value));return}
+  if(t.dataset.fin){if(t.dataset.fin==='q')return;UI.fin[t.dataset.fin]=t.value;UI.fin.page=0;finRefresh(t.id);return}
+  if(a==='rMonth'){const m=v;UI.rap.months=t.checked?[...new Set([...UI.rap.months,m])]:UI.rap.months.filter(x=>x!==m);render();return}
+  if(t.dataset.pay){const[id,k]=t.dataset.pay.split('|'),p=payById(id);let val=t.value.trim();if(k==='l'){val=val.toUpperCase();if(!val||S.payTypes.some(x=>x!==p&&norm(x.l)===norm(val))){toast(val?'Ce type existe déjà.':'Libellé obligatoire.');render();return}}p[k]=val;save();toast('Type de paiement mis à jour');return}
+  if(t.dataset.item){const[id,k]=t.dataset.item.split('|'),x=catById(id);let val=t.type==='checkbox'?t.checked:t.value.trim();
+    if(k==='lib'&&!val){toast('Libellé obligatoire.');render();return}
+    if(k==='lib'||k==='syn'){const c=imgClash(k==='lib'?[val]:String(val).split(','),x.fam,x.id);if(c){toast(`Doublon : déjà utilisé par « ${c.lib} ».`);render();return}}
+    if(k==='prix'||k==='prixP')val=val===''?0:Math.max(0,Math.round(+val));x[k]=val;save();if(k==='sys')render();toast('Liste mise à jour');return}
+  if(t.id==='impFile'){const f=t.files[0];t.value='';if(!f)return;toast('Lecture du fichier…');
+    try{const I=await readImport(f);const ms=Object.keys(I.months).sort();I.sel=ms.slice(-1);UI.imp=I;importModal()}catch(err){toast(err.message||'Lecture impossible.')}}});
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.dataset.fin==='q'){UI.fin.q=t.value;UI.fin.page=0;clearTimeout(UI.finT);UI.finT=setTimeout(()=>finRefresh('finQ'),180);return}
+  if(t.id==='catQ'){UI.catQ=t.value;const bx=$('#catBox');if(bx)bx.innerHTML=catTableHtml(UI.ptab||'echo');return}
+  if(t.id==='nLib'){const bx=$('#simBox');if(bx)bx.innerHTML=simHtml(t.value,UI.ptab||'echo',false);return}
+  if(t.dataset.filt&&t.dataset.filt.endsWith('|q')){const k=t.dataset.filt.split('|')[0];UI[k].q=t.value;UI[k].page=0;refreshBlock(k,t.id);return}
+  if(['prenom','nom','tel'].includes(t.dataset.f)){UI.f[t.dataset.f]=t.value;if(UI.f.from){delete UI.f.from;const bx=$('#exHead');if(bx)bx.remove()}if(UI.ferr[t.dataset.f]&&!nameErr(t.value)){delete UI.ferr[t.dataset.f];t.closest('.fld')?.classList.remove('invalid');t.parentNode.querySelector('.err')?.remove()}const b=$('#sugg');if(b)b.innerHTML=suggHtml()}});
+render();
+
+</script>
