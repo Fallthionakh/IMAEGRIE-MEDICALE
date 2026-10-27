@@ -117,6 +117,9 @@ td[class^="c-"]{min-width:120px;font-size:.82rem}
 .modal{background:var(--surface);color:var(--ink);border-radius:10px;max-width:640px;width:100%;max-height:90vh;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
 .toast{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:7px;z-index:120;font-size:.9rem;max-width:380px}
 .store{color:var(--err);font-size:.85rem}
+.cloudBar{flex-basis:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--muted,#5b6470);padding-top:4px}
+.cloudBar .cuser{margin-left:auto;font-weight:600}.cdot{width:9px;height:9px;border-radius:50%;background:#9aa3ad;flex:none}.cdot.ok{background:#1f8a4c}.cdot.wait{background:#d49a12}.cdot.off,.cdot.err{background:#c0392b}
+.login{max-width:440px;margin:40px auto}.fgrid1{display:grid;gap:12px}
 
 .note.ok{border-left-color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,var(--surface))}
 .exHead{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:8px 10px;border-radius:7px;background:color-mix(in srgb,var(--ok) 9%,var(--surface));border-left:4px solid var(--ok)}
@@ -194,10 +197,11 @@ table.plist td{text-align:left}.tagDemo{font-size:10px;padding:1px 5px;border-ra
 <button type="button" data-act="nav" data-nav-btn data-v="liste">Liste des examens</button>
 <button type="button" data-act="nav" data-nav-btn data-v="rapport">Rapport mensuel</button>
 <button type="button" data-act="nav" data-nav-btn data-v="params">Paramètres</button></nav>
-<span class="demo" id="demoTag">Démonstration · noms fictifs</span><span class="store" id="store"></span></header>
+<span class="demo" id="demoTag">Démonstration · noms fictifs</span><span class="store" id="store"></span><div class="cloudBar" id="cloudBar" hidden></div></header>
 <main id="view"></main>
 <div id="modalRoot"></div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.112.4/dist/umd/supabase.js"></script>
 <script>
 const Y=365;
 const norm=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
@@ -363,8 +367,100 @@ function genPass(svcImag,R,factor,ym){const base=genImg(svcImag,R,factor),units=
     pass.push({n:++n,d:ym+'-'+String(1+Math.floor(R()*D)).padStart(2,'0'),num:'',age:pickAge(),sx:u.sx,org:R()<0.05?'INT':'EXT',actes})}
   pass.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0).forEach((p,i)=>p.n=i+1);return pass}
 
+window.REG_CLOUD={url:'https://hglxyyqaouzjitaynfjq.supabase.co',key:'sb_publishable_3iTH5E7Kfi5NcpwVPIqroA_eJg8IOst'};
+/* --- Base commune Supabase (actif seulement si window.REG_CLOUD est défini) --- */
+const CLOUD=window.REG_CLOUD||null;
+const CL={sb:null,user:null,state:CLOUD?'init':'off',online:true,snap:new Map(),pSnap:'',pend:{},busy:false,timer:null,chan:null,err:'',refreshT:null,stale:false,saving:false};
+const PEND_KEY='registre-imagerie-cloud-pending';
+function cloudEmpty(){return{v:1,recs:[],imgSys:[...IMG_SYS_DEF,'Extrémités','Rachis'],imgCat:appCat(),ages:{img:ageGroups()},seq:1,demo:false,demoMarked:1,payDemo:1,payTypes:PAY_DEF.map(([id,l])=>({id,l}))}}
+const cfgOf=()=>({imgCat:S.imgCat,imgSys:S.imgSys,payTypes:S.payTypes,ages:S.ages});
+function pendSave(){try{localStorage.setItem(PEND_KEY,JSON.stringify(CL.pend))}catch(e){}}
+function pendLoad(){try{CL.pend=JSON.parse(localStorage.getItem(PEND_KEY)||'{}')||{}}catch(e){CL.pend={}}}
+const pendN=()=>Object.keys(CL.pend).length;
+function baseline(){CL.snap=new Map(S.recs.map(r=>[r.cle,JSON.stringify(r)]));CL.pSnap=JSON.stringify(cfgOf())}
+/* Appelé par save() : repère ce qui a changé depuis la dernière synchronisation */
+function cloudChanged(){if(!CLOUD||CL.state!=='ready')return;const cur=new Set();
+  S.recs.forEach(r=>{cur.add(r.cle);const s=JSON.stringify(r);if(CL.snap.get(r.cle)!==s)CL.pend[r.cle]=s});
+  CL.snap.forEach((_,k)=>{if(!cur.has(k))CL.pend[k]='__del'});
+  const p=JSON.stringify(cfgOf());if(p!==CL.pSnap)CL.pend.__cfg=p;
+  pendSave();cloudBar();clearTimeout(CL.timer);CL.timer=setTimeout(cloudFlush,300)}
+async function newCode(){if(CLOUD&&CL.sb&&CL.online){try{const r=await Promise.race([CL.sb.rpc('nouveau_code'),new Promise((_,j)=>setTimeout(()=>j(new Error('délai')),6000))]);if(!r.error&&r.data)return String(r.data)}catch(e){}}
+  return'TMP_'+Date.now().toString(36).toUpperCase()}
+function renameRec(old,cle){const r=S.recs.find(x=>x.cle===old);if(r)r.cle=cle;if(UI.f&&UI.f.edit===old)UI.f.edit=cle;if(UI.rdvCle===old)UI.rdvCle=cle}
+async function cloudFlush(){if(!CLOUD||CL.state!=='ready'||CL.busy)return;if(!pendN()){cloudBar();return}CL.busy=true;cloudBar();
+  try{const sb=CL.sb;
+    if(CL.pend.__cfg){const s=CL.pend.__cfg;const{error}=await sb.from('parametres').upsert({cle:'config',data:JSON.parse(s),modifie_le:new Date().toISOString()});if(error)throw error;CL.pSnap=s;if(CL.pend.__cfg===s)delete CL.pend.__cfg}
+    for(const k of Object.keys(CL.pend).filter(k=>k.startsWith('TMP_'))){const v=CL.pend[k];delete CL.pend[k];CL.snap.delete(k);if(v==='__del')continue;
+      const r=await sb.rpc('nouveau_code');if(r.error||!r.data){CL.pend[k]=v;throw r.error||new Error('code')}const cle=String(r.data);renameRec(k,cle);const rec=S.recs.find(x=>x.cle===cle);if(rec)CL.pend[cle]=JSON.stringify(rec);toast(`Fiche provisoire ${k} enregistrée sous le code ${cle}`)}
+    const ups=Object.entries(CL.pend).filter(([k,v])=>k!=='__cfg'&&v!=='__del'),dels=Object.entries(CL.pend).filter(([k,v])=>v==='__del').map(([k])=>k);
+    for(let i=0;i<ups.length;i+=400){const part=ups.slice(i,i+400),now=new Date().toISOString();
+      const{error}=await sb.from('fiches').upsert(part.map(([k,s])=>{const d=JSON.parse(s);return{cle:k,data:d,mois:d.mois||null,cree:d.cree||null,modifie_le:now}}));if(error)throw error;
+      part.forEach(([k,s])=>{CL.snap.set(k,s);if(CL.pend[k]===s)delete CL.pend[k]})}
+    for(let i=0;i<dels.length;i+=200){const part=dels.slice(i,i+200);const{error}=await sb.from('fiches').delete().in('cle',part);if(error)throw error;part.forEach(k=>{CL.snap.delete(k);if(CL.pend[k]==='__del')delete CL.pend[k]})}
+    CL.online=true;CL.err=''}
+  catch(e){CL.err=cloudMsg(e);CL.online=!/fetch|network|réseau|délai|Failed/i.test(String(e&&e.message||e));clearTimeout(CL.timer);CL.timer=setTimeout(cloudFlush,20000)}
+  finally{CL.busy=false;pendSave();cloudBar();if(pendN()&&!CL.err){clearTimeout(CL.timer);CL.timer=setTimeout(cloudFlush,300)}}}
+function cloudMsg(e){const m=String(e&&(e.message||e.details)||e||'');if(/fetch|network|Failed/i.test(m))return'Pas de connexion au serveur';if(/JWT|token|auth/i.test(m))return'Session expirée : reconnectez-vous';if(/permission|policy|42501/i.test(m))return'Accès refusé par la base';return m.slice(0,120)}
+/* Chargement complet depuis la base, puis réapplication des modifications locales en attente */
+async function cloudPull(){const sb=CL.sb,all=[];
+  for(let from=0;;from+=1000){const{data,error}=await sb.from('fiches').select('cle,data').order('cle').range(from,from+999);if(error)throw error;all.push(...data);if(data.length<1000)break}
+  const{data:cfg,error:e2}=await sb.from('parametres').select('cle,data').eq('cle','config');if(e2)throw e2;
+  S.recs=all.map(x=>{const d=x.data||{};d.cle=x.cle;return d});
+  if(cfg&&cfg[0]&&cfg[0].data){const c=cfg[0].data;['imgCat','imgSys','payTypes','ages'].forEach(k=>{if(c[k])S[k]=c[k]})}
+  baseline();if(!(cfg&&cfg[0]))CL.pend.__cfg=JSON.stringify(cfgOf());
+  Object.entries(CL.pend).forEach(([k,v])=>{if(k==='__cfg')return;const i=S.recs.findIndex(r=>r.cle===k);if(v==='__del'){if(i>=0)S.recs.splice(i,1)}else{const d=JSON.parse(v);if(i>=0)S.recs[i]=d;else S.recs.push(d)}});
+  if(CL.pend.__cfg){const c=JSON.parse(CL.pend.__cfg);['imgCat','imgSys','payTypes','ages'].forEach(k=>{if(c[k])S[k]=c[k]})}
+  imgSyncRef();try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){}}
+function cloudSubscribe(){const sb=CL.sb;if(CL.chan)sb.removeChannel(CL.chan);
+  CL.chan=sb.channel('registre').on('postgres_changes',{event:'*',schema:'public',table:'fiches'},p=>{
+      if(p.eventType==='DELETE'){const k=p.old&&p.old.cle;if(!k||CL.pend[k])return;const i=S.recs.findIndex(r=>r.cle===k);if(i>=0){S.recs.splice(i,1);CL.snap.delete(k);cloudRefresh()}return}
+      const row=p.new;if(!row||!row.cle||CL.pend[row.cle])return;const d=row.data||{};d.cle=row.cle;const i=S.recs.findIndex(r=>r.cle===row.cle);
+      if(i>=0&&canon(S.recs[i])===canon(d))return;if(i>=0)S.recs[i]=d;else S.recs.push(d);CL.snap.set(row.cle,JSON.stringify(d));cloudRefresh()})
+    .on('postgres_changes',{event:'*',schema:'public',table:'parametres'},p=>{const row=p.new;if(!row||row.cle!=='config'||CL.pend.__cfg)return;const c=row.data||{};
+      if(canon(c)===canon(cfgOf()))return;['imgCat','imgSys','payTypes','ages'].forEach(k=>{if(c[k])S[k]=c[k]});CL.pSnap=JSON.stringify(cfgOf());imgSyncRef();cloudRefresh()})
+    .subscribe(st=>{CL.live=st==='SUBSCRIBED';cloudBar()})}
+function canon(o){return JSON.stringify(o,(k,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.keys(v).sort().reduce((a,x)=>(a[x]=v[x],a),{}):v)}
+/* Rafraîchit l'écran sans perdre une saisie en cours */
+function cloudRefresh(){clearTimeout(CL.refreshT);CL.refreshT=setTimeout(()=>{try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){}
+  const a=document.activeElement,typing=a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&!a.closest('.filters'),modalOpen=!!$('#modalRoot .modal');
+  if(UI.view==='saisie'){if(document.getElementById('lb_jour'))refreshBlock('jour');return}
+  if(UI.view==='liste'){if(document.getElementById('lb_liste'))refreshBlock('liste');return}
+  if(typing||modalOpen){CL.stale=true;cloudBar();return}render()},700)}
+function cloudBar(){const el=document.getElementById('cloudBar');if(!el||!CLOUD)return;el.hidden=false;
+  if(!CL.user){el.innerHTML='';el.hidden=true;return}
+  const n=pendN(),st=CL.state!=='ready'?['wait','Chargement…']:!CL.online?['off',`Hors ligne · ${n} modification(s) en attente`]:CL.err?['err',CL.err+(n?` · ${n} en attente`:'')]:CL.busy||n?['wait',`Envoi… ${n} en attente`]:['ok',CL.live===false?'Base commune · connexion directe interrompue':'Base commune à jour'];
+  el.innerHTML=`<span class="cdot ${st[0]}"></span><span>${esc(st[1])}</span>${CL.stale?` <button type="button" class="btn ghost sm" data-act="cloudReload">Afficher les nouvelles données</button>`:''}${n&&CL.err?` <button type="button" class="btn ghost sm" data-act="cloudRetry">Réessayer</button>`:''}<span class="cuser">${esc(CL.user.email||'')}</span><button type="button" class="btn ghost sm" data-act="logout">Déconnexion</button>`}
+function loginView(){return`<section class="card login"><div class="head"><h2>Connexion au registre commun</h2></div>
+  <p class="muted small">Le registre est partagé entre tous les postes du service. Utilisez le compte créé pour vous par l’administrateur.</p>
+  <form id="loginForm" class="fgrid1"><label class="fld"><span>E-mail</span><input type="email" id="lgMail" autocomplete="username" required></label>
+  <label class="fld"><span>Mot de passe</span><input type="password" id="lgPass" autocomplete="current-password" required></label>
+  ${CL.err&&CL.state==='login'?`<p class="note warn">${esc(CL.err)}</p>`:''}
+  <div class="btns"><button type="submit" class="btn primary" id="lgBtn">Se connecter</button></div></form></section>`}
+function cloudGate(){if(!CLOUD)return false;document.querySelector('nav.main').hidden=!CL.user;cloudBar();
+  if(CL.user)return false;$('#view').innerHTML=CL.state==='init'?'<p class="muted" style="padding:24px">Connexion…</p>':loginView();if(CL.state==='login')setTimeout(()=>$('#lgMail')?.focus(),0);return true}
+async function cloudStart(user){CL.user=user;CL.state='loading';CL.err='';render();
+  try{await cloudPull();CL.state='ready';CL.online=true}catch(e){CL.err=cloudMsg(e);CL.online=false;CL.state='ready';baseline();toast('Base commune injoignable : travail sur la copie locale, envoi automatique au retour de la connexion.')}
+  cloudSubscribe();render();if(pendN())cloudFlush()}
+async function cloudInit(){if(!CLOUD)return;pendLoad();
+  if(!window.supabase||!window.supabase.createClient){CL.state='login';CL.err='Module de connexion non chargé : vérifiez la connexion Internet puis rechargez la page.';render();return}
+  CL.sb=window.supabase.createClient(CLOUD.url,CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true}});
+  CL.sb.auth.onAuthStateChange((ev,ses)=>{if(ev==='SIGNED_OUT'&&CL.user){CL.user=null;CL.state='login';render()}});
+  let ses=null;try{ses=(await CL.sb.auth.getSession()).data.session}catch(e){}
+  if(ses&&ses.user)cloudStart(ses.user);else{CL.state='login';render()}}
+document.addEventListener('submit',async e=>{if(e.target.id!=='loginForm')return;e.preventDefault();const b=$('#lgBtn');b.disabled=true;b.textContent='Connexion…';
+  const{data,error}=await CL.sb.auth.signInWithPassword({email:$('#lgMail').value.trim(),password:$('#lgPass').value});
+  if(error||!data||!data.user){CL.err=/invalid/i.test(error&&error.message||'')?'E-mail ou mot de passe incorrect.':cloudMsg(error);CL.state='login';render();return}
+  cloudStart(data.user)});
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act;
+  if(a==='cloudReload'){CL.stale=false;render();return}
+  if(a==='cloudRetry'){CL.err='';cloudFlush();return}
+  if(a==='logout'){if(pendN()&&!confirmLogout()){return}try{await CL.sb.auth.signOut()}catch(err){}if(CL.chan)CL.sb.removeChannel(CL.chan);CL.user=null;CL.state='login';CL.err='';
+    S=cloudEmpty();CL.pend={};pendSave();try{localStorage.removeItem(STORE)}catch(err){}baseline();UI.f=blankForm();UI.view='saisie';render();return}});
+function confirmLogout(){toast(`${pendN()} modification(s) pas encore envoyée(s) : reconnectez-vous à Internet avant de vous déconnecter.`);return false}
+window.addEventListener('online',()=>{CL.online=true;CL.err='';cloudFlush()});
+window.addEventListener('offline',()=>{CL.online=false;cloudBar()});
 /* ===== Registre de l'imagerie — application ===== */
-const STORE='registre-imagerie-chrt-v1';
+const STORE=window.REG_CLOUD?'registre-imagerie-cloud-v1':'registre-imagerie-chrt-v1';
 const FAMS=[['echo','Échographie','Prestations'],['rx','Radiographie','Radiographie'],['dop','Doppler','Doppler'],['spe','Examens spéciaux','Examens spéciaux'],['mam','Mammographie','Mammographie'],['scan','Scanner','Scanner']];
 if(!IMG_FAM_DEF.some(x=>x[0]==='scan'))IMG_FAM_DEF.push(['scan','Scanner','scan']);
 /* Scanner : [id, libellé, groupe, injection imposée par l'intitulé ('C' sans, '+C' avec, '' au choix), poids fictif] */
@@ -454,8 +550,8 @@ function markDemo(){const keep=S,recs=[...S.recs].filter(r=>/^IMG_\d+$/.test(r.c
 /* --- État --- */
 let S=null,persisted=true;
 function load(){try{const raw=localStorage.getItem(STORE);if(raw){const o=JSON.parse(raw);if(o&&o.v===1)return o}}catch(e){persisted=false}return null}
-function save(){try{localStorage.setItem(STORE,JSON.stringify(S));persisted=true;return true}catch(e){persisted=false;toast('Le stockage de ce navigateur est plein ou bloqué : exportez le registre (Paramètres) puis supprimez les mois anciens.');return false}}
-S=load();if(!S){S=buildDemo();save()}
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));persisted=true}catch(e){persisted=false;if(!CLOUD){toast('Le stockage de ce navigateur est plein ou bloqué : exportez le registre (Paramètres) puis supprimez les mois anciens.');return false}}if(CLOUD)cloudChanged();return true}
+S=load();if(!S){S=CLOUD?cloudEmpty():buildDemo();save()}
 {let ch=false;if(!S.imgCat.some(x=>x.fam==='scan')){S.imgCat.push(...scanCat());ch=true}
   const sy=S.imgSys||[...IMG_SYS_DEF];['Extrémités','Rachis'].forEach(y=>{if(!sy.includes(y)){sy.push(y);ch=true}});S.imgSys=sy;
   S.recs.forEach(r=>FAMS.forEach(([k])=>{if(!r.ex[k]){r.ex[k]={ids:[],date:'',rdv:''};ch=true}}));
@@ -485,7 +581,7 @@ function selectHtml(f){const items=itemsOf(f),sel=UI.f.sel[f]||'';
 function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null;
   const months=[];{const d=new Date();d.setMonth(d.getMonth()-11);for(let i=0;i<13;i++){months.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}`);d.setMonth(d.getMonth()+1)}}
   if(!months.includes(f.mois))months.unshift(f.mois);
-  const code=ed?ed.cle:'IMG_'+S.seq,ts=ed?ed.modif:null,tab=f.tab,cur=f.ex[tab],nTot=FAMS.reduce((a,[k])=>a+f.ex[k].ids.length,0);
+  const code=ed?ed.cle:CLOUD?'Attribué à l’enregistrement':'IMG_'+S.seq,ts=ed?ed.modif:null,tab=f.tab,cur=f.ex[tab],nTot=FAMS.reduce((a,[k])=>a+f.ex[k].ids.length,0);
   const opt=(v,l,s)=>`<option value="${esc(v)}" ${String(s)===String(v)?'selected':''}>${esc(l)}</option>`;
   return`<section class="entry">
   <form class="card patient" id="pForm" autocomplete="off">
@@ -528,7 +624,7 @@ function listTable(rows){
    ${FAMS.map(([k])=>{const e=r.ex[k];return`<td class="c-${k} ${e.ids.length?'on':''}">${e.ids.map((id,i)=>esc(exLabel(id))+(k==='scan'?' <b>'+esc(e.inj?.[i]||'C')+'</b>':'')).join('<br>')}${rdvBadge(e)}</td>`}).join('')}</tr>`).join('')||`<tr><td colspan="14" class="muted">Aucun passage.</td></tr>`}</tbody></table></div>`}
 function readForm(){const f=UI.f;document.querySelectorAll('[data-f]').forEach(el=>{f[el.dataset.f]=el.value})}
 function telOk(t){const d=t.replace(/\D/g,'');return!d||/^(7[05678]|3[03])\d{7}$/.test(d)}
-function saveRec(){readForm();const f=UI.f,err=[];
+async function saveRec(){if(CL.saving)return;readForm();const f=UI.f,err=[];
   UI.ferr={};const ep=nameErr(f.prenom),en=nameErr(f.nom);if(ep){UI.ferr.prenom=ep;err.push('le prénom')}if(en){UI.ferr.nom=en;err.push('le nom')}if(!f.sexe)err.push('le sexe');if(f.age==='')err.push('l’âge');if(!f.pay){UI.ferr.pay='Obligatoire.';err.push('le type de paiement')}
   const n=FAMS.reduce((a,[k])=>a+f.ex[k].ids.length,0);if(!n)err.push('au moins un examen');
   if(err.length){render();toast('À compléter : '+err.join(', ')+'.');(ep?$('#fPrenom'):en?$('#fNom'):null)?.focus();return}
@@ -538,7 +634,7 @@ function saveRec(){readForm();const f=UI.f,err=[];
     const key=dup?dup.cle:null;if(dup&&UI.confirmDup!==`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`){UI.confirmDup=`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`;render();return}}
   const now=nowLocal(),ex=clone(f.ex);
   if(f.edit){const r=S.recs.find(x=>x.cle===f.edit);Object.assign(r,{prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,modif:now});if(save())toast(`Fiche ${r.cle} mise à jour`)}
-  else{const cle='IMG_'+(S.seq++);S.recs.push({cle,cree:now,modif:now,prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex});if(save())toast(`Passage ${cle} enregistré`)}
+  else{CL.saving=true;let cle;try{cle=CLOUD?await newCode():'IMG_'+(S.seq++)}finally{CL.saving=false}S.recs.push({cle,cree:now,modif:now,prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex});if(save())toast(`Passage ${cle} enregistré`)}
   UI.confirmDup=null;UI.f=blankForm();render();window.scrollTo(0,0)}
 function openRec(cle){const r=S.recs.find(x=>x.cle===cle);if(!r)return;
   UI.f={edit:r.cle,prenom:r.prenom,nom:r.nom,sexe:r.sexe,age:String(r.age??''),origine:r.origine,mois:r.mois,tel:r.tel||'',pay:r.pay||'',tab:FAMS.find(([k])=>r.ex[k].ids.length)?.[0]||'echo',ex:clone(r.ex),sel:{}};
@@ -778,7 +874,7 @@ function finFiltTxt(){const G=UI.fin,a=[];if(G.src)a.push(G.src==='reel'?'mes sa
 function finFiltBar(){const G=UI.fin,opt=(v,l,s)=>`<option value="${esc(v)}" ${String(s)===String(v)?'selected':''}>${esc(l)}</option>`;
   return`<div class="filters">
    <label class="fld grow"><span>Rechercher dans le tableau (patient, code, téléphone, date, origine, paiement, examen, acte, montant)</span><input type="search" id="finQ" data-fin="q" value="${esc(G.q)}" placeholder="ex. LG · échographie thorax · 30/09/2026 · INTERNE · DIOUF" autocomplete="off"></label>
-   <label class="fld"><span>Données</span><select id="finSrc" data-fin="src">${opt('','Toutes',G.src)}${opt('reel','Mes saisies (hors démo)',G.src)}${opt('demo','Démonstration seulement',G.src)}</select></label>
+   ${S.recs.some(r=>r.demo)?`<label class="fld"><span>Données</span><select id="finSrc" data-fin="src">${opt('','Toutes',G.src)}${opt('reel','Mes saisies (hors démo)',G.src)}${opt('demo','Démonstration seulement',G.src)}</select></label>`:''}
    <label class="fld sm"><span>Du (date d’examen)</span><input type="date" id="finD1" data-fin="d1" value="${esc(G.d1)}"></label>
    <label class="fld sm"><span>Au (date d’examen)</span><input type="date" id="finD2" data-fin="d2" value="${esc(G.d2)}"></label>
    <label class="fld"><span>Type de paiement</span><select id="finPay" data-fin="pay">${opt('','Tous',G.pay)}${(S.payTypes||[]).map(p=>opt(p.id,p.l,G.pay)).join('')}${opt('__none','Non renseigné',G.pay)}</select></label>
@@ -1053,15 +1149,15 @@ function viewParams(){let used=0;try{used=(localStorage.getItem(STORE)||'').leng
    <div class="filters" style="margin-top:12px"><label class="fld grow"><span>Rechercher un acte (libellé, abréviation ou système)</span><input type="search" id="catQ" value="${esc(UI.catQ||'')}" placeholder="ex. genou, rx poumons, osseux"></label></div>
    <div id="catBox">${catTableHtml(k)}</div>`})()}</section>
   <section class="card"><div class="head"><h2>Données</h2></div>
-   <p class="small">${fmt(S.recs.length)} fiche(s) dans ce navigateur · ${(used/1048576).toLocaleString('fr-FR',{maximumFractionDigits:1})} Mo utilisés${S.demo?' · <b class="warnTxt">données de démonstration (noms fictifs)</b>':''}. Prochain code : IMG_${S.seq}.</p>
-   <div class="btns"><label class="btn primary" style="cursor:pointer">Importer un registre (.xlsx)<input type="file" id="impFile" accept=".xlsx,.xls,.xlsm" hidden></label><button type="button" class="btn ghost" data-act="xlsAll">Exporter tout le registre (.xlsx)</button><button type="button" class="btn danger" data-act="reset">Réinitialiser la démonstration</button></div>
+   <p class="small">${fmt(S.recs.length)} fiche(s) ${CLOUD?'dans le registre commun':'dans ce navigateur'} · ${(used/1048576).toLocaleString('fr-FR',{maximumFractionDigits:1})} Mo utilisés${S.demo?' · <b class="warnTxt">données de démonstration (noms fictifs)</b>':''}. ${CLOUD?'':'Prochain code : IMG_'+S.seq+'.'}</p>
+   <div class="btns"><label class="btn primary" style="cursor:pointer">Importer un registre (.xlsx)<input type="file" id="impFile" accept=".xlsx,.xls,.xlsm" hidden></label><button type="button" class="btn ghost" data-act="xlsAll">Exporter tout le registre (.xlsx)</button><button type="button" class="btn danger" data-act="goReal">${CLOUD?'Vider le registre commun':S.demo?'Supprimer les données fictives et démarrer en réel':'Vider le registre'}</button>${CLOUD||!S.demo?'':'<button type="button" class="btn danger" data-act="reset">Réinitialiser la démonstration</button>'}</div>
    <p class="muted small">L’import lit un classeur au format de votre registre (colonnes Clé primaire, PRENOM, NOM, SEXE, AGE, ORIGINE, MOIS, TEL, demanderx, Prestations, DEMANDE DOPPLER, DEMANDE EXAMENS SPECIAUX, DEMANDE MAMMO et dates d’examen et de RDV). L’export produit le même format : il peut être relu ici ou par la maquette du SIM.</p>
-   <p class="muted small">Les fiches sont conservées dans ce navigateur uniquement : elles ne sont ni partagées entre postes ni sauvegardées ailleurs. Exportez le registre régulièrement.</p></section>`}
+   <p class="muted small">${CLOUD?'Registre commun : les fiches sont enregistrées dans la base partagée et visibles sur tous les postes connectés. Une copie est gardée dans ce navigateur pour travailler pendant une coupure ; elle est envoyée dès le retour de la connexion. Exportez quand même le registre régulièrement comme sauvegarde.':'Les fiches sont conservées dans ce navigateur uniquement : elles ne sont ni partagées entre postes ni sauvegardées ailleurs. Exportez le registre régulièrement.'}</p></section>`}
 
 /* --- Rendu et événements --- */
 const VIEWS={saisie:viewSaisie,liste:viewListe,rapport:viewRapport,params:viewParams};
-function render(){imgSyncRef();document.querySelectorAll('[data-nav-btn]').forEach(b=>{const on=b.dataset.v===UI.view;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
-  $('#view').innerHTML=VIEWS[UI.view]();$('#demoTag').hidden=!S.demo;$('#store').textContent=persisted?'':'Stockage indisponible : les saisies seront perdues à la fermeture.'}
+function render(){imgSyncRef();if(cloudGate())return;document.querySelectorAll('[data-nav-btn]').forEach(b=>{const on=b.dataset.v===UI.view;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
+  $('#view').innerHTML=VIEWS[UI.view]();$('#demoTag').hidden=!S.demo;$('#store').textContent=persisted||CLOUD?'':'Stockage indisponible : les saisies seront perdues à la fermeture.'}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act,v=t.dataset.v;
   if(a==='closeBg'){if(e.target===t)closeModal();return}
   if(a==='close'){closeModal();return}
@@ -1110,6 +1206,21 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
     if(a==='addItem'&&similarActs(lib,v).length){$('#simBox').innerHTML=simHtml(lib,v,true);toast('Un acte similaire existe déjà : confirmez ou annulez.');return}
     S.imgCat.push({id:'c_'+Date.now().toString(36),lib,fam:v,sys,syn,w:0,prix:0,actif:true,...(v==='scan'?{inj:$('#nInj')?.value||''}:{})});save();render();toast('Examen ajouté à la liste');return}
   if(a==='reset'){modal(`<h2>Réinitialiser la démonstration ?</h2><p>Toutes les fiches de ce navigateur seront remplacées par les données fictives d’origine. Exportez d’abord le registre si vous avez saisi des données réelles.</p><div class="btns"><button type="button" class="btn danger" data-act="resetOk">Réinitialiser</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);return}
+  if(a==='goReal'){const nd=S.recs.filter(r=>r.demo).length,nr=S.recs.length-nd;
+    modal(`<div class="head"><h2>${CLOUD?'Vider le registre commun':'Démarrer en environnement réel'}</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
+    ${CLOUD?`<p>Les <b>${fmt(S.recs.length)}</b> fiche(s) du registre commun seront supprimées <b>pour tous les postes</b>. Les listes d’actes, tarifs et types de paiement sont conservés.</p>`:
+      `<p>${fmt(nd)} fiche(s) fictive(s) et ${fmt(nr)} fiche(s) saisie(s) dans ce navigateur. Les listes d’actes, tarifs et types de paiement sont conservés.</p>
+      <div class="fgrid1">${nr?`<label class="chk"><input type="radio" name="grWhat" value="demo" ${nd?'checked':''}> Supprimer seulement les fiches fictives (garder les ${fmt(nr)} fiche(s) saisie(s))</label><label class="chk"><input type="radio" name="grWhat" value="all" ${nd?'':'checked'}> Supprimer toutes les fiches, y compris les essais</label>`:'<input type="radio" name="grWhat" value="all" checked hidden>'}
+      <label class="fld"><span>Premier code des nouvelles fiches</span><input id="grSeq" type="number" min="1" value="${S.seq}" style="max-width:200px"></label></div>`}
+    <p class="small">Exportez d’abord le registre si vous voulez en garder une copie. Pour confirmer, tapez <b>VIDER</b> :</p>
+    <input id="grOk" autocomplete="off" style="max-width:200px">
+    <div class="btns" style="margin-top:10px"><button type="button" class="btn danger" data-act="goRealOk">Supprimer</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);setTimeout(()=>$('#grOk')?.focus(),0);return}
+  if(a==='goRealOk'){if(($('#grOk').value||'').trim().toUpperCase()!=='VIDER'){toast('Tapez VIDER pour confirmer.');$('#grOk').focus();return}
+    if(CLOUD){const n=S.recs.length;S.recs=[];save();closeModal();UI.f=blankForm();render();toast(`${fmt(n)} fiche(s) supprimée(s) du registre commun`);return}
+    const what=document.querySelector('input[name=grWhat]:checked')?.value||'all',seq=Math.max(1,Math.round(+$('#grSeq').value||1));
+    const keep=what==='all'?[]:S.recs.filter(r=>!r.demo),mx=keep.reduce((m,r)=>Math.max(m,+String(r.cle).replace(/\D/g,'')||0),0);
+    if(seq<=mx){toast('Ce premier code est déjà utilisé : choisissez un numéro supérieur à '+mx+'.');$('#grSeq').focus();return}
+    const n0=S.recs.length;S.recs=keep;S.demo=false;S.seq=seq;UI.fin.src='';UI.rap.months=[today().slice(0,7)];UI.f=blankForm();save();closeModal();render();toast(`${fmt(n0-S.recs.length)} fiche(s) supprimée(s). Le registre est prêt pour les données réelles.`);return}
   if(a==='resetOk'){S=buildDemo();save();UI.f=blankForm();closeModal();render();toast('Démonstration réinitialisée');return}
   if(a==='doImport'){doImport();return}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.target.matches('tr[data-act="open"]'))openRow(e.target.dataset.v)});
@@ -1147,6 +1258,6 @@ document.addEventListener('input',e=>{const t=e.target;
   if(t.id==='nLib'){const bx=$('#simBox');if(bx)bx.innerHTML=simHtml(t.value,UI.ptab||'echo',false);return}
   if(t.dataset.filt&&t.dataset.filt.endsWith('|q')){const k=t.dataset.filt.split('|')[0];UI[k].q=t.value;UI[k].page=0;refreshBlock(k,t.id);return}
   if(['prenom','nom','tel'].includes(t.dataset.f)){UI.f[t.dataset.f]=t.value;if(UI.f.from){delete UI.f.from;const bx=$('#exHead');if(bx)bx.remove()}if(UI.ferr[t.dataset.f]&&!nameErr(t.value)){delete UI.ferr[t.dataset.f];t.closest('.fld')?.classList.remove('invalid');t.parentNode.querySelector('.err')?.remove()}const b=$('#sugg');if(b)b.innerHTML=suggHtml()}});
-render();
+render();cloudInit();
 
 </script>
