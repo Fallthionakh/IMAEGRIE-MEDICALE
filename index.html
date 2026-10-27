@@ -119,7 +119,7 @@ td[class^="c-"]{min-width:120px;font-size:.82rem}
 .store{color:var(--err);font-size:.85rem}
 .cloudBar{flex-basis:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.82rem;color:var(--muted,#5b6470);padding-top:4px}
 .cloudBar .cuser{margin-left:auto;font-weight:600}.cdot{width:9px;height:9px;border-radius:50%;background:#9aa3ad;flex:none}.cdot.ok{background:#1f8a4c}.cdot.wait{background:#d49a12}.cdot.off,.cdot.err{background:#c0392b}
-.login{max-width:440px;margin:40px auto}.fgrid1{display:grid;gap:12px}
+.login{max-width:440px;margin:40px auto}.pwWrap{position:relative;display:block}.pwWrap input{width:100%;padding-right:46px}.pwEye{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--muted,#5b6470);padding:6px;border-radius:6px;cursor:pointer;line-height:0}.pwEye:hover{color:var(--ink,#1b2430);background:var(--tint-ext)}.pwEye.on .slash{display:none}.fgrid1{display:grid;gap:12px}
 
 .note.ok{border-left-color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,var(--surface))}
 .exHead{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:8px 10px;border-radius:7px;background:color-mix(in srgb,var(--ok) 9%,var(--surface));border-left:4px solid var(--ok)}
@@ -432,11 +432,11 @@ function cloudBar(){const el=document.getElementById('cloudBar');if(!el||!CLOUD)
   el.innerHTML=`<span class="cdot ${st[0]}"></span><span>${esc(st[1])}</span>${CL.stale?` <button type="button" class="btn ghost sm" data-act="cloudReload">Afficher les nouvelles données</button>`:''}${n&&CL.err?` <button type="button" class="btn ghost sm" data-act="cloudRetry">Réessayer</button>`:''}<span class="cuser">${esc(CL.user.email||'')}</span><button type="button" class="btn ghost sm" data-act="logout">Déconnexion</button>`}
 function loginView(){return`<section class="card login"><div class="head"><h2>Connexion au registre commun</h2></div>
   <p class="muted small">Le registre est partagé entre tous les postes du service. Utilisez le compte créé pour vous par l’administrateur.</p>
-  <form id="loginForm" class="fgrid1"><label class="fld"><span>E-mail</span><input type="email" id="lgMail" autocomplete="username" required></label>
-  <label class="fld"><span>Mot de passe</span><input type="password" id="lgPass" autocomplete="current-password" required></label>
+  <form id="loginForm" class="fgrid1"><label class="fld"><span>E-mail</span><input type="email" id="lgMail" autocomplete="username" required value="${esc(CL.lastMail||'')}"></label>
+  <label class="fld"><span>Mot de passe</span><span class="pwWrap"><input type="password" id="lgPass" autocomplete="current-password" required><button type="button" class="pwEye" data-act="pwEye" aria-label="Afficher le mot de passe" title="Afficher le mot de passe"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path class="slash" d="M3 3l18 18" stroke="currentColor" stroke-width="1.8"/></svg></button></span></label>
   ${CL.err&&CL.state==='login'?`<p class="note warn">${esc(CL.err)}</p>`:''}
   <div class="btns"><button type="submit" class="btn primary" id="lgBtn">Se connecter</button></div></form></section>`}
-function cloudGate(){if(!CLOUD)return false;document.querySelector('nav.main').hidden=!CL.user;cloudBar();
+function cloudGate(){if(!CLOUD)return false;document.querySelector('nav.main').style.display=CL.user?'':'none';cloudBar();
   if(CL.user)return false;$('#view').innerHTML=CL.state==='init'?'<p class="muted" style="padding:24px">Connexion…</p>':loginView();if(CL.state==='login')setTimeout(()=>$('#lgMail')?.focus(),0);return true}
 async function cloudStart(user){CL.user=user;CL.state='loading';CL.err='';render();
   try{await cloudPull();CL.state='ready';CL.online=true}catch(e){CL.err=cloudMsg(e);CL.online=false;CL.state='ready';baseline();toast('Base commune injoignable : travail sur la copie locale, envoi automatique au retour de la connexion.')}
@@ -448,10 +448,11 @@ async function cloudInit(){if(!CLOUD)return;pendLoad();
   let ses=null;try{ses=(await CL.sb.auth.getSession()).data.session}catch(e){}
   if(ses&&ses.user)cloudStart(ses.user);else{CL.state='login';render()}}
 document.addEventListener('submit',async e=>{if(e.target.id!=='loginForm')return;e.preventDefault();const b=$('#lgBtn');b.disabled=true;b.textContent='Connexion…';
-  const{data,error}=await CL.sb.auth.signInWithPassword({email:$('#lgMail').value.trim(),password:$('#lgPass').value});
-  if(error||!data||!data.user){CL.err=/invalid/i.test(error&&error.message||'')?'E-mail ou mot de passe incorrect.':cloudMsg(error);CL.state='login';render();return}
+  CL.lastMail=$('#lgMail').value.trim();const{data,error}=await CL.sb.auth.signInWithPassword({email:CL.lastMail,password:$('#lgPass').value});
+  if(error||!data||!data.user){{const m=error&&error.message||'';CL.err=/not confirmed/i.test(m)?'Compte non confirmé : dans Supabase (Authentication → Users), confirmez cet utilisateur ou recréez-le en cochant « Auto Confirm User ».':/invalid/i.test(m)?'E-mail ou mot de passe incorrect. Le compte doit avoir été créé dans Supabase (Authentication → Users) ; ce n’est pas le compte de connexion au site supabase.com.':cloudMsg(error)}CL.state='login';render();return}
   cloudStart(data.user)});
 document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act;
+  if(a==='pwEye'){const i=$('#lgPass');const show=i.type==='password';i.type=show?'text':'password';t.classList.toggle('on',show);t.setAttribute('aria-label',show?'Masquer le mot de passe':'Afficher le mot de passe');t.title=t.getAttribute('aria-label');i.focus();return}
   if(a==='cloudReload'){CL.stale=false;render();return}
   if(a==='cloudRetry'){CL.err='';cloudFlush();return}
   if(a==='logout'){if(pendN()&&!confirmLogout()){return}try{await CL.sb.auth.signOut()}catch(err){}if(CL.chan)CL.sb.removeChannel(CL.chan);CL.user=null;CL.state='login';CL.err='';
