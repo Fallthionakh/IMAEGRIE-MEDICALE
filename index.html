@@ -485,28 +485,51 @@ function parseActes(U){const out=[],seen=new Set();
   U.split('\n').forEach(line=>{const re=/([A-Z][A-Z' ]{2,30}?)\s*\/\s*([A-Z0-9][A-Z0-9 '+().,\-\/]{1,70}?)[\s|:!_\-—~.=]*(\d{1,3}(?:[ .]\d{3})+|\d{3,7})\s*F(?:CFA|\s*CFA)?\b/g;let m;
     while((m=re.exec(line))){let svc=m[1].trim().replace(/^[^A-Z]*/,'');{const k=svc.search(/RADIO|ECHO|SCAN|MAMMO|DOPPLER|IMAGERIE|EXAMEN|TDM|LABO|CONSULT/);if(k>0)svc=svc.slice(k)}const acte=m[2].replace(/[|!]+$/,'').trim(),px=numF(m[3]);if(/^(TEL|E-?MAIL|CHRT)/.test(svc))continue;const k=svc+'|'+acte+'|'+px;if(seen.has(k))continue;seen.add(k);out.push({svc,acte,px})}});
   return out}
+/* Montant écrit en lettres (« quarante-sept mille francs ») → nombre */
+function frWordsToNum(t){const U=RU(t).replace(/-/g,' ').replace(/\bET\b/g,' ');
+  const V={ZERO:0,UN:1,UNE:1,DEUX:2,TROIS:3,QUATRE:4,CINQ:5,SIX:6,SEPT:7,HUIT:8,NEUF:9,DIX:10,ONZE:11,DOUZE:12,TREIZE:13,QUATORZE:14,QUINZE:15,SEIZE:16,VINGT:20,VINGTS:20,TRENTE:30,QUARANTE:40,CINQUANTE:50,SOIXANTE:60,SEPTANTE:70,HUITANTE:80,NONANTE:90};
+  let tot=0,cur=0,any=false;for(const w of U.split(/\s+/).filter(Boolean)){if(w in V){any=true;if(V[w]===20&&cur%100===4)cur=cur-4+80;else cur+=V[w]}else if(w==='CENT'||w==='CENTS'){any=true;cur=(cur||1)*100}else if(w==='MILLE'){any=true;tot+=(cur||1)*1000;cur=0}else if(w==='MILLION'||w==='MILLIONS'){any=true;tot+=(cur||1)*1e6;cur=0}else if(any)break}
+  return any?tot+cur:''}
+const oneDigitOff=(a,b)=>{a=String(a);b=String(b);if(a.length!==b.length||a===b)return false;let d=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])d++;return d===1};
 function parseReceipt(text){const U=RU(text),L=U.split('\n'),r={raw:text};
-  const after=(re,cut)=>{for(const l of L){const m=l.match(re);if(m){let v=l.slice(m.index+m[0].length).replace(/^[\s|:.]+/,'');if(cut)v=v.split(cut)[0];return v}}return''};
+  const LABELS=/PR[EI]N[O0]M|\bN[O0][MN]{1,2}\s*[:.]|\bAGE\b|SEXE|AD+RES+E|T[EI]L[EI]PH?[O0]NE|MATR[I1L]CULE|TOTAL|CODE\s*PATIENT|AGENT|PRIS[E]?\s*EN\s*CHARGE/;
+  /* valeur après une étiquette ; si elle est vide sur la ligne (colonnes mal alignées), on prend le début de la ligne suivante */
+  const after=(re,cut,next)=>{for(let i=0;i<L.length;i++){const l=L[i],m=l.match(re);if(!m)continue;let v=l.slice(m.index+m[0].length).replace(/^[\s|:.]+/,'');if(cut)v=v.split(cut)[0];
+      if(!v.replace(/[^A-Z0-9]/g,'')&&next){for(let k=i+1;k<Math.min(L.length,i+3);k++){const n=L[k].replace(/^[\s|:.©®@]+/,'');if(!n.trim())continue;if(LABELS.test(n.split('|')[0]))break;v=n.split(cut||/\|/)[0];break}}return v}return''};
   const stop=/\||TOTAL|[A-Z]{4,}\s*\/\s*[A-Z]|\s{3,}|\bAGE\b|\bSEXE\b/;
   let m=U.match(/PAIEMENT\s*N\W{0,3}[\s|:.]*(\d{2}\/\d{2}\/\d{4}\s*\d{3,})/);r.recu=m?m[1].replace(/\s/g,''):'';
-  m=U.match(/CODE\s*PATIENT[\s|:.]*(\d{2}\/\d{2}\/\d{4}\s*[A-Z]{1,4}\s*\d{1,7})/);r.codePat=m?m[1].replace(/\s/g,''):'';
-  r.prenom=cleanName(after(/PRENOM\s*[:.]?/,stop));
-  r.nom=cleanName(after(/(?:^|[^A-Z])NOM\s*[:.]?/,stop));
+  m=U.match(/C[O0]DE\s*PATIENT[\s|:.]*(\d{2}\/\d{2}\/\d{4}\s*[A-Z]{1,4}\s*\d{1,7})/);r.codePat=m?m[1].replace(/\s/g,''):'';
+  r.prenom=cleanName(after(/PR[EI]N[O0]M\s*[:.]?/,stop,true));
+  r.nom=cleanName(after(/(?:^|[^A-Z])N[O0][MN]{1,2}\s*[:.]/,stop,true));
   m=U.match(/\bAGE[\s|:.\-—]{0,12}(\d{1,3})\s*(MOIS|JOURS?|ANS?|J\b)?/);if(m){r.ageV=+m[1];r.ageU=/^MOIS/.test(m[2]||'')?'mois':/^J/.test(m[2]||'')?'jours':'ans'}
   m=U.match(/SEXE[\s|:.]{0,8}([MF])(?![A-Z])/);r.sexe=m?m[1]:'';
-  r.adresse=cleanName(after(/ADRESSE\s*[:.]?/,stop));
-  m=U.match(/TELEPHONE[\s|:.]*([\d .]{9,})/);r.tel=m?m[1].replace(/\D/g,'').slice(0,9):'';
-  m=U.match(/MATRICULE[ \t|:.]*([A-Z0-9][A-Z0-9\/\-]{2,})/);r.matricule=m?m[1]:'';
+  r.adresse=cleanName(after(/AD+RES+E\s*[:.]?/,stop,true));
+  m=U.match(/T[EI]L[EI]PH?[O0]NE[\s|:.]*([\d .]{9,})/);r.tel=m?m[1].replace(/\D/g,'').slice(0,9):'';
+  r.matricule=after(/MATR[I1L]CULE\s*[:.]?/,/\||\s{3,}|TOTAL|AGENT|AINSI/,true).replace(/[^A-Z0-9\/\- ]/g,'').replace(/\s+/g,' ').trim();if(r.matricule.replace(/[^A-Z0-9]/g,'').length<2)r.matricule='';
+  /* tiers payant : nom de l'employeur ou de l'organisme sous « Patient pris en charge » */
+  r.tiers=cleanName(after(/PRIS[E]?\s*EN\s*CHARGE(?:\s*PAR)?\s*[:.]?/,/\||\s{3,}|TOTAL|AGENT|AINSI/,true));
+  if(!r.tiers){m=U.match(/(?:EMPLOYEUR|ORGANISME|ASSURANCE|SOCIETE)\s*[:.]\s*([A-Z][A-Z0-9 '&.\-]{2,40})/);if(m&&!/=/.test(m[0]))r.tiers=cleanName(m[1])}
   const amt=re=>{const x=U.match(re);return x?numF(x[1]):''};
   r.total=amt(/TOTAL(?!\W{0,3}(?:EM|PA[YV]))[^\n]*?(\d[\d .]*\d|\d)\s*F\s*CFA/);
   r.employeur=amt(/TOTAL\W{0,3}EM\w*[^\n]*?(\d[\d .]*\d|\d)\s*F\s*CFA/);
   r.paye=amt(/TOTAL\W{0,3}PA[YV]\w*[^\n]*?(\d[\d .]*\d|\d)\s*F\s*CFA/);
+  m=U.match(/EN DATE DU[^A-Z]*?\d{4}\s*A\s+(.+?)\s*FRANCS?/);r.lettres=m?frWordsToNum(m[1]):'';
   m=U.match(/EN DATE DU\s*(\d{2})\/(\d{2})\/(\d{4})/)||r.recu.match(/^(\d{2})\/(\d{2})\/(\d{4})/);r.dateRecu=m?`${m[3]}-${m[2]}-${m[1]}`:'';
-  m=U.match(/\b(\d{2})\/?(\d{2})\/?(\d{4})\s+(\d{2})[:H](\d{2})\b/);r.heure=m?m[4]+':'+m[5]:'';
+  m=U.match(/\bLE\s*\d{2}\W?\d{2}\W?\d{4}\s*[|]?\s*([01]?\d|2[0-3])\s*[:H.]\s*([0-5]\d)/)||U.match(/\b(\d{2})\/?(\d{2})\/?(\d{4})\s+(\d{2})[:H](\d{2})\b/)&&[0,...U.match(/\b\d{2}\/?\d{2}\/?\d{4}\s+(\d{2})[:H](\d{2})\b/).slice(1)];
+  r.heure=m?String(m[1]).padStart(2,'0')+':'+m[2]:'';
   r.agentEm=cleanName(after(/AGENT\s*EMETTEUR\s*[:.]?/,/AGENT|\s{3,}|\|/));
   r.agentFa=cleanName(after(/AGENT\s*FACTURATION\s*[:.]?/,/\s{3,}|\|/));
   r.actes=parseActes(U);
   return r}
+/* Contrôle croisé des montants : total, somme des actes, employeur + payé, montant en lettres ; corrige une erreur de lecture d'un chiffre */
+function fixAmounts(p){p.fixes=[];const S0=p.actes.reduce((a,x)=>a+(+x.px||0),0),cands=[];
+  if(p.total!=='')cands.push(+p.total);if(p.actes.length&&p.actes.every(x=>x.px!==''))cands.push(S0);if(p.employeur!==''&&p.paye!=='')cands.push(+p.employeur+(+p.paye));if(p.lettres)cands.push(+p.lettres,+p.lettres);
+  if(!cands.length)return;const cnt={};cands.forEach(v=>cnt[v]=(cnt[v]||0)+1);const TT=+Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||(+b===+p.lettres)-(+a===+p.lettres))[0];if(!(cnt[TT]>=2))return;
+  const fx=(lab,old,nw)=>p.fixes.push(`${lab} lu ${fcfa(old)}, corrigé en ${fcfa(nw)} (contrôle avec les autres montants${p.lettres?' et le montant en lettres':''}).`);
+  if(p.total!==''&&+p.total!==TT){fx('TOTAL',p.total,TT);p.total=TT}if(p.total==='')p.total=TT;
+  if(p.actes.length===1&&+p.actes[0].px!==TT){fx('Prix de l’acte',p.actes[0].px,TT);p.actes[0].px=TT}
+  else if(p.actes.length>1&&S0!==TT){const bad=p.actes.filter(x=>oneDigitOff(x.px,TT-(S0-x.px)));if(bad.length===1){const x=bad[0],nw=TT-(S0-x.px);fx('Prix de « '+x.acte+' »',x.px,nw);x.px=nw}}
+  if(p.employeur!==''&&p.paye!==''&&+p.employeur+(+p.paye)!==TT){if(oneDigitOff(p.paye,TT-p.employeur)){fx('TOTAL PAYÉ',p.paye,TT-p.employeur);p.paye=TT-p.employeur}else if(oneDigitOff(p.employeur,TT-p.paye)){fx('TOTAL EMPLOYEUR',p.employeur,TT-p.paye);p.employeur=TT-p.paye}}}
 /* Service du reçu → onglet de l'application ; acte du reçu → acte du catalogue */
 function famOfService(svc,acte){const s=RU(svc+' '+acte);
   if(/DOPPLER/.test(s))return'dop';if(/SCANN|TDM|TOMODENS|ANGIO ?SCAN|UROSCAN/.test(s))return'scan';if(/MAMMO/.test(s))return'mam';
@@ -558,6 +581,7 @@ function rcptModal(){const R=UI.rcpt,P=R.p;const opt=(v,l,s)=>`<option value="${
   if(!P.actes.length)chk.push('Aucune ligne « SERVICE / ACTE  PRIX » lue : ajoutez l’acte à la main dans la fiche.');
   if(tot&&sum&&sum!==tot)chk.push(`La somme des actes (${fcfa(sum)}) diffère du TOTAL lu (${fcfa(tot)}).`);
   if(tot&&(P.employeur!==''||P.paye!=='')&&(+P.employeur||0)+(+P.paye||0)!==tot)chk.push(`TOTAL EMPLOYEUR + TOTAL PAYÉ ne font pas le TOTAL (${fcfa(tot)}).`);
+  (P.fixes||[]).forEach(t=>chk.push('Corrigé automatiquement : '+t));if(+P.employeur>0&&!P.tiers)chk.push('Tiers payant : le nom de l’employeur ou de l’organisme n’a pas été lu, saisissez-le.');
   ['prenom','nom','sexe'].forEach(k=>{if(!P[k])chk.push(`${{prenom:'Prénom',nom:'Nom',sexe:'Sexe'}[k]} non lu.`)});
   const fld=(k,l,extra='')=>`<label class="fld ${P[k]===''||P[k]==null?'miss':''}"><span>${l}</span><input data-rc="${k}" value="${esc(P[k]??'')}" ${extra}></label>`;
   modal(`<div class="head"><h2>Vérifier les informations lues sur le reçu</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
@@ -570,6 +594,7 @@ function rcptModal(){const R=UI.rcpt,P=R.p;const opt=(v,l,s)=>`<option value="${
    <div class="rc4"><label class="fld ${P.ageV===''||P.ageV==null?'miss':''}"><span>Âge</span><input type="number" min="0" data-rc="ageV" value="${esc(P.ageV??'')}"></label><label class="fld"><span>Unité</span><select data-rc="ageU">${opt('ans','ans',P.ageU)}${opt('mois','mois',P.ageU)}${opt('jours','jours',P.ageU)}</select></label>
      <label class="fld ${P.sexe?'':'miss'}"><span>Sexe *</span><select data-rc="sexe">${opt('','—',P.sexe)}${opt('F','F',P.sexe)}${opt('M','M',P.sexe)}</select></label>${fld('tel','Téléphone','inputmode="tel"')}</div>
    <div class="rc2">${fld('adresse','Adresse')}${fld('matricule','Matricule')}</div>
+   ${+P.employeur>0||P.tiers?`<div class="rc2">${fld('tiers','Employeur / organisme (tiers payant)')}<div class="small muted" style="align-self:end;padding-bottom:10px">Lu sous « Patient pris en charge ».</div></div>`:''}
    <h3 class="rcH">Service, acte et prix</h3>
    <div class="rcTw"><table class="rcActs"><thead><tr><th>Lu sur le reçu</th><th>Service</th><th>Acte de la liste</th><th class="n">Prix</th></tr></thead><tbody>
    ${P.actes.map((x,i)=>{const items=x.fam?itemsOf(x.fam):[];return`<tr><td class="small mono">${esc(x.svc)} / ${esc(x.acte)}</td>
@@ -589,10 +614,12 @@ const titleAct=x=>{const c=coreActe(x.acte)||x.acte;const t=c.toLowerCase().repl
 function rcptPrepare(o){const p=mergeParsed(parseReceipt(o.text),o.text2?parseReceipt(o.text2):null);
   p.actes=p.actes.map(x=>{const fam=famOfService(x.svc,x.acte),m=matchActe(fam,x.acte);return{...x,fam,id:m?m.id:(fam?'__new':''),sc:m?m.sc:0,inj:fam==='scan'?(injOf(x.acte)||catById(m?.id)?.inj||'C'):'',sys:''}});
   if(p.paye===''&&p.total!==''&&p.employeur!=='')p.paye=Math.max(0,p.total-p.employeur);if(p.employeur===''&&p.total!==''&&p.paye!=='')p.employeur=Math.max(0,p.total-p.paye);
+  fixAmounts(p);
   p.origine='EXTERNE';p.ageU=p.ageU||'ans';if(p.ageV==null)p.ageV='';
   if(p.total===''&&p.actes.length)p.total=p.actes.reduce((a,x)=>a+(+x.px||0),0);
   if(p.paye===''&&p.total!==''&&p.employeur!=='')p.paye=Math.max(0,p.total-p.employeur);
-  p.pay=(p.employeur===0&&p.paye!==''&&+p.paye>0)?((S.payTypes||[]).find(t=>t.id==='paf')?'paf':''):'';
+  {const pt=(S.payTypes||[]),tn=norm(p.tiers||'');const hit=tn&&pt.find(t=>tn.includes(norm(t.l))||norm(t.l).includes(tn));
+   p.pay=hit?hit.id:(p.employeur===0&&p.paye!==''&&+p.paye>0)?(pt.find(t=>t.id==='paf')?'paf':''):'';}
 
   const th=document.createElement('canvas'),k=480/Math.max(o.canvas.width,o.canvas.height);th.width=o.canvas.width*k;th.height=o.canvas.height*k;th.getContext('2d').drawImage(o.canvas,0,0,th.width,th.height);
   UI.rcpt={p,thumb:th.toDataURL('image/jpeg',.8)};rcptModal()}
@@ -616,7 +643,7 @@ function rcptApply(){const P=UI.rcpt.p;const bad=P.actes.find(x=>!x.fam||!x.id);
   P.actes.forEach((x,i)=>{const e=f.ex[x.fam];e.ids.push(x.id);e.px=e.px||[];e.pp=e.pp||[];const k=e.ids.length-1;e.px[k]=+x.px||0;
     let pp='';if(paye!==''){pp=i===P.actes.length-1?rest:Math.round(tot?paye*(+x.px||0)/tot:0);rest-=pp}e.pp[k]=pp;if(x.fam==='scan'){e.inj=e.inj||[];e.inj[k]=x.inj||'C'}if(!e.date)e.date=P.dateRecu||today()});
   const d=P.dateRecu||today();Object.assign(f,{prenom:P.prenom,nom:P.nom,sexe:P.sexe,ageV:P.ageV===''?'':String(P.ageV),ageU:P.ageU||'ans',age:String(ageIdxOf(P.ageV,P.ageU)),origine:P.origine||'EXTERNE',mois:d.slice(0,7),tel:P.tel||'',pay:P.pay||'',
-    codePat:P.codePat||'',recu:P.recu||'',dateRecu:P.dateRecu||'',heure:P.heure||'',adresse:P.adresse||'',matricule:P.matricule||'',agentEm:P.agentEm||'',agentFa:P.agentFa||'',fromRecu:true,tab:P.actes[0]?.fam||'echo'});
+    codePat:P.codePat||'',recu:P.recu||'',tiers:P.tiers||'',dateRecu:P.dateRecu||'',heure:P.heure||'',adresse:P.adresse||'',matricule:P.matricule||'',agentEm:P.agentEm||'',agentFa:P.agentFa||'',fromRecu:true,tab:P.actes[0]?.fam||'echo'});
   UI.f=f;UI.rcpt=null;save();closeModal();UI.view='saisie';render();window.scrollTo(0,0);toast('Fiche remplie depuis le reçu : vérifiez puis cliquez sur « Enregistrer le passage ».')}
 /* ===== Registre de l'imagerie — application ===== */
 const STORE=window.REG_CLOUD?'registre-imagerie-cloud-v1':'registre-imagerie-chrt-v1';
@@ -727,8 +754,8 @@ function numOfCle(c){const m=String(c||'').match(/(\d+)$/);return m?+m[1]:''}
 function chrtCode(dIso,prenom,nom,n){const d=String(dIso||today()).slice(0,10).split('-'),ini=w=>(norm(w).replace(/[^a-z]/g,'')[0]||'X').toUpperCase();return`${d[2]}/${d[1]}/${d[0]}${ini(prenom)}${ini(nom)}${n}`}
 function ensureCodes(){let ch=0;S.recs.forEach(r=>{if(r.codePat||/^TMP_/.test(r.cle))return;r.codePat=chrtCode(r.cree,r.prenom,r.nom,numOfCle(r.ancien||r.cle));r.codeAuto=true;ch++});return ch}
 function codeOf(r){return r.codePat||r.cle}
-const XF=['codePat','recu','dateRecu','heure','ageV','adresse','matricule','agentEm','agentFa'];
-function blankForm(){UI.ferr={};return{edit:null,prenom:'',nom:'',sexe:'',age:'',ageV:'',ageU:'ans',codePat:'',recu:'',dateRecu:'',heure:'',adresse:'',matricule:'',agentEm:'',agentFa:'',origine:'EXTERNE',mois:today().slice(0,7),tel:'',pay:'',tab:UI.f?.tab||'echo',ex:emptyEx(),sel:{}}}
+const XF=['codePat','recu','dateRecu','heure','ageV','adresse','matricule','tiers','agentEm','agentFa'];
+function blankForm(){UI.ferr={};return{edit:null,prenom:'',nom:'',sexe:'',age:'',ageV:'',ageU:'ans',codePat:'',recu:'',dateRecu:'',heure:'',adresse:'',matricule:'',tiers:'',agentEm:'',agentFa:'',origine:'EXTERNE',mois:today().slice(0,7),tel:'',pay:'',tab:UI.f?.tab||'echo',ex:emptyEx(),sel:{}}}
 UI.f=blankForm();UI.jour=defFilt('jour','cree');UI.liste=defFilt('liste','cree');
 {const ms=[...new Set(S.recs.map(r=>r.mois))].sort();const full=ms.filter(m=>m<today().slice(0,7));UI.rap.months=[full[full.length-1]||ms[ms.length-1]].filter(Boolean)}
 
@@ -765,11 +792,13 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
     <label class="fld ${UI.ferr.pay?'invalid':''}"><span>Type de paiement <i>*</i></span><select id="fPay" data-act="pay"><option value="">— choisir —</option>${(S.payTypes||[]).map(p=>`<option value="${p.id}" ${f.pay===p.id?'selected':''}>${esc(p.l)}</option>`).join('')}<option value="__new">+ Nouveau type de paiement…</option></select>${UI.ferr.pay?`<small class="err">${esc(UI.ferr.pay)}</small>`:''}</label>
     <label class="fld"><span>Téléphone</span><input id="fTel" autocomplete="off" data-f="tel" value="${esc(f.tel)}" inputmode="tel" placeholder="9 chiffres, ex. 77 123 45 67"></label>
     <label class="fld"><span>Adresse</span><input id="fAdr" autocomplete="off" data-f="adresse" value="${esc(f.adresse)}" placeholder="Quartier, localité"></label>
-    <details class="recuBox" ${f.codePat||f.recu||f.matricule||f.agentEm||f.agentFa?'open':''}><summary>Reçu de caisse et code patient</summary>
+    <details class="recuBox" ${f.codePat||f.recu||f.matricule||f.tiers||f.agentEm||f.agentFa?'open':''}><summary>Reçu de caisse et code patient</summary>
       <div class="two"><label class="fld"><span>Code patient (CHRT)</span><input id="fCode" autocomplete="off" data-f="codePat" value="${esc(f.codePat)}" placeholder="ex. 15/10/2026SG411"></label>
       <label class="fld"><span>N° de reçu</span><input id="fRecu" autocomplete="off" data-f="recu" value="${esc(f.recu)}" placeholder="ex. 06/11/20261863353"></label></div>
       <div class="two"><label class="fld"><span>Date du reçu</span><input type="date" id="fDateR" data-f="dateRecu" value="${esc(f.dateRecu)}"></label>
       <label class="fld"><span>Matricule</span><input id="fMat" autocomplete="off" data-f="matricule" value="${esc(f.matricule)}"></label></div>
+      <div class="two"><label class="fld"><span>Heure du reçu</span><input id="fHeure" autocomplete="off" data-f="heure" value="${esc(f.heure)}" placeholder="ex. 08:43"></label>
+      <label class="fld"><span>Employeur / organisme (tiers payant)</span><input id="fTiers" autocomplete="off" data-f="tiers" value="${esc(f.tiers)}"></label></div>
       <div class="two"><label class="fld"><span>Agent émetteur</span><input id="fAgE" autocomplete="off" data-f="agentEm" value="${esc(f.agentEm)}"></label>
       <label class="fld"><span>Agent facturation</span><input id="fAgF" autocomplete="off" data-f="agentFa" value="${esc(f.agentFa)}"></label></div>
       <p class="small muted" style="margin:0">Sans code patient, l’application en crée un au format du CHRT : date + initiales + numéro.</p></details>
@@ -810,7 +839,7 @@ async function saveRec(){if(CL.saving)return;readForm();const f=UI.f,err=[];
   const prenom=f.prenom.trim().toUpperCase(),nom=f.nom.trim().toUpperCase(),tel=f.tel.replace(/\D/g,'');
   if(!f.edit){const dup=S.recs.find(r=>r.cree.slice(0,10)===today()&&r.prenom===prenom&&r.nom===nom&&(r.tel||'')===tel);
     const key=dup?dup.cle:null;if(dup&&UI.confirmDup!==`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`){UI.confirmDup=`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`;render();return}}
-  const now=nowLocal(),ex=clone(f.ex),xf={};XF.forEach(k=>xf[k]=String(f[k]??'').trim());xf.ageU=f.ageU||'ans';xf.codePat=xf.codePat.replace(/\s+/g,'').toUpperCase();xf.recu=xf.recu.replace(/\s+/g,'');['adresse','matricule','agentEm','agentFa'].forEach(k=>xf[k]=xf[k].toUpperCase());
+  const now=nowLocal(),ex=clone(f.ex),xf={};XF.forEach(k=>xf[k]=String(f[k]??'').trim());xf.ageU=f.ageU||'ans';xf.codePat=xf.codePat.replace(/\s+/g,'').toUpperCase();xf.recu=xf.recu.replace(/\s+/g,'');['adresse','matricule','tiers','agentEm','agentFa'].forEach(k=>xf[k]=xf[k].toUpperCase());
   if(xf.recu){const dr=S.recs.find(r=>r.recu===xf.recu&&r.cle!==f.edit);if(dr&&UI.confirmDup!=='recu:'+xf.recu){UI.confirmDup='recu:'+xf.recu;toast(`Le reçu ${xf.recu} est déjà enregistré (fiche ${codeOf(dr)}). Cliquez à nouveau sur Enregistrer pour confirmer.`);render();return}}
   if(f.edit){const r=S.recs.find(x=>x.cle===f.edit);const auto=!xf.codePat||(r.codeAuto&&xf.codePat===r.codePat);Object.assign(r,{prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,modif:now},xf);if(!xf.codePat||auto){r.codePat=r.codeAuto||!xf.codePat?chrtCode(r.cree,prenom,nom,numOfCle(r.ancien||r.cle)):xf.codePat;r.codeAuto=true}else delete r.codeAuto;if(save())toast(`Fiche ${r.cle} mise à jour`)}
   else{CL.saving=true;let cle;try{cle=CLOUD?await newCode():'IMG_'+(S.seq++)}finally{CL.saving=false}const rec={cle,cree:now,modif:now,prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,...xf};if(!rec.codePat){rec.codePat=chrtCode(now,prenom,nom,numOfCle(cle));rec.codeAuto=true}S.recs.push(rec);if(save())toast(`Passage enregistré · code patient ${rec.codePat}`)}
@@ -831,7 +860,7 @@ const pendingRdv=r=>FAMS.filter(([k])=>['prevu','retard'].includes(rdvState(r.ex
 function defFilt(key,mode){return{key,mode,date:today(),q:'',sexe:'',age:'',org:'',fam:'',rst:'',page:0}}
 function filtRows(F){const q=norm(F.q),qd=F.q.replace(/\D/g,''),d=F.key==='jour'?today():F.date;let rows=S.recs;
   if(F.mode==='cree')rows=rows.filter(r=>r.cree.slice(0,10)===d);else if(F.mode==='rdv')rows=rows.filter(r=>FAMS.some(([k])=>r.ex[k].rdv===d&&r.ex[k].ids.length));
-  if(q){const ws=q.split(' ');rows=rows.filter(r=>{const h=norm(r.cle+' '+(r.codePat||'')+' '+(r.recu||'')+' '+r.prenom+' '+r.nom+' '+(r.adresse||'')+' '+(r.matricule||''));return ws.every(w=>h.includes(w))||(qd.length>=4&&(r.tel||'').includes(qd))})}
+  if(q){const ws=q.split(' ');rows=rows.filter(r=>{const h=norm(r.cle+' '+(r.codePat||'')+' '+(r.recu||'')+' '+r.prenom+' '+r.nom+' '+(r.adresse||'')+' '+(r.matricule||'')+' '+(r.tiers||''));return ws.every(w=>h.includes(w))||(qd.length>=4&&(r.tel||'').includes(qd))})}
   if(F.sexe)rows=rows.filter(r=>(r.sexe||'X')===F.sexe);
   if(F.age!=='')rows=rows.filter(r=>String(r.age)===F.age);
   if(F.org)rows=rows.filter(r=>r.origine===F.org);
@@ -1006,7 +1035,7 @@ function finRecs(months){const G=UI.fin,q=nq(G.q||''),qd=(G.q||'').replace(/\D/g
   const byDate=!!(G.d1||G.d2);S.recs.forEach(r=>{if(!byDate&&!months.includes(r.mois))return;if(G.src==='reel'&&r.demo)return;if(G.src==='demo'&&!r.demo)return;const d=r.cree.slice(0,10);
     if(G.pay&&(r.pay||'__none')!==G.pay)return;if(G.org&&r.origine!==G.org)return;if(G.sexe&&(r.sexe||'X')!==G.sexe)return;if(G.age!==''&&String(r.age)!==G.age)return;
     const telHit=qd.length>=4&&qd.length===(G.q||'').replace(/\s/g,'').length&&(r.tel||'').replace(/\D/g,'').includes(qd);
-    const base=' '+nq([r.cle,r.codePat||'',r.recu||'',r.matricule||'',r.agentEm||'',r.agentFa||'',r.prenom,r.nom,r.tel||'',frDate(d),d,r.origine||'',r.sexe||'',AGES[r.age]?.[0]||'',r.pay?(payById(r.pay)?.l||r.pay):'non renseigne'].join(' '))+' ';
+    const base=' '+nq([r.cle,r.codePat||'',r.recu||'',r.matricule||'',r.tiers||'',r.agentEm||'',r.agentFa||'',r.prenom,r.nom,r.tel||'',frDate(d),d,r.origine||'',r.sexe||'',AGES[r.age]?.[0]||'',r.pay?(payById(r.pay)?.l||r.pay):'non renseigne'].join(' '))+' ';
     const ex={};let n=0;FAMS.forEach(([f])=>{const e=r.ex[f];if(!e||!e.ids.length||(G.fam&&G.fam!==f))return;const fd=e.date||d;if(G.d1&&fd<G.d1)return;if(G.d2&&fd>G.d2)return;const keep=[];const famL=nq(FAMS.find(x=>x[0]===f)[1]+' '+FAMS.find(x=>x[0]===f)[2]);
       e.ids.forEach((id,i)=>{if(!ws.length||telHit){keep.push(i);return}const it=catById(id),px=+(e.px&&e.px[i])||0,pp=+(e.pp&&e.pp[i])||0;
         const h=base+' '+nq(frDate(fd)+' '+fd)+' '+famL+' '+nq((it?.lib||id)+' '+(it?.sys||'')+' '+(f==='scan'?(e.inj?.[i]||it?.inj||'C'):''))+' '+px+' '+pp+' '+(px-pp)+' ';
@@ -1044,7 +1073,7 @@ function buildFinance(){const months=[...UI.rap.months].sort(),recs=finRecs(mont
   if(noPx)notes.push(`${fmt(noPx)} acte(s) sans prix renseigné, comptés à 0 F.`);
   const fdOf=r=>FAMS.map(([f])=>r.ex[f].ids.length?(r.ex[f].fd||r.cree.slice(0,10)):'').filter(Boolean).sort()[0]||r.cree.slice(0,10);
   const pl=[...recs].sort((a,b)=>(fdOf(b)+b.cree).localeCompare(fdOf(a)+a.cree)).map(r=>{let n=0,px=0,pp=0;const acts=[];FAMS.forEach(([f])=>{const e=r.ex[f];e.ids.forEach((id,i)=>{n++;px+=+(e.px&&e.px[i])||0;pp+=+(e.pp&&e.pp[i])||0;acts.push((catById(id)?.lib||id)+(f==='scan'?' '+(e.inj?.[i]||catById(id)?.inj||'C'):''))})});
-    return{cle:r.cle,code:codeOf(r),recu:r.recu||'',demo:!!r.demo,d:fdOf(r),pat:(r.prenom+' '+r.nom).trim(),org:r.origine||'',pay:r.pay?(payById(r.pay)?.l||r.pay):'Non renseigné',acts:acts.join(' ; '),n,px,pp}});
+    return{cle:r.cle,code:codeOf(r),recu:r.recu||'',demo:!!r.demo,d:fdOf(r),pat:(r.prenom+' '+r.nom).trim(),org:r.origine||'',pay:(r.pay?(payById(r.pay)?.l||r.pay):'Non renseigné')+(r.tiers?' · '+r.tiers:''),acts:acts.join(' ; '),n,px,pp}});
   if(finActive(UI.fin))notes.push('Rapport filtré : '+finFiltTxt()+'.');
   return{tables:[t1,t2,t3,t4,t5],pl,T,months,filt:finActive(UI.fin)?finFiltTxt():'',label:(UI.fin.d1||UI.fin.d2)?finPeriod():months.length>1?moisXl(months[0])+' à '+moisXl(months[months.length-1]):moisXl(months[0]),notes,demo:!!S.demo}}
 const finPeriod=()=>{const G=UI.fin;return G.d1&&G.d1===G.d2?'journée du '+frDate(G.d1):'du '+(G.d1?frDate(G.d1):'début')+' au '+(G.d2?frDate(G.d2):'fin')};
@@ -1254,7 +1283,7 @@ const cellList=(ids,rx)=>ids.map(id=>{const it=catById(id);if(!it)return'';retur
 function regRows(recs){return recs.map(r=>({'AGE':AGES[r.age]?.[0]||'','Clé primaire':r.cle,'Demande':cellList(r.ex.echo.ids,false),'DEMANDE DOPPLER':cellList(r.ex.dop.ids,false),'DEMANDE EXAMENS SPECIAUX':cellList(r.ex.spe.ids,false),'DEMANDE MAMMO':cellList(r.ex.mam.ids,false),
   'demanderx':cellList(r.ex.rx.ids,true),'EXAMEN_ECHO':frDate(r.ex.echo.date),'Horodatage de modification':frDate(r.modif)+' '+r.modif.slice(11,19),'MOIS':moisCode(r.mois),'NOM':r.nom,'ORIGINE':r.origine,'PRENOM':r.prenom,
   'Prestations':r.ex.echo.ids.map(id=>(catById(id)?.lib||'').toUpperCase()).join('\n'),'RDV_ECHO':frDate(r.ex.echo.rdv),'SEXE':r.sexe,'TEL':r.tel,'EXAMEN_RX':frDate(r.ex.rx.date),'RDV_RX':frDate(r.ex.rx.rdv),'EXAMEN_DOPPLER':frDate(r.ex.dop.date),'RDV_DOPPLER':frDate(r.ex.dop.rdv),
-  'EXAMEN_EXAM SPEC':frDate(r.ex.spe.date),'RDV_EXAM SPEC':frDate(r.ex.spe.rdv),'EXAMEN_MAMMO':frDate(r.ex.mam.date),'RDV_MAMMO':frDate(r.ex.mam.rdv),'NBRE CLICHES RX':(r.ex.rx.cl||[]).reduce((a,x)=>a+(+x||0),0)||'','NBRE CLICHES EXAM SPEC':(r.ex.spe.cl||[]).reduce((a,x)=>a+(+x||0),0)||'','NBRE CLICHES MAMMO':(r.ex.mam.cl||[]).reduce((a,x)=>a+(+x||0),0)||'','DEMANDE SCANNER':(r.ex.scan?.ids||[]).map((id,i)=>`${catById(id)?.lib||''} ${r.ex.scan.inj?.[i]||'C'}\n_\n`).join(''),'EXAMEN_SCANNER':frDate(r.ex.scan?.date),'RDV_SCANNER':frDate(r.ex.scan?.rdv),'TYPE PAIEMENT':payById(r.pay)?.l||'','MONTANT ACTES':passMoney(r.ex).px||'','PART PATIENT':passMoney(r.ex).pp||'','CODE PATIENT':r.codePat||'','N° RECU':r.recu||'','DATE RECU':frDate(r.dateRecu),'AGE EXACT':r.ageV!==''&&r.ageV!=null?r.ageV+' '+(r.ageU||'ans'):'','ADRESSE':r.adresse||'','MATRICULE':r.matricule||'','AGENT EMETTEUR':r.agentEm||'','AGENT FACTURATION':r.agentFa||'','DONNEES (ne pas modifier)':JSON.stringify(r)}))}
+  'EXAMEN_EXAM SPEC':frDate(r.ex.spe.date),'RDV_EXAM SPEC':frDate(r.ex.spe.rdv),'EXAMEN_MAMMO':frDate(r.ex.mam.date),'RDV_MAMMO':frDate(r.ex.mam.rdv),'NBRE CLICHES RX':(r.ex.rx.cl||[]).reduce((a,x)=>a+(+x||0),0)||'','NBRE CLICHES EXAM SPEC':(r.ex.spe.cl||[]).reduce((a,x)=>a+(+x||0),0)||'','NBRE CLICHES MAMMO':(r.ex.mam.cl||[]).reduce((a,x)=>a+(+x||0),0)||'','DEMANDE SCANNER':(r.ex.scan?.ids||[]).map((id,i)=>`${catById(id)?.lib||''} ${r.ex.scan.inj?.[i]||'C'}\n_\n`).join(''),'EXAMEN_SCANNER':frDate(r.ex.scan?.date),'RDV_SCANNER':frDate(r.ex.scan?.rdv),'TYPE PAIEMENT':payById(r.pay)?.l||'','MONTANT ACTES':passMoney(r.ex).px||'','PART PATIENT':passMoney(r.ex).pp||'','CODE PATIENT':r.codePat||'','N° RECU':r.recu||'','DATE RECU':frDate(r.dateRecu),'AGE EXACT':r.ageV!==''&&r.ageV!=null?r.ageV+' '+(r.ageU||'ans'):'','ADRESSE':r.adresse||'','MATRICULE':r.matricule||'','TIERS PAYANT':r.tiers||'','HEURE RECU':r.heure||'','AGENT EMETTEUR':r.agentEm||'','AGENT FACTURATION':r.agentFa||'','DONNEES (ne pas modifier)':JSON.stringify(r)}))}
 function xlsRegister(months){if(!window.XLSX){toast('Module Excel non chargé.');return}const recs=S.recs.filter(r=>!months||months.includes(r.mois));
   const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(regRows(recs));XLSX.utils.book_append_sheet(wb,ws,'REGISTRE');
   saveFile(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:XLSX_T}),`Registre-imagerie-${months?months.map(moisCode).join('_'):'complet'}.xlsx`)}
@@ -1282,7 +1311,7 @@ async function readImport(file){if(!window.XLSX)throw new Error('Module Excel no
     const ts=stamp instanceof Date&&!isNaN(stamp)?`${toIso(stamp)}T${pad(stamp.getHours())}:${pad(stamp.getMinutes())}:${pad(stamp.getSeconds())}`:ym+'-01T00:00:00';
     const sx=String(col(r,'SEXE')??'').trim().toUpperCase(),og=String(col(r,'ORIGINE')??'').trim().toUpperCase();
     const rec={cle,cree:ts,modif:ts,prenom:String(col(r,'PRENOM')??'').trim().toUpperCase(),nom:String(col(r,'NOM')??'').trim().toUpperCase(),sexe:sx==='F'||sx==='M'?sx:'',age:ageOf(col(r,'AGE')),origine:og==='INTERNE'?'INTERNE':og==='EXTERNE'?'EXTERNE':'',mois:ym,tel:String(col(r,'TEL')??'').replace(/\D/g,''),ex};
-    const tx=k=>String(col(r,k)??'').trim();rec.codePat=tx('CODE PATIENT').replace(/\s+/g,'').toUpperCase();rec.recu=tx('N° RECU').replace(/\s+/g,'');rec.dateRecu=toIso(col(r,'DATE RECU'));rec.adresse=tx('ADRESSE').toUpperCase();rec.matricule=tx('MATRICULE').toUpperCase();rec.agentEm=tx('AGENT EMETTEUR').toUpperCase();rec.agentFa=tx('AGENT FACTURATION').toUpperCase();
+    const tx=k=>String(col(r,k)??'').trim();rec.codePat=tx('CODE PATIENT').replace(/\s+/g,'').toUpperCase();rec.recu=tx('N° RECU').replace(/\s+/g,'');rec.dateRecu=toIso(col(r,'DATE RECU'));rec.adresse=tx('ADRESSE').toUpperCase();rec.matricule=tx('MATRICULE').toUpperCase();rec.tiers=tx('TIERS PAYANT').toUpperCase();rec.heure=tx('HEURE RECU');rec.agentEm=tx('AGENT EMETTEUR').toUpperCase();rec.agentFa=tx('AGENT FACTURATION').toUpperCase();
     {const m=tx('AGE EXACT').match(/(\d+)\s*(ans|mois|jours)?/i);if(m){rec.ageV=m[1];rec.ageU=(m[2]||'ans').toLowerCase()}}
     {const pl=norm(tx('TYPE PAIEMENT'));if(pl){let t=(S.payTypes||[]).find(p=>norm(p.l)===pl);if(!t){t={id:'p_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),l:tx('TYPE PAIEMENT').toUpperCase()};S.payTypes.push(t)}rec.pay=t.id}}
     {const tot=+col(r,'MONTANT ACTES')||0,pp=col(r,'PART PATIENT');if(tot){const all=[];FAMS.forEach(([k])=>{const e=ex[k];e.px=e.ids.map((id,i)=>tarifOf(id,k==='scan'?e.inj?.[i]:''));e.pp=e.ids.map(()=>'');e.ids.forEach((id,i)=>all.push([e,i]))});
