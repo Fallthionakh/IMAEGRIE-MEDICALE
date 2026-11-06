@@ -1,3 +1,9 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f5c8c">
 <title>Registre de l'imagerie</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -121,7 +127,7 @@ td[class^="c-"]{min-width:120px;font-size:.82rem}
 .cloudBar .cuser{margin-left:auto;font-weight:600}.cdot{width:9px;height:9px;border-radius:50%;background:#9aa3ad;flex:none}.cdot.ok{background:#1f8a4c}.cdot.wait{background:#d49a12}.cdot.off,.cdot.err{background:#c0392b}
 .login{max-width:440px;margin:40px auto}
 .scanBtn{display:inline-flex;align-items:center;gap:8px;justify-content:center;cursor:pointer;border:1.5px dashed var(--accent,#0f5c8c);color:var(--accent,#0f5c8c);background:var(--tint-ext);font-weight:600;padding:10px 12px;border-radius:10px;width:100%;box-sizing:border-box}
-.scanBtn:hover{filter:brightness(.97)}.ageRow{display:flex;gap:6px}.ageRow input{flex:1;min-width:0}.ageRow select{flex:0 0 92px}
+.scanBtn:hover{filter:brightness(.97)}.scanRow{display:flex;gap:8px;flex-wrap:wrap}.scanRow .scanBtn{flex:1 1 180px;width:auto}.scanAlt{cursor:pointer;flex:0 1 auto;display:inline-flex;align-items:center;justify-content:center}.ageRow{display:flex;gap:6px}.ageRow input{flex:1;min-width:0}.ageRow select{flex:0 0 92px}
 .recuBox{border:1px solid var(--line,#dfe3e8);border-radius:10px;padding:8px 10px}.recuBox>summary{cursor:pointer;font-weight:600;font-size:.9rem;padding:2px 0}.recuBox[open]>summary{margin-bottom:8px}.recuBox .two{margin-bottom:8px}
 .modal.wide{max-width:1100px;width:calc(100vw - 32px)}.rcGrid{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:16px;align-items:start}.rcGrid>*{min-width:0}.rcTw{overflow-x:auto;margin-bottom:10px}.rcImg img{width:100%;border:1px solid var(--line,#dfe3e8);border-radius:8px;position:sticky;top:0}
 .rc2,.rc3,.rc4{display:grid;gap:8px;margin-bottom:8px}.rc2{grid-template-columns:1fr 1fr}.rc3{grid-template-columns:repeat(3,1fr)}.rc4{grid-template-columns:90px 100px 90px 1fr}
@@ -745,8 +751,8 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
   const opt=(v,l,s)=>`<option value="${esc(v)}" ${String(s)===String(v)?'selected':''}>${esc(l)}</option>`;
   return`<section class="entry">
   <form class="card patient" id="pForm" autocomplete="off">
-    <div class="codeRow"><div><span class="lab">Code patient</span><span class="code mono">${esc(f.codePat||(ed&&ed.codePat)||'')}${f.codePat||(ed&&ed.codePat)?'':'<span class="small muted" style="font-family:inherit;font-size:13px;display:block">généré à l’enregistrement</span>'}</span><span class="small muted mono" style="display:block">N° passage ${esc(code)}</span></div><div class="stamp mono">${ts?frDate(ts)+' '+ts.slice(11,19):'nouveau passage'}</div></div>
-    ${ed?'':`<label class="btn scanBtn"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg> Remplir depuis la photo du reçu<input type="file" id="rcFile" accept="image/*" hidden></label>`}
+    <div class="codeRow"><div><span class="lab">Code patient</span><span class="code mono">${esc(f.codePat||(ed&&ed.codePat)||'')}${f.codePat||(ed&&ed.codePat)?'':'<span class="small muted" style="font-family:inherit;font-size:13px;display:block">généré à l’enregistrement</span>'}</span>${ed||!CLOUD?`<span class="small muted mono" style="display:block">N° passage ${esc(code)}</span>`:''}</div><div class="stamp mono">${ts?frDate(ts)+' '+ts.slice(11,19):'nouveau passage'}</div></div>
+    ${ed?'':`<div class="scanRow"><label class="btn scanBtn"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg> Photographier le reçu<input type="file" id="rcCam" accept="image/*" capture="environment" hidden></label><label class="btn ghost scanAlt">Choisir une image<input type="file" id="rcFile" accept="image/*" hidden></label></div>`}
     ${f.fromRecu&&!ed?`<div class="note ok small">Fiche remplie depuis le reçu ${esc(f.recu||'')} : vérifiez les champs puis enregistrez.</div>`:''}
     ${ed?`<div class="note warn">Modification de la fiche ${esc(ed.cle)} enregistrée le ${frDate(ed.cree)} à ${ed.cree.slice(11,16)}.</div>`:''}
     <label class="fld ${UI.ferr.prenom?'invalid':''}"><span>Prénom <i>*</i></span><input id="fPrenom" autocomplete="off" data-f="prenom" value="${esc(f.prenom)}" autocapitalize="characters" required aria-required="true" aria-invalid="${!!UI.ferr.prenom}">${UI.ferr.prenom?`<small class="err">${esc(UI.ferr.prenom)}</small>`:''}</label>
@@ -1358,7 +1364,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
   if(a==='oldImport'){const L=oldLocal();if(!L)return;const byCle=new Map(S.recs.map((r,i)=>[r.cle,i]));let add=0,rep=0;
     L.recs.forEach(r0=>{const r=clone(r0);delete r.demo;r.ancien=r.ancien||r.cle;r.cle=impKey(r);if(byCle.has(r.cle)){S.recs[byCle.get(r.cle)]=r;rep++}else{byCle.set(r.cle,S.recs.length);S.recs.push(r);add++}});
     ensureCodes();save();try{L.o.migreLe=today();localStorage.setItem('registre-imagerie-chrt-v1',JSON.stringify(L.o))}catch(e){}render();toast(`${fmt(add)} fiche(s) ajoutée(s) au registre commun${rep?', '+fmt(rep)+' remplacée(s)':''}.`);return}
-  if(a==='rcAgain'){closeModal();UI.rcpt=null;if(UI.view!=='saisie'){UI.view='saisie';render()}$('#rcFile')?.click();return}
+  if(a==='rcAgain'){closeModal();UI.rcpt=null;if(UI.view!=='saisie'){UI.view='saisie';render()}(matchMedia('(pointer:coarse)').matches?$('#rcCam'):$('#rcFile'))?.click();return}
   if(a==='newRec'){UI.f=blankForm();UI.confirmDup=null;render();return}
   if(a==='delRec'){modal(`<h2>Supprimer la fiche ${esc(UI.f.edit)} ?</h2><p>Le passage et ses examens seront retirés du registre et du rapport.</p><div class="btns"><button type="button" class="btn danger" data-act="delOk">Supprimer</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);return}
   if(a==='delOk'){S.recs=S.recs.filter(r=>r.cle!==UI.f.edit);save();toast(`Fiche ${UI.f.edit} supprimée`);UI.f=blankForm();closeModal();render();return}
@@ -1418,7 +1424,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
   if(a==='doImport'){doImport();return}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();if(e.key==='Enter'&&e.target.matches('tr[data-act="open"]'))openRow(e.target.dataset.v)});
 document.addEventListener('change',async e=>{const t=e.target,a=t.dataset.act,v=t.dataset.v;
-  if(t.id==='rcFile'){const f=t.files&&t.files[0];t.value='';if(f){readForm();rcptStart(f)}return}
+  if(t.id==='rcFile'||t.id==='rcCam'){const f=t.files&&t.files[0];t.value='';if(f){readForm();rcptStart(f)}return}
   if(t.dataset.f==='ageU'){UI.f.ageU=t.value;const i=ageIdxOf($('#fAgeV')?.value,t.value);if(i!==''){UI.f.age=String(i);const s=$('#fAge');if(s)s.value=String(i)}return}
   if(t.dataset.rc&&UI.rcpt){const P=UI.rcpt.p,k=t.dataset.rc;P[k]=['total','employeur','paye','ageV'].includes(k)?(t.value===''?'':+t.value):t.value;rcptKeep();return}
   if(t.dataset.rca&&UI.rcpt){const[i,k]=t.dataset.rca.split('|'),x=UI.rcpt.p.actes[+i];if(k==='px')x.px=t.value===''?'':+t.value;else x[k]=t.value;
@@ -1461,3 +1467,5 @@ document.addEventListener('input',e=>{const t=e.target;
 render();cloudInit();setTimeout(()=>{try{(window.requestIdleCallback||setTimeout)(tessPreload)}catch(e){}},4000);
 
 </script>
+
+</html>
