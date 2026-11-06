@@ -131,10 +131,12 @@ td[class^="c-"]{min-width:120px;font-size:.82rem}
 .recuBox{border:1px solid var(--line,#dfe3e8);border-radius:10px;padding:8px 10px}.recuBox>summary{cursor:pointer;font-weight:600;font-size:.9rem;padding:2px 0}.recuBox[open]>summary{margin-bottom:8px}.recuBox .two{margin-bottom:8px}
 .modal.wide{max-width:1100px;width:calc(100vw - 32px)}.rcGrid{display:grid;grid-template-columns:minmax(0,260px) minmax(0,1fr);gap:16px;align-items:start}.rcGrid>*{min-width:0}.rcTw{overflow-x:auto;margin-bottom:10px}.rcImg img{width:100%;border:1px solid var(--line,#dfe3e8);border-radius:8px;position:sticky;top:0}
 .rc2,.rc3,.rc4{display:grid;gap:8px;margin-bottom:8px}.rc2{grid-template-columns:1fr 1fr}.rc3{grid-template-columns:repeat(3,1fr)}.rc4{grid-template-columns:90px 100px 90px 1fr}
-.fld.miss input,.fld.miss select{background:var(--warn-soft);border-color:var(--warn)}.rcH{margin:12px 0 6px;font-size:1rem}
-table.rcActs{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:.88rem}table.rcActs th,table.rcActs td{border-bottom:1px solid var(--line,#dfe3e8);padding:6px;text-align:left;vertical-align:top}table.rcActs td.n,table.rcActs th.n{text-align:right}table.rcActs select{max-width:100%;margin-bottom:4px}
+.fld.doubt input{border:2px solid var(--warn);background:var(--warn-soft)}.fld.doubt>span::after{content:' · à vérifier';color:var(--warn);font-weight:600}.fld.miss input,.fld.miss select{background:var(--warn-soft);border-color:var(--warn)}.rcH{margin:12px 0 6px;font-size:1rem}
+.rcActs{display:grid;gap:8px;margin-bottom:10px}.rcAct{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) 110px 34px;gap:8px;align-items:end;border:1px solid var(--line);border-radius:8px;padding:8px}.rcAct .rcLu{grid-column:1/-1}.rcAct .x{height:38px}.rcAct select{width:100%;margin-bottom:4px}
+.note.err{background:#fdecea;border-left:4px solid var(--err);color:var(--ink)}@media (prefers-color-scheme:dark){.note.err{background:#3a1d1b}}
+table.rcActsOld{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:.88rem}table.rcActs th,table.rcActs td{border-bottom:1px solid var(--line,#dfe3e8);padding:6px;text-align:left;vertical-align:top}table.rcActs td.n,table.rcActs th.n{text-align:right}table.rcActs select{max-width:100%;margin-bottom:4px}
 .rcRaw{white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;background:var(--tint-ext);padding:8px;border-radius:6px}.rcBar{height:8px;background:var(--line,#dfe3e8);border-radius:4px;overflow:hidden}.rcBar i{display:block;height:100%;width:0;background:var(--accent,#0f5c8c);transition:width .3s}
-@media (max-width:760px){.rcGrid{grid-template-columns:1fr}.rcImg img{position:static;max-height:220px;object-fit:contain;width:100%}.rcActs td:first-child{min-width:110px}.rcActs select{min-width:130px}.rc3,.rc2{grid-template-columns:1fr}.rc4{grid-template-columns:1fr 1fr}.modal.wide{width:calc(100vw - 16px)}}.pwWrap{position:relative;display:block}.pwWrap input{width:100%;padding-right:46px}.pwEye{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--muted,#5b6470);padding:6px;border-radius:6px;cursor:pointer;line-height:0}.pwEye:hover{color:var(--ink,#1b2430);background:var(--tint-ext)}.pwEye.on .slash{display:none}.fgrid1{display:grid;gap:12px}
+@media (max-width:760px){.rcAct{grid-template-columns:minmax(0,1fr) 34px}.rcAct .fld{grid-column:1/2}.rcAct .x{grid-column:2;grid-row:2}.rcGrid{grid-template-columns:1fr}.rcImg img{position:static;max-height:220px;object-fit:contain;width:100%}.rcActs td:first-child{min-width:110px}.rcActs select{min-width:130px}.rc3,.rc2{grid-template-columns:1fr}.rc4{grid-template-columns:1fr 1fr}.modal.wide{width:calc(100vw - 16px)}}.pwWrap{position:relative;display:block}.pwWrap input{width:100%;padding-right:46px}.pwEye{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:var(--muted,#5b6470);padding:6px;border-radius:6px;cursor:pointer;line-height:0}.pwEye:hover{color:var(--ink,#1b2430);background:var(--tint-ext)}.pwEye.on .slash{display:none}.fgrid1{display:grid;gap:12px}
 
 .note.ok{border-left-color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,var(--surface))}
 .exHead{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;padding:8px 10px;border-radius:7px;background:color-mix(in srgb,var(--ok) 9%,var(--surface));border-left:4px solid var(--ok)}
@@ -481,6 +483,12 @@ const RU=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[‘�
 const cleanName=v=>String(v||'').replace(/[^A-Z' \-]/g,' ').replace(/\s+/g,' ').trim().split(' ').filter((w,i,a)=>w.length>1||(i>0&&i<a.length-1)).join(' ');
 const numF=v=>{const d=String(v||'').replace(/[^\d]/g,'');return d?+d:''};
 /* Rubrique « SERVICE / ACTE  PRIX F » ; plusieurs lignes possibles */
+/* Repli quand la ligne « SERVICE / ACTE  PRIX » est cassée par la lecture : prix en « F » (sans CFA) + mot-clé d'examen sur la ligne ou ses voisines */
+function parseActesLoose(U){const L=U.split('\n'),out=[];const KW=/(MAMMOGRAPHIE|MAMMO\w*|ECHO\s*DOPPLER(?:\s+[A-Z]{3,}){0,3}|DOPPLER(?:\s+[A-Z]{3,}){0,3}|ECHOGRAPHIE(?:\s+[A-Z]{3,}){0,3}|ECHO(?:\s+[A-Z]{3,}){1,3}|SCANNER(?:\s+[A-Z+]{2,}){0,3}|TDM(?:\s+[A-Z+]{2,}){1,3}|RX(?:\s+[A-Z]{3,}){1,2}|RADIOGRAPHIE(?:\s+[A-Z]{3,}){0,3}|HSG|UIV|UCR|TOGD)/;
+  L.forEach((l,i)=>{if(/TOTAL/.test(l))return;const re=/(\d{1,3}(?:[ .]\d{3})+|\d{4,7})\s*F(?!\s*C\s*F\s*A|[A-Z])/g;let m;while((m=re.exec(l))){const px=numF(m[1]);if(px<500)continue;
+      const ctx=[l,L[i-1]||'',L[i+1]||''].filter(x=>!/TOTAL|AGENT|PAIEMENT|CODE/.test(x)).join('  ').replace(/[|()\[\]]/g,' ').replace(/\s+/g,' ');
+      const kw=ctx.match(KW);if(!kw)continue;const svc=(ctx.match(/RADIOLOG\w*|ECHOGRAPHIE|SCANNER|IMAGERIE/)||['IMAGERIE'])[0].replace(/^RADIOLOG\w*/,'RADIOLOGIE');
+      if(!out.some(x=>x.acte===kw[0]&&x.px===px))out.push({svc,acte:kw[0].trim(),px,loose:true})}});return out}
 function parseActes(U){const out=[],seen=new Set();
   U.split('\n').forEach(line=>{const re=/([A-Z][A-Z' ]{2,30}?)\s*\/\s*([A-Z0-9][A-Z0-9 '+().,\-\/]{1,70}?)[\s|:!_\-—~.=]*(\d{1,3}(?:[ .]\d{3})+|\d{3,7})\s*F(?:CFA|\s*CFA)?\b/g;let m;
     while((m=re.exec(line))){let svc=m[1].trim().replace(/^[^A-Z]*/,'');{const k=svc.search(/RADIO|ECHO|SCAN|MAMMO|DOPPLER|IMAGERIE|EXAMEN|TDM|LABO|CONSULT/);if(k>0)svc=svc.slice(k)}const acte=m[2].replace(/[|!]+$/,'').trim(),px=numF(m[3]);if(/^(TEL|E-?MAIL|CHRT)/.test(svc))continue;const k=svc+'|'+acte+'|'+px;if(seen.has(k))continue;seen.add(k);out.push({svc,acte,px})}});
@@ -497,39 +505,52 @@ function parseReceipt(text){const U=RU(text),L=U.split('\n'),r={raw:text};
   const after=(re,cut,next)=>{for(let i=0;i<L.length;i++){const l=L[i],m=l.match(re);if(!m)continue;let v=l.slice(m.index+m[0].length).replace(/^[\s|:.]+/,'');if(cut)v=v.split(cut)[0];
       if(!v.replace(/[^A-Z0-9]/g,'')&&next){for(let k=i+1;k<Math.min(L.length,i+3);k++){const n=L[k].replace(/^[\s|:.©®@]+/,'');if(!n.trim())continue;if(LABELS.test(n.split('|')[0]))break;v=n.split(cut||/\|/)[0];break}}return v}return''};
   const stop=/\||TOTAL|[A-Z]{4,}\s*\/\s*[A-Z]|\s{3,}|\bAGE\b|\bSEXE\b/;
-  let m=U.match(/PAIEMENT\s*N\W{0,3}[\s|:.]*(\d{2}\/\d{2}\/\d{4}\s*\d{3,})/);r.recu=m?m[1].replace(/\s/g,''):'';
-  m=U.match(/C[O0]DE\s*PATIENT[\s|:.]*(\d{2}\/\d{2}\/\d{4}\s*[A-Z]{1,4}\s*\d{1,7})/);r.codePat=m?m[1].replace(/\s/g,''):'';
+  let m=U.match(/PAIEMENT\s*N\W{0,3}[\s|:.\-—_*~]*(\d{2}\/\d{2}\/\d{4}\s*\d{3,})/);r.recu=m?m[1].replace(/\s/g,''):'';
+  m=U.match(/C[O0]DE\s*PATIENT[\s|:.\-—_*~]*(\d{2}\/\d{2}\/\d{4}\s*[A-Z]{1,4}\s*\d{1,7})/);r.codePat=m?m[1].replace(/\s/g,''):'';
   r.prenom=cleanName(after(/PR[EI]N[O0]M\s*[:.]?/,stop,true));
-  r.nom=cleanName(after(/(?:^|[^A-Z])N[O0][MN]{1,2}\s*[:.]/,stop,true));
+  r.nom=cleanName(after(/(?:^|[^A-Z])N[O0][MN]{1,2}(?![A-Z])\s*[:.]?/,stop,true));
   m=U.match(/\bAGE[\s|:.\-—]{0,12}(\d{1,3})\s*(MOIS|JOURS?|ANS?|J\b)?/);if(m){r.ageV=+m[1];r.ageU=/^MOIS/.test(m[2]||'')?'mois':/^J/.test(m[2]||'')?'jours':'ans'}
   m=U.match(/SEXE[\s|:.]{0,8}([MF])(?![A-Z])/);r.sexe=m?m[1]:'';
   r.adresse=cleanName(after(/AD+RES+E\s*[:.]?/,stop,true));
-  m=U.match(/T[EI]L[EI]PH?[O0]NE[\s|:.]*([\d .]{9,})/);r.tel=m?m[1].replace(/\D/g,'').slice(0,9):'';
+  m=U.match(/T[EI]L[EI]PH?[O0]NE[\s|:.]*([\d .]{9,})/);r.tel=m?m[1].replace(/\D/g,'').slice(0,9):'';r.telDoute=!!(m&&m[1].replace(/\D/g,'').length!==9);
   r.matricule=after(/MATR[I1L]CULE\s*[:.]?/,/\||\s{3,}|TOTAL|AGENT|AINSI/,true).replace(/[^A-Z0-9\/\- ]/g,'').replace(/\s+/g,' ').trim();if(r.matricule.replace(/[^A-Z0-9]/g,'').length<2)r.matricule='';
   /* tiers payant : nom de l'employeur ou de l'organisme sous « Patient pris en charge » */
-  r.tiers=cleanName(after(/PRIS[E]?\s*EN\s*CHARGE(?:\s*PAR)?\s*[:.]?/,/\||\s{3,}|TOTAL|AGENT|AINSI/,true));
+  {let t='';for(let i=0;i<L.length&&!t;i++){const m2=L[i].match(/PATIENT\s*PRISE?(?:\s*EN)?(?:\s*CHARGE)?(?:\s*PAR)?|PRISE?\s*EN\s*CHARGE(?:\s*PAR)?/);if(!m2)continue;
+      const same=L[i].slice(m2.index+m2[0].length).split('|').map(x=>x.replace(/[^A-Z' \/]/g,' ').trim()).find(x=>x.replace(/[^A-Z]/g,'').length>=6&&!/^EN$|CHARGE/.test(x));if(same){t=same;break}
+      for(let k=i+1;k<Math.min(L.length,i+4)&&!t;k++){const seg=L[k].split('|').map(x=>x.replace(/[^A-Z' \/]/g,' ').trim()).filter(x=>x.replace(/[^A-Z]/g,'').length>=6&&!/TOTAL|CODE|PATIENT|PRENOM|RADIOLOG|ECHOGRAPH|SCANNER/.test(x)).sort((a,b)=>b.length-a.length)[0];if(seg)t=seg}}
+    r.tiers=t.replace(/\s+/g,' ').replace(/^\W+|\W+$/g,'')}
   if(!r.tiers){m=U.match(/(?:EMPLOYEUR|ORGANISME|ASSURANCE|SOCIETE)\s*[:.]\s*([A-Z][A-Z0-9 '&.\-]{2,40})/);if(m&&!/=/.test(m[0]))r.tiers=cleanName(m[1])}
   const amt=re=>{const x=U.match(re);return x?numF(x[1]):''};
   r.total=amt(/TOTAL(?!\W{0,3}(?:EM|PA[YV]))[^\n]*?(\d[\d .]*\d|\d)\s*F\s*CFA/);
   r.employeur=amt(/TOTAL\W{0,3}EM\w*[^\n]*?(\d[\d .]*\d|\d)\s*F\s*CFA/);
   r.paye=amt(/TOTAL\W{0,3}PA[YV]\w*[^\n]*?(\d[\d .]*\d|\d)\s*F\s*CFA/);
-  m=U.match(/EN DATE DU[^A-Z]*?\d{4}\s*A\s+(.+?)\s*FRANCS?/);r.lettres=m?frWordsToNum(m[1]):'';
-  m=U.match(/EN DATE DU\s*(\d{2})\/(\d{2})\/(\d{4})/)||r.recu.match(/^(\d{2})\/(\d{2})\/(\d{4})/);r.dateRecu=m?`${m[3]}-${m[2]}-${m[1]}`:'';
+  m=U.match(/DATE\s*DU[^A-Z]*?\d{4}\s*A\s+(.+?)\s*FRANCS?/);r.lettres=m?frWordsToNum(m[1]):'';
+  m=U.match(/DATE\s*DU\W*(\d{2})\/(\d{2})\/(\d{4})/)||r.recu.match(/^(\d{2})\/(\d{2})\/(\d{4})/);r.dateRecu=m?`${m[3]}-${m[2]}-${m[1]}`:'';
   m=U.match(/\bLE\s*\d{2}\W?\d{2}\W?\d{4}\s*[|]?\s*([01]?\d|2[0-3])\s*[:H.]\s*([0-5]\d)/)||U.match(/\b(\d{2})\/?(\d{2})\/?(\d{4})\s+(\d{2})[:H](\d{2})\b/)&&[0,...U.match(/\b\d{2}\/?\d{2}\/?\d{4}\s+(\d{2})[:H](\d{2})\b/).slice(1)];
-  r.heure=m?String(m[1]).padStart(2,'0')+':'+m[2]:'';
+  r.heure=m?String(m[1]).padStart(2,'0')+':'+m[2]:'';if(!r.heure){const top=L.slice(0,6).join(' ');const h=top.match(/\b([01]\d|2[0-3])\s*[:H]\s*([0-5]\d)\b/);if(h)r.heure=h[1]+':'+h[2]}
+  if(!r.dateRecu){const d=U.match(/THIES\s*LE\s*(\d{2})\/(\d{2})\/(\d{4})/);if(d)r.dateRecu=`${d[3]}-${d[2]}-${d[1]}`}
   r.agentEm=cleanName(after(/AGENT\s*EMETTEUR\s*[:.]?/,/AGENT|\s{3,}|\|/));
   r.agentFa=cleanName(after(/AGENT\s*FACTURATION\s*[:.]?/,/\s{3,}|\|/));
-  r.actes=parseActes(U);
+  r.actes=parseActes(U);if(!r.actes.length)r.actes=parseActesLoose(U);
   return r}
-/* Contrôle croisé des montants : total, somme des actes, employeur + payé, montant en lettres ; corrige une erreur de lecture d'un chiffre */
-function fixAmounts(p){p.fixes=[];const S0=p.actes.reduce((a,x)=>a+(+x.px||0),0),cands=[];
-  if(p.total!=='')cands.push(+p.total);if(p.actes.length&&p.actes.every(x=>x.px!==''))cands.push(S0);if(p.employeur!==''&&p.paye!=='')cands.push(+p.employeur+(+p.paye));if(p.lettres)cands.push(+p.lettres,+p.lettres);
-  if(!cands.length)return;const cnt={};cands.forEach(v=>cnt[v]=(cnt[v]||0)+1);const TT=+Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||(+b===+p.lettres)-(+a===+p.lettres))[0];if(!(cnt[TT]>=2))return;
-  const fx=(lab,old,nw)=>p.fixes.push(`${lab} lu ${fcfa(old)}, corrigé en ${fcfa(nw)} (contrôle avec les autres montants${p.lettres?' et le montant en lettres':''}).`);
-  if(p.total!==''&&+p.total!==TT){fx('TOTAL',p.total,TT);p.total=TT}if(p.total==='')p.total=TT;
-  if(p.actes.length===1&&+p.actes[0].px!==TT){fx('Prix de l’acte',p.actes[0].px,TT);p.actes[0].px=TT}
-  else if(p.actes.length>1&&S0!==TT){const bad=p.actes.filter(x=>oneDigitOff(x.px,TT-(S0-x.px)));if(bad.length===1){const x=bad[0],nw=TT-(S0-x.px);fx('Prix de « '+x.acte+' »',x.px,nw);x.px=nw}}
-  if(p.employeur!==''&&p.paye!==''&&+p.employeur+(+p.paye)!==TT){if(oneDigitOff(p.paye,TT-p.employeur)){fx('TOTAL PAYÉ',p.paye,TT-p.employeur);p.paye=TT-p.employeur}else if(oneDigitOff(p.employeur,TT-p.paye)){fx('TOTAL EMPLOYEUR',p.employeur,TT-p.paye);p.employeur=TT-p.paye}}}
+/* Contrôle croisé des montants. Le montant écrit en lettres correspond au TOTAL PAYÉ par le patient.
+   On ne corrige automatiquement que ce qui est certain ; en cas de désaccord entre le TOTAL et la somme des actes, on demande de choisir. */
+function fixAmounts(p){p.fixes=[];p.conflict=null;const fx=(lab,old,nw,why)=>p.fixes.push(`${lab} lu ${fcfa(old)}, corrigé en ${fcfa(nw)} (${why}).`);
+  if(p.lettres!==''&&p.lettres!=null){if(p.paye==='')p.paye=+p.lettres;else if(+p.paye!==+p.lettres&&oneDigitOff(p.paye,p.lettres)){fx('TOTAL PAYÉ',p.paye,p.lettres,'montant en lettres');p.paye=+p.lettres}}
+  const allPx=p.actes.length&&p.actes.every(x=>x.px!==''),S0=allPx?p.actes.reduce((a,x)=>a+(+x.px||0),0):'';
+  if(p.total===''&&S0!=='')p.total=S0;
+  if(S0!==''&&p.total!==''&&+p.total!==S0){
+    /* l'employeur + le payé confirme l'un des deux ? */
+    const ep=p.employeur!==''&&p.paye!==''?+p.employeur+(+p.paye):null;
+    if(ep===S0){fx('TOTAL',p.total,S0,'somme des actes et employeur + payé');p.total=S0}
+    else p.conflict={total:+p.total,somme:S0}}
+  const T=+p.total;if(p.total!==''&&!p.conflict){
+    if(p.employeur===''&&p.paye!=='')p.employeur=Math.max(0,T-p.paye);
+    else if(p.paye===''&&p.employeur!=='')p.paye=Math.max(0,T-p.employeur);
+    else if(p.employeur!==''&&p.paye!==''&&+p.employeur+(+p.paye)!==T){
+      if(p.lettres!==''&&+p.paye===+p.lettres){fx('TOTAL EMPLOYEUR',p.employeur,T-p.paye,'TOTAL − TOTAL PAYÉ');p.employeur=T-p.paye}
+      else if(oneDigitOff(p.paye,T-p.employeur)){fx('TOTAL PAYÉ',p.paye,T-p.employeur,'TOTAL − TOTAL EMPLOYEUR');p.paye=T-p.employeur}
+      else if(oneDigitOff(p.employeur,T-p.paye)){fx('TOTAL EMPLOYEUR',p.employeur,T-p.paye,'TOTAL − TOTAL PAYÉ');p.employeur=T-p.paye}}}}
 /* Service du reçu → onglet de l'application ; acte du reçu → acte du catalogue */
 function famOfService(svc,acte){const s=RU(svc+' '+acte);
   if(/DOPPLER/.test(s))return'dop';if(/SCANN|TDM|TOMODENS|ANGIO ?SCAN|UROSCAN/.test(s))return'scan';if(/MAMMO/.test(s))return'mam';
@@ -568,11 +589,15 @@ async function ocrReceipt(file,onStep){const img=await loadImg(file),w=await tes
   for(let i=0;i<rots.length;i++){onStep&&onStep(i,rots.length);const c=prepCanvas(img,rots[i]);const res=await w.recognize(c,{},{text:true,blocks:true});const tx=gapText(res.data);const sc=rcptScore(tx);
     if(!best||sc>best.sc)best={sc,text:tx,rot:rots[i],canvas:c};if(sc>=5)break}
   /* deuxième lecture (autre traitement de l'image) pour compléter les rubriques manquées */
-  const P1=parseReceipt(best.text),missing=!P1.prenom||!P1.nom||!P1.actes.length||P1.total===''||P1.paye===''&&P1.employeur==='';
+  const P1=parseReceipt(best.text),missing=['recu','codePat','prenom','nom','sexe','tel','adresse','total'].some(k=>P1[k]===''||P1[k]==null)||!P1.actes.length||P1.actes.some(x=>x.loose)||P1.paye===''&&P1.employeur==='';
   if(best.sc>=3&&missing){onStep&&onStep(-1);const r2=await w.recognize(prepCanvas(img,best.rot,true),{},{text:true,blocks:true});best.text2=gapText(r2.data)}
   return{...best,img}}
 /* Fusion de deux lectures : une rubrique lue une seule fois est reprise ; si les deux diffèrent, on garde la plus complète */
-function mergeParsed(a,b){if(!b)return a;const o={...a};Object.keys(b).forEach(k=>{if(k==='actes'||k==='raw')return;const x=a[k],y=b[k];if(x===''||x==null)o[k]=y;else if(typeof x==='string'&&typeof y==='string'&&y.length>x.length&&y.includes(x))o[k]=y});
+function mergeParsed(a,b){if(!b)return a;const o={...a};o.doubt={};
+  /* chiffres lus différemment par les deux lectures : on garde la lecture la plus fine (2e) et on signale le doute */
+  ['recu','codePat','tel','matricule','ageV'].forEach(k=>{const x=a[k],y=b[k];if(x!==''&&x!=null&&y!==''&&y!=null&&String(x)!==String(y)){const keepA=k==='tel'&&a.telDoute===false&&b.telDoute;o.doubt[k]=keepA?[x,y]:[y,x];o[k]=keepA?x:y;if(k==='tel')o.telDoute=keepA?a.telDoute:b.telDoute}});
+  if((a.tel===''||a.tel==null)&&b.tel)o.telDoute=b.telDoute;
+  Object.keys(b).forEach(k=>{if(k==='actes'||k==='raw'||k==='doubt'||o.doubt[k])return;const x=a[k],y=b[k];if(x===''||x==null)o[k]=y;else if(typeof x==='string'&&typeof y==='string'&&y.length>x.length&&y.includes(x))o[k]=y});
   o.actes=(b.actes||[]).length>(a.actes||[]).length?b.actes:a.actes;if(o.actes.length&&a.actes.length&&b.actes.length)o.actes=o.actes.map((x,i)=>{const y=(o.actes===a.actes?b.actes:a.actes)[i];return y&&!x.px&&y.px?{...x,px:y.px}:x});o.raw=a.raw+(b.raw?'\n——— 2e lecture ———\n'+b.raw:'');return o}
 /* Écran de vérification */
 function rcptModal(){const R=UI.rcpt,P=R.p;const opt=(v,l,s)=>`<option value="${esc(v)}" ${String(s)===String(v)?'selected':''}>${esc(l)}</option>`;
@@ -581,11 +606,13 @@ function rcptModal(){const R=UI.rcpt,P=R.p;const opt=(v,l,s)=>`<option value="${
   if(!P.actes.length)chk.push('Aucune ligne « SERVICE / ACTE  PRIX » lue : ajoutez l’acte à la main dans la fiche.');
   if(tot&&sum&&sum!==tot)chk.push(`La somme des actes (${fcfa(sum)}) diffère du TOTAL lu (${fcfa(tot)}).`);
   if(tot&&(P.employeur!==''||P.paye!=='')&&(+P.employeur||0)+(+P.paye||0)!==tot)chk.push(`TOTAL EMPLOYEUR + TOTAL PAYÉ ne font pas le TOTAL (${fcfa(tot)}).`);
-  (P.fixes||[]).forEach(t=>chk.push('Corrigé automatiquement : '+t));if(+P.employeur>0&&!P.tiers)chk.push('Tiers payant : le nom de l’employeur ou de l’organisme n’a pas été lu, saisissez-le.');
+  (P.fixes||[]).forEach(t=>chk.push('Corrigé automatiquement : '+t));const DL={recu:'N° de reçu',codePat:'Code patient',tel:'Téléphone',matricule:'Matricule',ageV:'Âge'};Object.entries(P.doubt||{}).forEach(([k,[v,alt]])=>chk.push(`${DL[k]} : deux lectures différentes (${v} ou ${alt}). Vérifiez sur le reçu.`));if(P.telDoute)chk.push('Téléphone : le nombre de chiffres lus ne correspond pas, vérifiez le numéro.');if(P.actes.some(x=>x.loose))chk.push('La ligne « service / acte » était mal imprimée ou mal photographiée : vérifiez l’acte et son prix.');if(+P.employeur>0&&!P.tiers)chk.push('Tiers payant : le nom de l’employeur ou de l’organisme n’a pas été lu, saisissez-le.');
   ['prenom','nom','sexe'].forEach(k=>{if(!P[k])chk.push(`${{prenom:'Prénom',nom:'Nom',sexe:'Sexe'}[k]} non lu.`)});
-  const fld=(k,l,extra='')=>`<label class="fld ${P[k]===''||P[k]==null?'miss':''}"><span>${l}</span><input data-rc="${k}" value="${esc(P[k]??'')}" ${extra}></label>`;
+  const fld=(k,l,extra='')=>`<label class="fld ${P[k]===''||P[k]==null?'miss':''} ${(P.doubt||{})[k]||(k==='tel'&&P.telDoute)?'doubt':''}"><span>${l}</span><input data-rc="${k}" value="${esc(P[k]??'')}" ${extra}></label>`;
   modal(`<div class="head"><h2>Vérifier les informations lues sur le reçu</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
    <p class="small muted">Corrigez si besoin : la lecture automatique peut se tromper. Les champs vides sur fond jaune n’ont pas été lus. La photo reste sur cet appareil.</p>
+   ${P.conflict?`<div class="note err rcConf"><b>Montants à vérifier sur le reçu :</b> le TOTAL lu est ${fcfa(P.conflict.total)} mais la somme des actes lus fait ${fcfa(P.conflict.somme)}. Regardez le reçu : lequel est juste ?
+     <div class="btns" style="margin-top:8px"><button type="button" class="btn primary sm" data-act="rcConf" data-v="somme">${fcfa(P.conflict.somme)} (somme des actes)</button><button type="button" class="btn ghost sm" data-act="rcConf" data-v="total">${fcfa(P.conflict.total)} (TOTAL lu)</button></div></div>`:''}
    ${dupR?`<p class="note warn"><b>Ce reçu est déjà enregistré</b> : fiche ${esc(dupR.codePat||dupR.cle)} du ${frDate(dupR.cree)} (${esc(dupR.prenom)} ${esc(dupR.nom)}).</p>`:''}
    ${known&&known.length?`<p class="note ok">Patient déjà connu : ${known.length} passage(s) avec le code ${esc(P.codePat)}.</p>`:''}
    <div class="rcGrid"><div class="rcImg"><img src="${R.thumb}" alt="Reçu photographié"></div><div>
@@ -596,11 +623,12 @@ function rcptModal(){const R=UI.rcpt,P=R.p;const opt=(v,l,s)=>`<option value="${
    <div class="rc2">${fld('adresse','Adresse')}${fld('matricule','Matricule')}</div>
    ${+P.employeur>0||P.tiers?`<div class="rc2">${fld('tiers','Employeur / organisme (tiers payant)')}<div class="small muted" style="align-self:end;padding-bottom:10px">Lu sous « Patient pris en charge ».</div></div>`:''}
    <h3 class="rcH">Service, acte et prix</h3>
-   <div class="rcTw"><table class="rcActs"><thead><tr><th>Lu sur le reçu</th><th>Service</th><th>Acte de la liste</th><th class="n">Prix</th></tr></thead><tbody>
-   ${P.actes.map((x,i)=>{const items=x.fam?itemsOf(x.fam):[];return`<tr><td class="small mono">${esc(x.svc)} / ${esc(x.acte)}</td>
-     <td><select data-rca="${i}|fam"><option value="">— choisir —</option>${FAMS.map(([k,l])=>opt(k,l,x.fam)).join('')}</select></td>
-     <td>${x.fam?`<select data-rca="${i}|id"><option value="">— choisir —</option><option value="__new" ${x.id==='__new'?'selected':''}>+ Créer « ${esc(titleAct(x))} »</option>${items.map(it=>opt(it.id,it.lib+(it.sys?' · '+it.sys:''),x.id)).join('')}</select>${x.fam==='scan'?`<select data-rca="${i}|inj" aria-label="Injection">${opt('C','C (sans)',x.inj||'C')}${opt('+C','+C (avec)',x.inj)}</select>`:''}${x.id==='__new'&&x.fam==='rx'?`<select data-rca="${i}|sys" aria-label="Système">${IMG_SYS.map(y=>opt(y,y,x.sys||'Osseux')).join('')}</select>`:''}${x.sc&&x.id!=='__new'?`<div class="small muted">reconnu à ${Math.round(x.sc*100)} %</div>`:''}`:'<span class="small muted">choisissez d’abord le service</span>'}</td>
-     <td class="n"><input type="number" min="0" step="500" data-rca="${i}|px" value="${esc(x.px)}" style="width:96px"></td></tr>`}).join('')||'<tr><td colspan="4" class="muted">Aucune ligne lue.</td></tr>'}</tbody></table></div>
+   <div class="rcActs">
+   ${P.actes.map((x,i)=>{const items=x.fam?itemsOf(x.fam):[];return`<div class="rcAct"><div class="rcLu small mono">Lu : ${esc(x.svc)} / ${esc(x.acte)}${x.loose?' <span class="warnTxt">(ligne mal lue, vérifiez)</span>':''}</div>
+     <label class="fld"><span>Service</span><select data-rca="${i}|fam"><option value="">— choisir —</option>${FAMS.map(([k,l])=>opt(k,l,x.fam)).join('')}</select></label>
+     <label class="fld"><span>Acte</span>${x.fam?`<select data-rca="${i}|id"><option value="">— choisir —</option><option value="__new" ${x.id==='__new'?'selected':''}>+ Créer « ${esc(titleAct(x))} »</option>${items.map(it=>opt(it.id,it.lib+(it.sys?' · '+it.sys:''),x.id)).join('')}</select>${x.fam==='scan'?`<select data-rca="${i}|inj" aria-label="Injection">${opt('C','C (sans)',x.inj||'C')}${opt('+C','+C (avec)',x.inj)}</select>`:''}${x.id==='__new'&&x.fam==='rx'?`<select data-rca="${i}|sys" aria-label="Système">${IMG_SYS.map(y=>opt(y,y,x.sys||'Osseux')).join('')}</select>`:''}${x.sc&&x.id!=='__new'?`<div class="small muted">reconnu à ${Math.round(x.sc*100)} %</div>`:''}`:'<span class="small muted">choisissez d’abord le service</span>'}</label>
+     <label class="fld ${x.px===''?'miss':''}"><span>Prix</span><input type="number" min="0" step="500" data-rca="${i}|px" value="${esc(x.px)}"></label><button type="button" class="x" data-act="rcDelA" data-v="${i}" aria-label="Retirer cette ligne">×</button></div>`}).join('')||'<p class="muted small">Aucune ligne d’acte lue.</p>'}
+   <button type="button" class="btn ghost sm" data-act="rcAddA">+ Ajouter un acte</button></div>
    <div class="rc3">${fld('total','TOTAL','type="number" min="0"')}${fld('employeur','TOTAL EMPLOYEUR (prise en charge)','type="number" min="0"')}${fld('paye','TOTAL PAYÉ (patient)','type="number" min="0"')}</div>
    <div class="rc3"><label class="fld ${P.pay?'':'miss'}"><span>Type de paiement *</span><select data-rc="pay"><option value="">— choisir —</option>${(S.payTypes||[]).map(p=>opt(p.id,p.l,P.pay)).join('')}</select></label>
      <label class="fld"><span>Origine</span><select data-rc="origine">${opt('EXTERNE','EXTERNE',P.origine)}${opt('INTERNE','INTERNE',P.origine)}</select></label>${fld('heure','Heure')}</div>
@@ -618,7 +646,9 @@ function rcptPrepare(o){const p=mergeParsed(parseReceipt(o.text),o.text2?parseRe
   p.origine='EXTERNE';p.ageU=p.ageU||'ans';if(p.ageV==null)p.ageV='';
   if(p.total===''&&p.actes.length)p.total=p.actes.reduce((a,x)=>a+(+x.px||0),0);
   if(p.paye===''&&p.total!==''&&p.employeur!=='')p.paye=Math.max(0,p.total-p.employeur);
-  {const pt=(S.payTypes||[]),tn=norm(p.tiers||'');const hit=tn&&pt.find(t=>tn.includes(norm(t.l))||norm(t.l).includes(tn));
+  {const pt=(S.payTypes||[]),tn=norm(p.tiers||'');const W=x=>new Set(norm(x).split(' ').filter(w=>w.length>=3&&!['les','des','del','pour'].includes(w)));const tw=W(p.tiers||'');
+   const scoreOf=t=>{const lw=W(t.l);if(!tw.size||!lw.size)return 0;let c=0;tw.forEach(w=>{if([...lw].some(v=>v===w||(w.length>=5&&lev(v,w)<=1)))c++});return c/Math.min(tw.size,lw.size)};
+   const best=pt.map(t=>({t,sc:scoreOf(t)})).sort((a,b)=>b.sc-a.sc)[0];const hit=tn&&best&&best.sc>=.6?best.t:null;p.payGuess=hit?Math.round(best.sc*100):0;
    p.pay=hit?hit.id:(p.employeur===0&&p.paye!==''&&+p.paye>0)?(pt.find(t=>t.id==='paf')?'paf':''):'';}
 
   const th=document.createElement('canvas'),k=480/Math.max(o.canvas.width,o.canvas.height);th.width=o.canvas.width*k;th.height=o.canvas.height*k;th.getContext('2d').drawImage(o.canvas,0,0,th.width,th.height);
@@ -632,9 +662,13 @@ async function rcptStart(file){if(!file)return;
     rcptPrepare(o)}catch(err){modal(`<h2>Lecture impossible</h2><p>${esc(err.message||String(err))}</p><div class="btns"><button type="button" class="btn ghost" data-act="close">Fermer</button></div>`)}}
 /* Re-dessine l'écran de vérification en gardant la position de lecture */
 function rcptKeep(){const m=document.querySelector('.modal'),y=m?m.scrollTop:0,a=document.activeElement,id=a&&(a.dataset.rc||a.dataset.rca);rcptModal();const m2=document.querySelector('.modal');if(m2)m2.scrollTop=y;if(id){const n=document.querySelector(`[data-rc="${id}"],[data-rca="${id}"]`);if(n)n.focus({preventScroll:true})}}
+function rcptConf(v){const P=UI.rcpt.p,c=P.conflict;if(!c)return;const T=v==='somme'?c.somme:c.total,oldT=+P.total;P.total=T;
+  if(P.employeur!==''&&+P.employeur===oldT&&+P.paye===0)P.employeur=T;else if(P.paye!==''){P.employeur=Math.max(0,T-(+P.paye))}
+  if(v==='total'&&P.actes.length===1)P.actes[0].px=T;P.conflict=null;P.fixes=(P.fixes||[]).concat(v==='somme'?[`TOTAL remplacé par la somme des actes (${fcfa(T)}).`]:[`TOTAL lu conservé (${fcfa(T)}) : corrigez le prix des actes si besoin.`]);rcptKeep()}
 /* Transfert vers la fiche de saisie */
 function rcptApply(){const P=UI.rcpt.p;const bad=P.actes.find(x=>!x.fam||!x.id);if(bad){toast('Choisissez le service et l’acte pour chaque ligne.');return}
   if(!P.prenom||!P.nom){toast('Le prénom et le nom sont obligatoires.');return}
+  if(P.conflict){toast('Choisissez d’abord le bon montant total (encadré rouge en haut).');document.querySelector('.rcConf')?.scrollIntoView({block:'center'});return}
   P.actes.filter(x=>x.id==='__new').forEach(x=>{const lib=titleAct(x),ex=imgClash([lib],x.fam,null);if(ex){x.id=ex.id;return}const it={id:'c_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),lib,fam:x.fam,sys:x.fam==='rx'?(x.sys||'Osseux'):'',syn:RU(x.acte).toLowerCase(),w:0,prix:+x.px||0,actif:true};if(x.fam==='scan'){it.inj='';if(x.inj==='+C'){it.prixP=+x.px||0;it.prix=0}}S.imgCat.push(it);x.id=it.id});
   /* mémorise le libellé du reçu comme synonyme, pour reconnaître l'acte directement la prochaine fois */
   P.actes.forEach(x=>{const it=catById(x.id);if(!it)return;const s=RU(x.acte).toLowerCase(),syn=String(it.syn||'').split(',').map(v=>v.trim()).filter(Boolean);if(!syn.map(norm).includes(norm(s))&&norm(s)!==norm(it.lib)){syn.push(s);it.syn=syn.join(', ')}
@@ -1390,6 +1424,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
   if(a==='rmEx'){readForm();const[f,i]=v.split('|');UI.f.ex[f].ids.splice(+i,1);if(UI.f.ex[f].cl)UI.f.ex[f].cl.splice(+i,1);if(UI.f.ex[f].inj)UI.f.ex[f].inj.splice(+i,1);['px','pp'].forEach(k=>{if(UI.f.ex[f][k])UI.f.ex[f][k].splice(+i,1)});render();return}
   if(a==='saveRec'){saveRec();return}
   if(a==='rcApply'){rcptApply();return}
+  if(a==='rcConf'){rcptConf(v);return}
+  if(a==='rcAddA'){UI.rcpt.p.actes.push({svc:'',acte:'',px:'',fam:'',id:'',sc:0,inj:'',sys:''});rcptKeep();return}
+  if(a==='rcDelA'){UI.rcpt.p.actes.splice(+v,1);rcptKeep();return}
   if(a==='oldImport'){const L=oldLocal();if(!L)return;const byCle=new Map(S.recs.map((r,i)=>[r.cle,i]));let add=0,rep=0;
     L.recs.forEach(r0=>{const r=clone(r0);delete r.demo;r.ancien=r.ancien||r.cle;r.cle=impKey(r);if(byCle.has(r.cle)){S.recs[byCle.get(r.cle)]=r;rep++}else{byCle.set(r.cle,S.recs.length);S.recs.push(r);add++}});
     ensureCodes();save();try{L.o.migreLe=today();localStorage.setItem('registre-imagerie-chrt-v1',JSON.stringify(L.o))}catch(e){}render();toast(`${fmt(add)} fiche(s) ajoutée(s) au registre commun${rep?', '+fmt(rep)+' remplacée(s)':''}.`);return}
