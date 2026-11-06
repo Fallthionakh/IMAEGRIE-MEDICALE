@@ -133,6 +133,7 @@ td[class^="c-"]{min-width:120px;font-size:.82rem}
 .rc2,.rc3,.rc4{display:grid;gap:8px;margin-bottom:8px}.rc2{grid-template-columns:1fr 1fr}.rc3{grid-template-columns:repeat(3,1fr)}.rc4{grid-template-columns:90px 100px 90px 1fr}
 .fld.doubt input{border:2px solid var(--warn);background:var(--warn-soft)}.fld.doubt>span::after{content:' · à vérifier';color:var(--warn);font-weight:600}.fld.miss input,.fld.miss select{background:var(--warn-soft);border-color:var(--warn)}.rcH{margin:12px 0 6px;font-size:1rem}
 .rcActs{display:grid;gap:8px;margin-bottom:10px}.rcAct{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) 110px 34px;gap:8px;align-items:end;border:1px solid var(--line);border-radius:8px;padding:8px}.rcAct .rcLu{grid-column:1/-1}.rcAct .x{height:38px}.rcAct select{width:100%;margin-bottom:4px}
+.rcChk ol{margin:6px 0 0;padding-left:20px}.rcChk li{margin-bottom:10px;min-width:0;overflow-wrap:anywhere}.rcChk .btns{margin-top:6px;gap:6px;display:flex;flex-wrap:wrap}.rcChk .btn{white-space:normal;text-align:left;max-width:100%}
 .note.err{background:#fdecea;border-left:4px solid var(--err);color:var(--ink)}@media (prefers-color-scheme:dark){.note.err{background:#3a1d1b}}
 table.rcActsOld{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:.88rem}table.rcActs th,table.rcActs td{border-bottom:1px solid var(--line,#dfe3e8);padding:6px;text-align:left;vertical-align:top}table.rcActs td.n,table.rcActs th.n{text-align:right}table.rcActs select{max-width:100%;margin-bottom:4px}
 .rcRaw{white-space:pre-wrap;font-size:11px;max-height:220px;overflow:auto;background:var(--tint-ext);padding:8px;border-radius:6px}.rcBar{height:8px;background:var(--line,#dfe3e8);border-radius:4px;overflow:hidden}.rcBar i{display:block;height:100%;width:0;background:var(--accent,#0f5c8c);transition:width .3s}
@@ -602,12 +603,19 @@ function mergeParsed(a,b){if(!b)return a;const o={...a};o.doubt={};
 /* Écran de vérification */
 function rcptModal(){const R=UI.rcpt,P=R.p;const opt=(v,l,s)=>`<option value="${esc(v)}" ${String(s)===String(v)?'selected':''}>${esc(l)}</option>`;
   const dupR=P.recu&&S.recs.find(r=>r.recu===P.recu),known=P.codePat&&S.recs.filter(r=>r.codePat===P.codePat);
-  const sum=P.actes.reduce((a,x)=>a+(+x.px||0),0),tot=+P.total||0,chk=[];
-  if(!P.actes.length)chk.push('Aucune ligne « SERVICE / ACTE  PRIX » lue : ajoutez l’acte à la main dans la fiche.');
-  if(tot&&sum&&sum!==tot)chk.push(`La somme des actes (${fcfa(sum)}) diffère du TOTAL lu (${fcfa(tot)}).`);
-  if(tot&&(P.employeur!==''||P.paye!=='')&&(+P.employeur||0)+(+P.paye||0)!==tot)chk.push(`TOTAL EMPLOYEUR + TOTAL PAYÉ ne font pas le TOTAL (${fcfa(tot)}).`);
-  (P.fixes||[]).forEach(t=>chk.push('Corrigé automatiquement : '+t));const DL={recu:'N° de reçu',codePat:'Code patient',tel:'Téléphone',matricule:'Matricule',ageV:'Âge'};Object.entries(P.doubt||{}).forEach(([k,[v,alt]])=>chk.push(`${DL[k]} : deux lectures différentes (${v} ou ${alt}). Vérifiez sur le reçu.`));if(P.telDoute)chk.push('Téléphone : le nombre de chiffres lus ne correspond pas, vérifiez le numéro.');if(P.actes.some(x=>x.loose))chk.push('La ligne « service / acte » était mal imprimée ou mal photographiée : vérifiez l’acte et son prix.');if(+P.employeur>0&&!P.tiers)chk.push('Tiers payant : le nom de l’employeur ou de l’organisme n’a pas été lu, saisissez-le.');
-  ['prenom','nom','sexe'].forEach(k=>{if(!P[k])chk.push(`${{prenom:'Prénom',nom:'Nom',sexe:'Sexe'}[k]} non lu.`)});
+  const sum=P.actes.reduce((a,x)=>a+(+x.px||0),0),tot=+P.total||0,chk=[],btn=(act,v,l,pri)=>`<button type="button" class="btn ${pri?'primary':'ghost'} sm" data-act="${act}" data-v="${esc(v)}">${esc(l)}</button>`;
+  if(!P.actes.length)chk.push('<b>Aucun acte lu.</b> Utilisez « + Ajouter un acte » plus haut pour l’ajouter.');
+  /* même acte lu deux fois */
+  const seenA={};P.actes.forEach((x,i)=>{const k=(x.id&&x.id!=='__new'?x.id:norm(x.acte))+'|'+x.px;if(seenA[k]!=null)chk.push(`<b>L’acte « ${esc(x.acte)} » apparaît deux fois</b> (${fcfa(x.px)}). Si le reçu ne le porte qu’une fois, supprimez le doublon. <div class="btns">${btn('rcDelA',i,'Supprimer le doublon',true)}</div>`);else seenA[k]=i});
+  if(!P.conflict&&tot&&sum&&sum!==tot)chk.push(`<b>Montants qui ne concordent pas.</b> En additionnant les prix des actes, on trouve ${fcfa(sum)}, alors que le TOTAL lu sur le reçu est ${fcfa(tot)}. Regardez le TOTAL imprimé sur le reçu et choisissez :<div class="btns">${btn('rcSetTot',sum,'Le total est '+fcfa(sum))}${btn('rcSetTot',tot,'Le total est '+fcfa(tot)+' (corriger les prix des actes)')}</div>`);
+  if(tot&&(P.employeur!==''||P.paye!=='')&&(+P.employeur||0)+(+P.paye||0)!==tot)chk.push(`<b>TOTAL EMPLOYEUR + TOTAL PAYÉ</b> (${fcfa((+P.employeur||0)+(+P.paye||0))}) ne font pas le TOTAL (${fcfa(tot)}) : corrigez l’un des trois montants.`);
+  (P.fixes||[]).forEach(t=>chk.push('<b>Corrigé automatiquement :</b> '+esc(t)));
+  const DL={recu:'N° de reçu',codePat:'Code patient',tel:'Téléphone',matricule:'Matricule',ageV:'Âge'};
+  Object.entries(P.doubt||{}).forEach(([k,[v,alt]])=>chk.push(`<b>${DL[k]} :</b> la photo a été lue deux fois et un chiffre diffère. Lequel est imprimé sur le reçu ?<div class="btns">${btn('rcPick',k+'|'+v,String(v),String(P[k])===String(v))}${btn('rcPick',k+'|'+alt,String(alt),String(P[k])===String(alt))}</div>`));
+  if(P.telDoute&&!(P.doubt||{}).tel)chk.push('<b>Téléphone :</b> le nombre de chiffres lus n’est pas 9 ; vérifiez le numéro.');
+  if(P.actes.some(x=>x.loose))chk.push('<b>Ligne de l’acte mal imprimée ou mal photographiée :</b> vérifiez l’acte et son prix.');
+  if(+P.employeur>0&&!P.tiers)chk.push('<b>Tiers payant :</b> le nom de l’employeur ou de l’organisme n’a pas été lu, saisissez-le.');
+  ['prenom','nom','sexe'].forEach(k=>{if(!P[k])chk.push(`<b>${{prenom:'Prénom',nom:'Nom',sexe:'Sexe'}[k]} non lu :</b> saisissez-le.`)});
   const fld=(k,l,extra='')=>`<label class="fld ${P[k]===''||P[k]==null?'miss':''} ${(P.doubt||{})[k]||(k==='tel'&&P.telDoute)?'doubt':''}"><span>${l}</span><input data-rc="${k}" value="${esc(P[k]??'')}" ${extra}></label>`;
   modal(`<div class="head"><h2>Vérifier les informations lues sur le reçu</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
    <p class="small muted">Corrigez si besoin : la lecture automatique peut se tromper. Les champs vides sur fond jaune n’ont pas été lus. La photo reste sur cet appareil.</p>
@@ -633,7 +641,7 @@ function rcptModal(){const R=UI.rcpt,P=R.p;const opt=(v,l,s)=>`<option value="${
    <div class="rc3"><label class="fld ${P.pay?'':'miss'}"><span>Type de paiement *</span><select data-rc="pay"><option value="">— choisir —</option>${(S.payTypes||[]).map(p=>opt(p.id,p.l,P.pay)).join('')}</select></label>
      <label class="fld"><span>Origine</span><select data-rc="origine">${opt('EXTERNE','EXTERNE',P.origine)}${opt('INTERNE','INTERNE',P.origine)}</select></label>${fld('heure','Heure')}</div>
    <div class="rc2">${fld('agentEm','Agent émetteur')}${fld('agentFa','Agent facturation')}</div>
-   ${chk.length?`<div class="note warn"><b>À vérifier :</b><br>${chk.map(esc).join('<br>')}</div>`:'<p class="note ok">Montants cohérents.</p>'}
+   ${chk.length?`<div class="note warn rcChk"><b>À vérifier avant de remplir la fiche (${chk.length}) :</b><ol>${chk.map(t=>`<li>${t}</li>`).join('')}</ol></div>`:'<p class="note ok">Tout concorde : montants cohérents.</p>'}
    <details class="small"><summary>Texte lu sur la photo</summary><pre class="rcRaw">${esc(P.raw)}</pre></details>
    </div></div>
    <div class="btns"><button type="button" class="btn primary" data-act="rcApply">Remplir la fiche</button><button type="button" class="btn ghost" data-act="rcAgain">Reprendre une photo</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);
@@ -1425,6 +1433,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
   if(a==='saveRec'){saveRec();return}
   if(a==='rcApply'){rcptApply();return}
   if(a==='rcConf'){rcptConf(v);return}
+  if(a==='rcPick'){const i=v.indexOf('|'),k=v.slice(0,i),val=v.slice(i+1),P=UI.rcpt.p;P[k]=k==='ageV'?+val:val;if(P.doubt)delete P.doubt[k];if(k==='tel')P.telDoute=false;rcptKeep();return}
+  if(a==='rcSetTot'){const P=UI.rcpt.p,T=+v,old=+P.total;P.total=T;if(+P.employeur===old&&+P.paye===0)P.employeur=T;else if(P.paye!=='')P.employeur=Math.max(0,T-(+P.paye));if(P.actes.length===1)P.actes[0].px=T;rcptKeep();return}
   if(a==='rcAddA'){UI.rcpt.p.actes.push({svc:'',acte:'',px:'',fam:'',id:'',sc:0,inj:'',sys:''});rcptKeep();return}
   if(a==='rcDelA'){UI.rcpt.p.actes.splice(+v,1);rcptKeep();return}
   if(a==='oldImport'){const L=oldLocal();if(!L)return;const byCle=new Map(S.recs.map((r,i)=>[r.cle,i]));let add=0,rep=0;
