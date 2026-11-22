@@ -214,7 +214,8 @@ table.plist td{text-align:left}.tagDemo{font-size:10px;padding:1px 5px;border-ra
 <button type="button" data-act="nav" data-nav-btn data-v="saisie">Saisie</button>
 <button type="button" data-act="nav" data-nav-btn data-v="liste">Liste des examens</button>
 <button type="button" data-act="nav" data-nav-btn data-v="rapport">Rapport mensuel</button>
-<button type="button" data-act="nav" data-nav-btn data-v="params">Paramètres</button></nav>
+<button type="button" data-act="nav" data-nav-btn data-v="params">Paramètres</button>
+<button type="button" data-act="nav" data-nav-btn data-v="comptes" id="navComptes" hidden>Comptes d’accès</button></nav>
 <span class="demo" id="demoTag">Démonstration · noms fictifs</span><span class="store" id="store"></span><div class="cloudBar" id="cloudBar" hidden></div></header>
 <main id="view"></main>
 <div id="modalRoot"></div>
@@ -405,7 +406,7 @@ function cloudChanged(){if(!CLOUD||CL.state!=='ready')return;const cur=new Set()
 async function newCode(){if(CLOUD&&CL.sb&&CL.online){try{const r=await Promise.race([CL.sb.rpc('nouveau_code'),new Promise((_,j)=>setTimeout(()=>j(new Error('délai')),6000))]);if(!r.error&&r.data)return String(r.data)}catch(e){}}
   return'TMP_'+Date.now().toString(36).toUpperCase()}
 function renameRec(old,cle){const r=S.recs.find(x=>x.cle===old);if(r){r.cle=cle;if(r.codeAuto||!r.codePat){r.codePat=chrtCode(r.cree,r.prenom,r.nom,numOfCle(cle));r.codeAuto=true}}if(UI.f&&UI.f.edit===old)UI.f.edit=cle;if(UI.rdvCle===old)UI.rdvCle=cle}
-async function cloudFlush(){if(!CLOUD||CL.state!=='ready'||CL.busy)return;if(!pendN()){cloudBar();return}CL.busy=true;cloudBar();
+async function cloudFlush(){if(!CLOUD||CL.state!=='ready'||CL.busy)return;if(!pendN()){cloudBar();return}if(CL.role==='lecture'){CL.err='Accès en lecture seule : modifications non enregistrées';cloudBar();return}CL.busy=true;cloudBar();
   try{const sb=CL.sb;
     if(CL.pend.__cfg){const s=CL.pend.__cfg;const{error}=await sb.from('parametres').upsert({cle:'config',data:JSON.parse(s),modifie_le:new Date().toISOString()});if(error)throw error;CL.pSnap=s;if(CL.pend.__cfg===s)delete CL.pend.__cfg}
     for(const k of Object.keys(CL.pend).filter(k=>k.startsWith('TMP_'))){const v=CL.pend[k];delete CL.pend[k];CL.snap.delete(k);if(v==='__del')continue;
@@ -454,9 +455,11 @@ function loginView(){return`<section class="card login"><div class="head"><h2>Co
   <label class="fld"><span>Mot de passe</span><span class="pwWrap"><input type="password" id="lgPass" autocomplete="current-password" required><button type="button" class="pwEye" data-act="pwEye" aria-label="Afficher le mot de passe" title="Afficher le mot de passe"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path class="slash" d="M3 3l18 18" stroke="currentColor" stroke-width="1.8"/></svg></button></span></label>
   ${CL.err&&CL.state==='login'?`<p class="note warn">${esc(CL.err)}</p>`:''}
   <div class="btns"><button type="submit" class="btn primary" id="lgBtn">Se connecter</button></div></form></section>`}
-function cloudGate(){if(!CLOUD)return false;document.querySelector('nav.main').style.display=CL.user?'':'none';cloudBar();
+function cloudGate(){if(!CLOUD)return false;document.querySelector('nav.main').style.display=CL.user&&CL.state!=='denied'?'':'none';cloudBar();
+  if(CL.user&&CL.state==='denied'){$('#view').innerHTML=deniedView();return true}
   if(CL.user)return false;$('#view').innerHTML=CL.state==='init'?'<p class="muted" style="padding:24px">Connexion…</p>':loginView();if(CL.state==='login')setTimeout(()=>$('#lgMail')?.focus(),0);return true}
 async function cloudStart(user){CL.user=user;CL.state='loading';CL.err='';render();
+  if(!(await cloudRole(user)))return;
   try{await cloudPull();CL.state='ready';CL.online=true}catch(e){CL.err=cloudMsg(e);CL.online=false;CL.state='ready';baseline();toast('Base commune injoignable : travail sur la copie locale, envoi automatique au retour de la connexion.')}
   if(ensureCodes())save();cloudSubscribe();render();if(pendN())cloudFlush()}
 async function cloudInit(){if(!CLOUD)return;pendLoad();
@@ -473,8 +476,55 @@ document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]
   if(a==='pwEye'){const i=$('#lgPass');const show=i.type==='password';i.type=show?'text':'password';t.classList.toggle('on',show);t.setAttribute('aria-label',show?'Masquer le mot de passe':'Afficher le mot de passe');t.title=t.getAttribute('aria-label');i.focus();return}
   if(a==='cloudReload'){CL.stale=false;render();return}
   if(a==='cloudRetry'){CL.err='';cloudFlush();return}
-  if(a==='logout'){if(pendN()&&!confirmLogout()){return}try{await CL.sb.auth.signOut()}catch(err){}if(CL.chan)CL.sb.removeChannel(CL.chan);CL.user=null;CL.state='login';CL.err='';
+  if(a==='logout'){if(pendN()&&!confirmLogout()){return}CL.role=null;CPT=null;try{await CL.sb.auth.signOut()}catch(err){}if(CL.chan)CL.sb.removeChannel(CL.chan);CL.user=null;CL.state='login';CL.err='';
     S=cloudEmpty();CL.pend={};pendSave();try{localStorage.removeItem(STORE)}catch(err){}baseline();UI.f=blankForm();UI.view='saisie';render();return}});
+
+/* --- Comptes d'accès du service (profil propre au service : lecture, saisie, responsable) --- */
+const IMG_SVC='imagerie',NIV={lecture:'Lecture seule',saisie:'Saisie',responsable:'Responsable'},ROLE_KEY='registre-imagerie-role';
+let CPT=null;
+async function cloudRole(user){try{const{data,error}=await CL.sb.from('acces_services').select('role,nom').eq('service',IMG_SVC).eq('user_id',user.id).eq('actif',true).maybeSingle();if(error)throw error;
+    CL.role=data?data.role:null;CL.nomCompte=data&&data.nom||'';try{localStorage.setItem(ROLE_KEY,JSON.stringify({u:user.id,r:CL.role}))}catch(e){}}
+  catch(e){let c=null;try{c=JSON.parse(localStorage.getItem(ROLE_KEY)||'null')}catch(x){}CL.role=c&&c.u===user.id?c.r:'saisie'}
+  if(!CL.role){CL.state='denied';S=cloudEmpty();render();return false}
+  if(CL.role==='lecture'&&(UI.view==='saisie'||UI.view==='params'))UI.view='liste';return true}
+function deniedView(){return`<section class="card login"><div class="head"><h2>Aucun accès au registre de l’imagerie</h2></div>
+  <p>Votre compte (${esc(CL.user&&CL.user.email||'')}) n’est pas rattaché au service d’imagerie. Demandez au responsable du service de vous donner un accès depuis l’écran « Comptes d’accès ».</p>
+  <div class="btns"><button type="button" class="btn ghost" data-act="logout">Se déconnecter</button></div></section>`}
+function cptNav(){const b=document.getElementById('navComptes');if(b)b.hidden=!(CLOUD&&CL.role==='responsable');
+  document.querySelectorAll('[data-nav-btn][data-v="saisie"],[data-nav-btn][data-v="params"]').forEach(x=>x.hidden=!!(CLOUD&&CL.role==='lecture'))}
+async function cptCharger(){const{data,error}=await CL.sb.from('acces_services').select('user_id,role,nom,email,actif,cree_le').eq('service',IMG_SVC).order('nom');
+  CPT=error?[]:data;if(error)toast(cloudMsg(error));if(UI.view==='comptes')render()}
+async function cptFn(action,a){const{data,error}=await CL.sb.functions.invoke('acces-admin',{body:{service:IMG_SVC,action,...a}});
+  if(error){let m=error.message;try{const j=await error.context.json();m=j.error||m}catch(x){}throw new Error(m)}if(!data||!data.ok)throw new Error(data&&data.error||'Erreur inconnue');return data}
+function viewComptes(){if(!CLOUD||CL.role!=='responsable')return`<section class="card"><p>Cet écran est réservé au responsable du service.</p></section>`;
+  if(CPT===null){CPT=undefined;cptCharger()}const L=CPT||[],moi=CL.user&&CL.user.id;
+  const lig=L.map(m=>`<tr><td><b>${esc(m.nom||'—')}</b></td><td>${esc(m.email||'')}</td><td>${esc(NIV[m.role]||m.role)}</td><td>${m.actif?'<span style="color:var(--ok);font-weight:700">actif</span>':'<span class="muted">désactivé</span>'}</td>
+    <td class="acts">${m.user_id===moi?'<span class="muted small">vous</span>':`<button type="button" class="btn ghost sm" data-act="cpEdit" data-v="${m.user_id}">Modifier</button> <button type="button" class="btn ghost sm" data-act="cpMdp" data-v="${m.user_id}">Mot de passe</button> <button type="button" class="btn ghost sm" data-act="cpActif" data-v="${m.user_id}">${m.actif?'Désactiver':'Réactiver'}</button>`}</td></tr>`).join('');
+  return`<section class="card"><div class="head"><h2>Comptes d’accès du service d’imagerie</h2></div>
+  <p class="muted small">Seuls les comptes de cette liste voient le registre. <b>Lecture seule</b> : consultation et rapports. <b>Saisie</b> : enregistrement et modification des examens. <b>Responsable</b> : en plus, suppression, paramètres et gestion des comptes.</p>
+  ${CPT===undefined?'<p class="muted">Chargement…</p>':`<div class="tw"><table class="list"><thead><tr><th>Nom</th><th>E-mail</th><th>Niveau</th><th>État</th><th>Actions</th></tr></thead><tbody>${lig||'<tr><td colspan="5" class="muted">Aucun compte.</td></tr>'}</tbody></table></div>`}</section>
+  <section class="card"><div class="head"><h2>Nouveau compte</h2></div>
+  <div class="fgrid1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">
+  <label class="fld"><span>Nom et prénom</span><input id="cpNom" autocomplete="off"></label><label class="fld"><span>E-mail</span><input id="cpMail" type="email" autocomplete="off"></label>
+  <label class="fld"><span>Mot de passe (8 caractères minimum)</span><input id="cpPass" type="text" autocomplete="new-password"></label>
+  <label class="fld"><span>Niveau d’accès</span><select id="cpRole">${Object.entries(NIV).map(([k,l])=>`<option value="${k}"${k==='saisie'?' selected':''}>${l}</option>`).join('')}</select></label></div>
+  <div class="btns"><button type="button" class="btn primary" data-act="cpNew">Créer le compte</button></div>
+  <p class="muted small">Le compte est actif tout de suite, sans confirmation par e-mail. Transmettez l’adresse et le mot de passe à la personne. Si l’adresse a déjà un compte dans une autre application, elle garde son mot de passe actuel.</p></section>`}
+const cptGet=id=>(CPT||[]).find(x=>x.user_id===id);
+const cptVal=id=>(document.getElementById(id)||{}).value||'';
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-act]');if(!t||!/^cp/.test(t.dataset.act))return;const a=t.dataset.act,v=t.dataset.v,m=cptGet(v);
+  const go=async(f,msg,after)=>{t.disabled=true;try{await f();toast(msg);if(after)after();await cptCharger()}catch(err){toast(err.message)}finally{t.disabled=false}};
+  if(a==='cpNew'){const b={nom:cptVal('cpNom').trim(),email:cptVal('cpMail').trim(),password:cptVal('cpPass'),role:cptVal('cpRole')};
+    if(!b.nom||!b.email){toast('Indiquez le nom et l’adresse e-mail.');return}
+    t.disabled=true;try{const r=await cptFn('creer',b);toast(r.existant?`Accès ajouté pour ${b.email} : son mot de passe actuel reste valable.`:`Compte créé pour ${b.email}.`);await cptCharger()}catch(err){toast(err.message)}finally{t.disabled=false}return}
+  if(a==='cpEdit'&&m){modal(`<div class="head"><h2>Modifier l’accès — ${esc(m.nom)}</h2></div><div class="fgrid1"><label class="fld"><span>Nom et prénom</span><input id="ceNom" value="${esc(m.nom)}"></label>
+    <label class="fld"><span>Niveau d’accès</span><select id="ceRole">${Object.entries(NIV).map(([k,l])=>`<option value="${k}"${k===m.role?' selected':''}>${l}</option>`).join('')}</select></label></div>
+    <div class="btns"><button type="button" class="btn ghost" data-act="close">Annuler</button><button type="button" class="btn primary" data-act="cpEditOk" data-v="${m.user_id}">Enregistrer</button></div>`);return}
+  if(a==='cpEditOk')return go(()=>cptFn('modifier',{user_id:v,nom:cptVal('ceNom').trim(),role:cptVal('ceRole')}),'Accès modifié.',closeModal);
+  if(a==='cpMdp'&&m){modal(`<div class="head"><h2>Nouveau mot de passe — ${esc(m.nom)}</h2></div><label class="fld"><span>Mot de passe (8 caractères minimum)</span><input id="cmPass" type="text" autocomplete="new-password"></label>
+    <div class="btns"><button type="button" class="btn ghost" data-act="close">Annuler</button><button type="button" class="btn primary" data-act="cpMdpOk" data-v="${m.user_id}">Enregistrer</button></div>`);return}
+  if(a==='cpMdpOk')return go(()=>cptFn('motdepasse',{user_id:v,password:cptVal('cmPass')}),'Mot de passe modifié.',closeModal);
+  if(a==='cpActif'&&m)return go(()=>cptFn('modifier',{user_id:v,actif:!m.actif}),m.actif?'Accès désactivé.':'Accès réactivé.')});
 function confirmLogout(){toast(`${pendN()} modification(s) pas encore envoyée(s) : reconnectez-vous à Internet avant de vous déconnecter.`);return false}
 window.addEventListener('online',()=>{CL.online=true;CL.err='';cloudFlush()});
 window.addEventListener('offline',()=>{CL.online=false;cloudBar()});
@@ -1420,8 +1470,8 @@ function viewParams(){let used=0;try{used=(localStorage.getItem(STORE)||'').leng
    <p class="muted small">${CLOUD?'Registre commun : les fiches sont enregistrées dans la base partagée et visibles sur tous les postes connectés. Une copie est gardée dans ce navigateur pour travailler pendant une coupure ; elle est envoyée dès le retour de la connexion. Exportez quand même le registre régulièrement comme sauvegarde.':'Les fiches sont conservées dans ce navigateur uniquement : elles ne sont ni partagées entre postes ni sauvegardées ailleurs. Exportez le registre régulièrement.'}</p></section>`}
 
 /* --- Rendu et événements --- */
-const VIEWS={saisie:viewSaisie,liste:viewListe,rapport:viewRapport,params:viewParams};
-function render(){imgSyncRef();if(cloudGate())return;document.querySelectorAll('[data-nav-btn]').forEach(b=>{const on=b.dataset.v===UI.view;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
+const VIEWS={saisie:viewSaisie,liste:viewListe,rapport:viewRapport,params:viewParams,comptes:viewComptes};
+function render(){imgSyncRef();if(cloudGate())return;cptNav();document.querySelectorAll('[data-nav-btn]').forEach(b=>{const on=b.dataset.v===UI.view;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
   $('#view').innerHTML=VIEWS[UI.view]();$('#demoTag').hidden=!S.demo;$('#store').textContent=persisted||CLOUD?'':'Stockage indisponible : les saisies seront perdues à la fermeture.'}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act,v=t.dataset.v;
   if(a==='closeBg'){if(e.target===t)closeModal();return}
