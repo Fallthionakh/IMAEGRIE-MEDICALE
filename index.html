@@ -495,6 +495,13 @@ table{font-size:.82rem}th{font-size:.64rem;padding:8px}td{padding:7px 8px}
   .login{margin:6vh 0 0;max-width:none}}
 @keyframes agSheet{from{transform:translateY(30px);opacity:.6}}
 @media (max-width:380px){.bnav button{font-size:.58rem}.kpi b{font-size:1.15rem}}
+
+.smsList{display:flex;flex-direction:column;gap:6px;margin-top:10px;max-height:46vh;overflow:auto}
+.smsLi{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--sunk)}
+.smsLi span{display:flex;flex-direction:column;min-width:0}.smsLi small{color:var(--muted);font-size:.74rem}
+.modal details{border:1px solid var(--line);border-radius:12px;padding:10px 12px}.modal details>summary{cursor:pointer}
+.modal textarea{font:inherit;border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--sunk);color:var(--ink);resize:vertical}
+a.btn{text-decoration:none}
 </style>
 <header class="top"><div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 7v10M12 7v10M16 7v10M6 12h12"/></svg></span><span class="txt"><h1>Registre de l’imagerie</h1><span>CHR El Hadji Ahmadou Sakhir Ndiéguène de Thiès · service d’imagerie médicale</span></span></div>
 <nav class="main" aria-label="Navigation">
@@ -1284,7 +1291,7 @@ function rdvModal(cle){const r=S.recs.find(x=>x.cle===cle);if(!r){closeModal();r
     <div>${e.ids.map(id=>esc(exLabel(id))).join(' · ')}</div>
     <div class="small">${e.rdv?`Rendez-vous le <b>${frDate(e.rdv)}</b>`:'Pas de rendez-vous'}${e.date&&st==='realise'?` · réalisé le <b>${frDate(e.date)}</b>`:e.date?` · examen du ${frDate(e.date)}`:''}${st==='annule'&&e.motif?` · motif : ${esc(e.motif)}`:''}</div>
     ${st?`<div class="rdvAct">
-      ${st==='prevu'||st==='retard'?`<button type="button" class="btn primary sm" data-act="rdvDo" data-v="${k}">Réaliser aujourd’hui</button>`:''}
+      ${st==='prevu'||st==='retard'?`<span class="inl"><input type="date" id="rd_${k}" max="${t}" value="${st==='retard'?e.rdv:t}" aria-label="Date de réalisation ${esc(l)}"><button type="button" class="btn primary sm" data-act="rdvDoAt" data-v="${k}">Marquer réalisé</button></span>`:''}${st==='prevu'||st==='retard'?smsLien(r.cle+'|'+k):''}
       <span class="inl"><input type="date" id="rp_${k}" min="${t}" aria-label="Nouvelle date de rendez-vous ${esc(l)}"><button type="button" class="btn ghost sm" data-act="rdvMove" data-v="${k}">${st==='prevu'||st==='retard'?'Reporter':'Reprogrammer'}</button></span>
       ${st==='prevu'||st==='retard'?`<span class="inl"><input id="ra_${k}" placeholder="Motif d’annulation" aria-label="Motif d’annulation ${esc(l)}"><button type="button" class="btn ghost sm" data-act="rdvCancel" data-v="${k}">Annuler le RDV</button></span>`:''}
       <button type="button" class="btn danger sm" data-act="rdvDel" data-v="${k}">${UI.delRdv===k?'Confirmer la suppression du RDV':'Supprimer le RDV'}</button></div>`:''}
@@ -1762,6 +1769,66 @@ function viewParams(){let used=0;try{used=(localStorage.getItem(STORE)||'').leng
    <p class="muted small">${CLOUD?'Registre commun : les fiches sont enregistrées dans la base partagée et visibles sur tous les postes connectés. Une copie est gardée dans ce navigateur pour travailler pendant une coupure ; elle est envoyée dès le retour de la connexion. Exportez quand même le registre régulièrement comme sauvegarde.':'Les fiches sont conservées dans ce navigateur uniquement : elles ne sont ni partagées entre postes ni sauvegardées ailleurs. Exportez le registre régulièrement.'}</p></section>`}
 
 /* --- Rendu et événements --- */
+/* ===================== SMS et « réalisé à une date » ===================== */
+const SMS_KEY='registre-imagerie-sms';
+const SMS_DEF={rappel:'Bonjour {prenom} {nom}, nous vous rappelons votre rendez-vous de {examen} le {date} au service d’imagerie du CHR de Thiès. Merci de vous présenter à l’heure.',
+  relance:'Bonjour {prenom} {nom}, votre rendez-vous de {examen} prévu le {date} au service d’imagerie du CHR de Thiès n’a pas pu avoir lieu. Merci de nous contacter pour le reprogrammer.',
+  groupe:'Bonjour, le service d’imagerie du CHR de Thiès vous rappelle votre rendez-vous. Merci de vous présenter à la date prévue ou de nous contacter en cas d’empêchement.'};
+function smsModeles(){let m={};try{m=JSON.parse(localStorage.getItem(SMS_KEY)||'{}')||{}}catch(e){}return{...SMS_DEF,...m}}
+function smsSauver(k,v){const m=smsModeles();m[k]=v;try{localStorage.setItem(SMS_KEY,JSON.stringify(m))}catch(e){}}
+function smsTel(t){const d=String(t||'').replace(/\D/g,'');if(!d)return'';if(d.length===9)return'+221'+d;if(d.startsWith('221')&&d.length===12)return'+'+d;if(d.startsWith('00'))return'+'+d.slice(2);return d}
+const smsIOS=()=>typeof navigator!=='undefined'&&/iPhone|iPad|iPod/i.test(navigator.userAgent||'');
+function smsHref(nums,body){nums=nums.filter(Boolean);const b=encodeURIComponent(body||'');if(smsIOS())return nums.length>1?`sms://open?addresses=${nums.join(',')}&body=${b}`:`sms:${nums[0]||''}&body=${b}`;return`sms:${nums.join(',')}?body=${b}`}
+function smsEv(id){const[cle,k]=id.split('|'),r=S.recs.find(x=>x.cle===cle);if(!r)return null;const e=r.ex[k];return{id,cle,k,r,e,st:rdvState(e),tel:smsTel(r.tel),ex:e.ids.map(i=>exLabel(i)).join(', '),l:FAMS.find(x=>x[0]===k)[1]}}
+function smsTexte(x,modele){return modele.replace(/\{prenom\}/g,x.r.prenom||'').replace(/\{nom\}/g,x.r.nom||'').replace(/\{examen\}/g,(x.ex||x.l).toLowerCase()).replace(/\{date\}/g,frDate(x.e.rdv)).replace(/\{service\}/g,x.l).replace(/\s+/g,' ').trim()}
+const smsModeleDe=x=>smsModeles()[x.st==='retard'?'relance':'rappel'];
+function smsLien(id,cls){const x=smsEv(id);if(!x||!x.tel)return'';return`<a class="${cls||'btn ghost sm'}" href="${esc(smsHref([x.tel],smsTexte(x,smsModeleDe(x))))}" data-sms="${esc(id)}" title="Envoyer un SMS ${x.st==='retard'?'de relance':'de rappel'}">SMS</a>`}
+function smsTrace(ids,quoi){const t=nowLocal();let n=0;for(const id of ids){const x=smsEv(id);if(!x)continue;x.e.hist=x.e.hist||[];x.e.hist.push({d:t,a:quoi});x.r.modif=t;n++}if(n)save()}
+/* Marquer réalisé à une date (un ou plusieurs) */
+function faitDlg(ids){const L=ids.map(smsEv).filter(x=>x&&['prevu','retard'].includes(x.st)),t=today();if(!L.length){toast('Aucun rendez-vous prévu ou dépassé dans la sélection.');return}
+  UI.faitIds=L.map(x=>x.id);const un=L.length===1,d0=un&&L[0].e.rdv<t?L[0].e.rdv:t;
+  modal(`<div class="head"><h2>Marquer ${un?'le rendez-vous':L.length+' rendez-vous'} comme réalisé${un?'':'s'}</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
+  ${un?`<p class="small" style="margin:0"><b>${esc(L[0].r.prenom)} ${esc(L[0].r.nom)}</b> · ${esc(L[0].l)} : ${esc(L[0].ex)} · rendez-vous du ${frDate(L[0].e.rdv)}</p>`:`<p class="small" style="margin:0">${L.filter(x=>x.st==='retard').length} dépassé(s) et ${L.filter(x=>x.st==='prevu').length} prévu(s).</p>`}
+  <div class="fgrid1" style="display:flex;flex-direction:column;gap:8px">
+   ${un?'':`<label class="chk"><input type="radio" name="faitQuand" value="rdv" checked> À la date de chaque rendez-vous (aujourd’hui pour ceux qui sont à venir)</label>`}
+   <label class="chk"><input type="radio" name="faitQuand" value="date" ${un?'checked':''}> À la date suivante :</label>
+   <input type="date" id="faitDate" value="${d0}" max="${t}" style="max-width:220px"></div>
+  <div class="btns"><button type="button" class="btn primary" data-act="faitOk">Marquer réalisé${un?'':'s'}</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);
+  setTimeout(()=>{const i=document.getElementById('faitDate');if(i)i.addEventListener('focus',()=>{const r=document.querySelector('input[name=faitQuand][value=date]');if(r)r.checked=true})},0)}
+function faitOk(){const q=(document.querySelector('input[name=faitQuand]:checked')||{}).value||'date',d=(document.getElementById('faitDate')||{}).value,t=today();
+  if(q==='date'){if(!d){toast('Choisissez la date de réalisation.');return}if(d>t){toast('La date de réalisation ne peut pas être dans le futur.');return}}
+  let n=0;for(const id of UI.faitIds||[]){const x=smsEv(id);if(!x||!['prevu','retard'].includes(x.st))continue;const dd=q==='rdv'?(x.e.rdv<=t?x.e.rdv:t):d;
+    x.e.rdvSt='realise';x.e.date=dd;x.e.hist=x.e.hist||[];x.e.hist.push({d:nowLocal(),a:`Rendez-vous réalisé le ${frDate(dd)}`});x.r.modif=nowLocal();if(UI.f&&UI.f.edit===x.cle)UI.f.ex[x.k]=clone(x.e);n++}
+  UI.faitIds=null;if(n)save();if(UI.ag)UI.ag.sel=[];closeModal();if(typeof agApres==='function')agApres();if(UI.view!=='saisie'&&UI.view!=='agenda')render();toast(`${n} rendez-vous marqué(s) réalisé(s)`)}
+/* SMS groupé ou un par un */
+function smsDlg(ids){const L=ids.map(smsEv).filter(Boolean),avec=L.filter(x=>x.tel),sans=L.length-avec.length;if(!avec.length){toast('Aucun numéro de téléphone pour ces rendez-vous.');return}
+  UI.smsIds=avec.map(x=>x.id);const M=smsModeles();
+  modal(`<div class="head"><h2>SMS à ${avec.length} patient${avec.length>1?'s':''}</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
+  ${sans?`<p class="note warn" style="margin:0">${sans} rendez-vous sans numéro de téléphone ne recevront pas de SMS.</p>`:''}
+  <p class="small muted" style="margin:0">Les SMS partent depuis <b>ce téléphone</b>, par votre application de messagerie, au tarif de votre forfait. Mots remplacés automatiquement : {prenom} {nom} {examen} {date}.</p>
+  <details open><summary><b>Un par un, message personnalisé</b> (recommandé)</summary>
+   <label class="fld" style="margin-top:8px"><span>Message de rappel (rendez-vous à venir)</span><textarea id="smsRappel" rows="3" style="width:100%">${esc(M.rappel)}</textarea></label>
+   <label class="fld"><span>Message de relance (rendez-vous dépassé)</span><textarea id="smsRelance" rows="3" style="width:100%">${esc(M.relance)}</textarea></label>
+   <div class="smsList">${avec.map(x=>`<div class="smsLi"><span><b>${esc(x.r.prenom)} ${esc(x.r.nom)}</b><small>${esc(x.l)} · ${frDate(x.e.rdv)} · ${esc(x.tel)}${x.st==='retard'?' · <span class="warnTxt">dépassé</span>':''}</small></span><a class="btn primary sm" data-smsun="${esc(x.id)}" href="${esc(smsHref([x.tel],smsTexte(x,x.st==='retard'?M.relance:M.rappel)))}">Envoyer</a></div>`).join('')}</div></details>
+  ${avec.length>1?`<details><summary><b>Groupé, même message pour tous</b></summary>
+   <label class="fld" style="margin-top:8px"><span>Message commun (sans nom ni date, il part à tous en une fois)</span><textarea id="smsGroupe" rows="3" style="width:100%">${esc(M.groupe)}</textarea></label>
+   ${avec.length>20?`<p class="small warnTxt" style="margin:0">Au-delà de 20 destinataires, certains téléphones refusent l’envoi groupé : préférez plusieurs envois plus petits ou l’envoi un par un.</p>`:''}
+   <div class="btns"><a class="btn primary" id="smsGrpBtn" data-smsgrp="1" href="${esc(smsHref(avec.map(x=>x.tel),M.groupe))}">Ouvrir la messagerie (${avec.length} destinataires)</a></div></details>`:''}`);
+  setTimeout(()=>{[['smsRappel','rappel'],['smsRelance','relance'],['smsGroupe','groupe']].forEach(([id,k])=>{const t=document.getElementById(id);if(t)t.addEventListener('input',()=>{smsSauver(k,t.value);smsMaj()})})},0)}
+function smsMaj(){const M=smsModeles();document.querySelectorAll('[data-smsun]').forEach(a=>{const x=smsEv(a.dataset.smsun);if(x)a.href=smsHref([x.tel],smsTexte(x,x.st==='retard'?M.relance:M.rappel))});
+  const g=document.getElementById('smsGrpBtn');if(g)g.href=smsHref((UI.smsIds||[]).map(id=>(smsEv(id)||{}).tel),M.groupe)}
+document.addEventListener('click',e=>{const a=e.target.closest('[data-sms],[data-smsun],[data-smsgrp]');if(!a)return;
+  if(a.dataset.smsun){a.classList.remove('primary');a.classList.add('ghost');a.textContent='Envoyé ✓';setTimeout(()=>smsTrace([a.dataset.smsun],'SMS préparé depuis l’agenda'),300);return}
+  if(a.dataset.smsgrp){setTimeout(()=>smsTrace(UI.smsIds||[],'SMS groupé préparé depuis l’agenda'),300);return}
+  if(a.dataset.sms){setTimeout(()=>{smsTrace([a.dataset.sms],'SMS préparé depuis l’agenda');if(typeof agRefresh==='function')agRefresh()},300)}});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act,v=t.dataset.v;
+  if(a==='faitOk')return faitOk();
+  if(a==='agFaitDlg')return faitDlg([v]);
+  if(a==='agBulkFaitDlg')return faitDlg((UI.ag&&UI.ag.sel)||[]);
+  if(a==='agBulkSms')return smsDlg((UI.ag&&UI.ag.sel)||[]);
+  if(a==='rdvDoAt'){const d=(document.getElementById('rd_'+v)||{}).value,t0=today();if(!d){toast('Choisissez la date de réalisation.');return}if(d>t0){toast('La date de réalisation ne peut pas être dans le futur.');return}
+    rdvAct(v,x=>{x.rdvSt='realise';x.date=d},`Rendez-vous réalisé le ${frDate(d)}`);if(typeof agRefresh==='function')agRefresh();return}});
+
 /* ===================== Agenda des rendez-vous ===================== */
 const AG_JOURS=['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'],AG_JL=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 const AG_MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -1802,7 +1869,7 @@ function agSemaineHtml(evs){const A=agUI(),l=agLundi(A.date),t=today();
 function agLigne(ev){const A=agUI(),sel=A.sel.includes(ev.id);
   return`<div class="agRow ${sel?'sel':''}" data-fam="${ev.k}">${A.selMode?`<label class="agRk"><input type="checkbox" data-act="agTog" data-v="${esc(ev.id)}" ${sel?'checked':''} ${agEditable(ev)?'':'disabled'}></label>`:''}
     ${agChip(ev,true)}<span class="agRx">${esc(ev.l)} · ${esc(ev.ex)}</span>${ev.tel?`<a class="agTel" href="tel:${esc(ev.tel.replace(/\s/g,''))}">${esc(ev.tel)}</a>`:'<span></span>'}<span class="pill st-${ev.st}">${RDV_ST[ev.st]}</span>
-    <span class="agQa">${['prevu','retard'].includes(ev.st)?`<button type="button" class="btn ghost sm" data-act="agFait" data-v="${esc(ev.id)}" title="Marquer réalisé">Réalisé</button>`:''}${agEditable(ev)?`<button type="button" class="btn ghost sm" data-act="agDemain" data-v="${esc(ev.id)}" title="Reporter au jour ouvré suivant">+1 jour</button>`:''}<button type="button" class="btn ghost sm" data-act="agOuvrir" data-v="${esc(ev.id)}">Gérer</button></span></div>`}
+    <span class="agQa">${['prevu','retard'].includes(ev.st)?`<button type="button" class="btn ghost sm" data-act="agFaitDlg" data-v="${esc(ev.id)}" title="Marquer réalisé à une date">Réalisé</button>`+smsLien(ev.id):''}${agEditable(ev)?`<button type="button" class="btn ghost sm" data-act="agDemain" data-v="${esc(ev.id)}" title="Reporter au jour ouvré suivant">+1 jour</button>`:''}<button type="button" class="btn ghost sm" data-act="agOuvrir" data-v="${esc(ev.id)}">Gérer</button></span></div>`}
 function agJourHtml(evs){if(!evs.length)return`<div class="agEmpty"><b>Aucun rendez-vous</b><span>Rien de prévu ce jour avec les filtres choisis.</span></div>`;
   return FAMS.filter(([k])=>evs.some(e=>e.k===k)).map(([k,l])=>{const L=evs.filter(e=>e.k===k);return`<div class="agGrp" data-fam="${k}"><div class="agGrpHd"><i class="agDot f-${k}"></i><b>${esc(l)}</b><span>${L.length}</span></div>${L.map(agLigne).join('')}</div>`}).join('')}
 function agListeHtml(evs){if(!evs.length)return`<div class="agEmpty"><b>Aucun rendez-vous à venir</b><span>Sur les 30 prochains jours, avec les filtres choisis.</span></div>`;
@@ -1820,7 +1887,7 @@ function agendaHtml(plein){const A=agUI(),[d1,d2]=agPeriode(),evs=agEvents(d1,d2
     <div class="agSt">${Object.entries(RDV_ST).map(([s,l])=>`<label class="agS st-${s} ${A.st.includes(s)?'on':''}"><input type="checkbox" data-act="agSt" data-v="${s}" ${A.st.includes(s)?'checked':''}>${l}</label>`).join('')}</div></div>
   ${A.selMode?`<div class="agBulk"><b>${selN} sélectionné(s)</b><button type="button" class="btn ghost sm" data-act="agSelTout">Tout sélectionner (${evs.filter(agEditable).length})</button>${selN?`<button type="button" class="btn ghost sm" data-act="agSelRaz">Vider</button>
     <span class="agSep"></span><label class="agInl">Déplacer au <input type="date" id="agBulkD" min="${t}"></label><button type="button" class="btn primary sm" data-act="agBulkMove">Déplacer</button>
-    <label class="agInl">ou décaler de <select id="agBulkN">${[1,2,3,7,14,-1,-7].map(n=>`<option value="${n}">${n>0?'+':''}${n} jour${Math.abs(n)>1?'s':''}</option>`).join('')}</select></label><button type="button" class="btn ghost sm" data-act="agBulkShift">Décaler</button><button type="button" class="btn ghost sm" data-act="agBulkFait" title="Pour les rendez-vous dont l’examen a déjà été fait">Marquer réalisés</button>`:'<span class="muted small">Cliquez sur les rendez-vous à reprogrammer.</span>'}</div>`:''}
+    <label class="agInl">ou décaler de <select id="agBulkN">${[1,2,3,7,14,-1,-7].map(n=>`<option value="${n}">${n>0?'+':''}${n} jour${Math.abs(n)>1?'s':''}</option>`).join('')}</select></label><button type="button" class="btn ghost sm" data-act="agBulkShift">Décaler</button><button type="button" class="btn ghost sm" data-act="agBulkFaitDlg" title="Pour les rendez-vous dont l’examen a déjà été fait">Marquer réalisés…</button><button type="button" class="btn ghost sm" data-act="agBulkSms">SMS…</button>`:'<span class="muted small">Cliquez sur les rendez-vous à reprogrammer.</span>'}</div>`:''}
   ${A.pris?`<div class="agPris">Rendez-vous sélectionné : touchez le jour de destination. <button type="button" class="btn ghost sm" data-act="agPrisRaz">Annuler</button></div>`:''}
   <div class="agBody">${vue}</div>
   <p class="agAide muted small">Glissez-déposez un rendez-vous sur un autre jour pour le reprogrammer (sur téléphone : appui long, puis touchez le jour). Cliquez sur un jour pour le voir en détail, sur un rendez-vous pour le gérer.</p></section>`}
