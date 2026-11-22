@@ -7,7 +7,7 @@
 <title>Registre de l'imagerie</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
 /* Poste de saisie : fiche patient à gauche, examens en onglets colorés à droite (codes couleur du registre), liste du jour dessous */
 :root{
@@ -375,6 +375,61 @@ tr.click{transition:background .12s}tr.click:hover td{background:color-mix(in sr
 .agenda.plein .agCell{min-height:130px}.agenda.plein .agCol{min-height:420px}
 @media (max-width:760px){.agCell,.agenda.plein .agCell{min-height:62px;padding:3px}.agCell .agEv{padding:0;height:6px;border-radius:3px;border:0;background:var(--fam);font-size:0}.agCell .agEv .agNom,.agCell .agEv .agDot,.agCell .agEv .agCk{display:none}.agCnt{top:4px;right:4px}.agMore{font-size:.62rem;padding:0}
   .agWeek{grid-template-columns:1fr}.agCol{min-height:0}.agRow,.agRow:not(:has(.agRk)){grid-template-columns:1fr auto;}.agRx{grid-column:1/-1;white-space:normal}.agQa{grid-column:1/-1;justify-content:flex-start}.agQ{width:100%}.agTools{width:100%}.agQ{flex:1}}
+
+/* ===================== Mise en page compacte ===================== */
+:root{--f-display:"Inter","Plus Jakarta Sans",system-ui,sans-serif;--f-body:"Inter","Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--r-lg:14px;--r-md:10px}
+html{font-size:14px}body{font-size:13.5px;line-height:1.45;letter-spacing:-.005em}
+/* en-tête sur une seule ligne */
+header.top{padding-block:8px;gap:8px 16px;flex-wrap:nowrap}
+.brand{gap:10px;flex:none}.brand .logo{width:34px;height:34px;border-radius:10px}.brand .logo svg{width:18px;height:18px}
+.brand h1{font-size:1rem;font-weight:800;line-height:1.2}.brand .txt>span{font-size:.72rem;max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+nav.main{flex-wrap:nowrap;padding:3px;border-radius:11px;overflow-x:auto;scrollbar-width:none;min-width:0}nav.main::-webkit-scrollbar{display:none}
+nav.main button{padding:6px 11px;font-size:.84rem;border-radius:8px;white-space:nowrap;flex:none}
+.cloudBar{flex-basis:auto;margin-left:auto;padding-top:0;flex-wrap:nowrap;gap:8px;font-size:.76rem;white-space:nowrap}
+.cloudBar .cuser{margin-left:0;padding:3px 9px;font-size:.74rem;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.cloudBar .btn,.cloudBar button{min-height:30px;padding:4px 10px;font-size:.76rem}
+@media (max-width:1100px){header.top{flex-wrap:wrap}.cloudBar{flex-basis:100%;margin-left:0}.brand .txt>span{display:none}}
+main{padding-top:16px;gap:14px;max-width:1600px}
+/* cartes et titres */
+.card{padding:16px;gap:12px;border-radius:var(--r-lg)}
+.entry{gap:14px}@media (min-width:901px){.entry{grid-template-columns:minmax(0,360px) minmax(0,1fr)}}
+.secHead{gap:10px}.secHead .step{width:26px;height:26px;border-radius:8px;font-size:.8rem}.secHead .step svg{width:15px;height:15px}
+.secHead b{font-size:.95rem}.secHead small{font-size:.74rem}
+h2{font-size:1rem}h3{font-size:.92rem}
+.codeRow{padding:9px 12px}.codeRow .lab,.lab{font-size:.66rem}.codeRow .code{font-size:1.05rem}.stamp{font-size:.7rem;padding:3px 8px}
+/* champs */
+.fld{gap:3px}.fld>span{font-size:.74rem}
+input,select,textarea{min-height:36px;padding:6px 10px;font-size:.88rem;border-radius:9px}
+.two{gap:10px}
+form.patient{gap:10px}
+.scanBtn{min-height:40px;font-size:.86rem}.scanRow{gap:6px}
+.recuBox{padding:8px 12px}.recuBox>summary{font-size:.84rem}
+/* boutons */
+.btn{min-height:36px;padding:7px 14px;font-size:.84rem;border-radius:9px}.btn.sm{min-height:30px;padding:4px 10px;font-size:.78rem;border-radius:8px}
+/* onglets d'examens sur une ligne */
+.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:3px;gap:2px;border-radius:11px}.tabs::-webkit-scrollbar{display:none}
+.tab{font-size:.8rem;padding:6px 10px;border-radius:8px;white-space:nowrap;flex:none;gap:6px}.tab .dot{width:7px;height:7px}
+.panel{padding:14px;border-radius:var(--r-md)}.pgrid{gap:14px;grid-template-columns:minmax(0,1fr) 180px}
+.plab{font-size:.68rem}.demande{min-height:84px;padding:8px}.demande li{padding:6px 8px;font-size:.84rem}
+.money{padding:8px 12px;gap:6px 18px}.money b{font-size:.95rem}.money>span{font-size:.72rem}
+.chip{font-size:.76rem;padding:3px 10px}.actions{padding-top:12px}
+/* indicateurs, filtres, tableaux */
+.kpis{gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}.kpi{padding:10px 12px;gap:2px}.kpi b{font-size:1.35rem}.kpi .lab{font-size:.64rem}
+.filters{padding:10px 12px;gap:8px 12px}.filters .fld{min-width:140px}
+table{font-size:.82rem}th{font-size:.64rem;padding:8px}td{padding:7px 8px}
+/* agenda */
+.agSeg button{font-size:.78rem;padding:5px 10px;border-radius:8px}.agArr{width:30px;height:30px;font-size:1.1rem;border-radius:8px}
+.agTitre{font-size:.95rem}.agPick{min-height:30px;font-size:.78rem;padding:3px 8px}.agQ{min-height:30px;width:180px;font-size:.8rem;padding:4px 10px}
+.agF{font-size:.72rem;padding:3px 9px;gap:5px}.agS{font-size:.7rem;padding:3px 8px}.agDot{width:7px;height:7px}
+.agFiltres{gap:6px 10px}.agFam,.agSt{gap:5px}
+.agGrid .agHd{font-size:.62rem}.agCell{min-height:86px;padding:5px}.agNum{width:22px;height:22px;font-size:.74rem}.agCnt{font-size:.62rem}
+.agEv{font-size:.7rem;padding:3px 6px;border-radius:6px}.agEv .agEx{font-size:.66rem}
+.agCol{min-height:180px;padding:5px;border-radius:12px}.agColHd b{font-size:1rem}
+.agRow{padding:6px 10px;gap:8px}.agRx{font-size:.76rem}.agGrpHd{padding:7px 10px;font-size:.84rem}
+.agenda.plein .agCell{min-height:110px}
+.agBulk,.agPris{padding:8px 10px;font-size:.82rem}
+.modal{padding:18px}.toast{font-size:.84rem}
+@media (max-width:1480px) and (min-width:1101px){.brand .txt>span{display:none}.cloudBar>span:nth-child(2){display:none}nav.main button{padding:6px 9px}}
 </style>
 <header class="top"><div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 7v10M12 7v10M16 7v10M6 12h12"/></svg></span><span class="txt"><h1>Registre de l’imagerie</h1><span>CHR El Hadji Ahmadou Sakhir Ndiéguène de Thiès · service d’imagerie médicale</span></span></div>
 <nav class="main" aria-label="Navigation">
@@ -1699,7 +1754,7 @@ function agendaHtml(plein){const A=agUI(),[d1,d2]=agPeriode(),evs=agEvents(d1,d2
     <div class="agSt">${Object.entries(RDV_ST).map(([s,l])=>`<label class="agS st-${s} ${A.st.includes(s)?'on':''}"><input type="checkbox" data-act="agSt" data-v="${s}" ${A.st.includes(s)?'checked':''}>${l}</label>`).join('')}</div></div>
   ${A.selMode?`<div class="agBulk"><b>${selN} sélectionné(s)</b><button type="button" class="btn ghost sm" data-act="agSelTout">Tout sélectionner (${evs.filter(agEditable).length})</button>${selN?`<button type="button" class="btn ghost sm" data-act="agSelRaz">Vider</button>
     <span class="agSep"></span><label class="agInl">Déplacer au <input type="date" id="agBulkD" min="${t}"></label><button type="button" class="btn primary sm" data-act="agBulkMove">Déplacer</button>
-    <label class="agInl">ou décaler de <select id="agBulkN">${[1,2,3,7,14,-1,-7].map(n=>`<option value="${n}">${n>0?'+':''}${n} jour${Math.abs(n)>1?'s':''}</option>`).join('')}</select></label><button type="button" class="btn ghost sm" data-act="agBulkShift">Décaler</button>`:'<span class="muted small">Cliquez sur les rendez-vous à reprogrammer.</span>'}</div>`:''}
+    <label class="agInl">ou décaler de <select id="agBulkN">${[1,2,3,7,14,-1,-7].map(n=>`<option value="${n}">${n>0?'+':''}${n} jour${Math.abs(n)>1?'s':''}</option>`).join('')}</select></label><button type="button" class="btn ghost sm" data-act="agBulkShift">Décaler</button><button type="button" class="btn ghost sm" data-act="agBulkFait" title="Pour les rendez-vous dont l’examen a déjà été fait">Marquer réalisés</button>`:'<span class="muted small">Cliquez sur les rendez-vous à reprogrammer.</span>'}</div>`:''}
   ${A.pris?`<div class="agPris">Rendez-vous sélectionné : touchez le jour de destination. <button type="button" class="btn ghost sm" data-act="agPrisRaz">Annuler</button></div>`:''}
   <div class="agBody">${vue}</div>
   <p class="agAide muted small">Glissez-déposez un rendez-vous sur un autre jour pour le reprogrammer (sur téléphone : appui long, puis touchez le jour). Cliquez sur un jour pour le voir en détail, sur un rendez-vous pour le gérer.</p></section>`}
@@ -1738,6 +1793,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
   if(a==='agUndo'){t.closest('.toast')?.remove();return agAnnulerDernier()}
   if(a==='agBulkMove'){const d=(document.getElementById('agBulkD')||{}).value;if(!d){toast('Choisissez la nouvelle date.');return}if(d<today()){toast('Choisissez une date à partir d’aujourd’hui.');return}return agDeplacer(A.sel,()=>d,'reprogrammation groupée')}
   if(a==='agBulkShift'){const n=+((document.getElementById('agBulkN')||{}).value||1);return agDeplacer(A.sel,old=>agAdd(old<today()&&n>0?today():old,n),'reprogrammation groupée')}
+  if(a==='agBulkFait'){let n=0;for(const id of A.sel){const[cle,k]=id.split('|'),r=S.recs.find(x=>x.cle===cle);if(!r)continue;const x=r.ex[k],st=rdvState(x);if(!['prevu','retard'].includes(st))continue;x.rdvSt='realise';x.date=x.rdv<today()?x.rdv:today();x.hist=x.hist||[];x.hist.push({d:nowLocal(),a:'Rendez-vous marqué réalisé (agenda, sélection groupée)'});r.modif=nowLocal();if(UI.f&&UI.f.edit===cle)UI.f.ex[k]=clone(x);n++}
+    if(n)save();A.sel=[];agApres();toast(`${n} rendez-vous marqué(s) réalisé(s)`);return}
   if(a==='agFait'){const[cle,k]=v.split('|'),r=S.recs.find(x=>x.cle===cle);if(!r)return;const x=r.ex[k];x.rdvSt='realise';x.date=today();x.hist=x.hist||[];x.hist.push({d:nowLocal(),a:'Rendez-vous réalisé'});r.modif=nowLocal();if(UI.f&&UI.f.edit===cle)UI.f.ex[k]=clone(x);save();agApres();toast('Rendez-vous réalisé');return}
   if(a==='agDemain'){return agDeplacer([v],old=>agJourOuvre(old),'agenda')}
   if(a==='agOuvrir'){return rdvModal(v.split('|')[0])}});
