@@ -7,7 +7,7 @@
 <title>Registre de l'imagerie</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wght@500;700;800&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
 /* Poste de saisie : fiche patient à gauche, examens en onglets colorés à droite (codes couleur du registre), liste du jour dessous */
 :root{
@@ -208,11 +208,179 @@ table.model td.inj{font-family:var(--f-mono);font-weight:700;min-width:64px!impo
 table.fin td.n{font-family:var(--f-mono);white-space:nowrap}
 table.plist td{text-align:left}.tagDemo{font-size:10px;padding:1px 5px;border-radius:4px;background:var(--tint-int);color:var(--muted,#667);margin-left:4px;text-transform:uppercase;letter-spacing:.04em}.pxg input.bad{border-color:#c0392b;background:#fdecea}table.plist td.acts{white-space:normal;min-width:220px;font-size:12px}table.plist td.n{text-align:right}table.plist tr.click:hover td{background:var(--tint-ext)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* ===================== Thème moderne (surcouche) ===================== */
+:root{--accent:#2563eb;--accent-2:#4f46e5;--accent-ink:#fff;--bg:#f3f6fb;--surface:#fff;--sunk:#f6f8fc;--line:#e3e8f0;--ink:#0f172a;--muted:#64748b;
+  --r-lg:18px;--r-md:12px;--sh-1:0 1px 2px rgba(15,23,42,.05),0 2px 8px rgba(15,23,42,.04);--sh-2:0 10px 30px -12px rgba(15,23,42,.18);
+  --f-display:"Plus Jakarta Sans","Public Sans",system-ui,sans-serif;--f-body:"Plus Jakarta Sans","Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --dot-echo:#64748b;--dot-rx:#d4b106;--dot-dop:#e11d48;--dot-spe:#7c3aed;--dot-mam:#0ea5e9;--dot-scan:#0f766e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--accent:#60a5fa;--accent-2:#818cf8;--accent-ink:#0b1220;--bg:#0b1220;--surface:#111a2b;--sunk:#0e1626;--line:#1f2a3d;--ink:#e5edf7;--muted:#94a3b8;--sh-1:0 1px 2px rgba(0,0,0,.4);--sh-2:0 12px 30px -12px rgba(0,0,0,.6)}}
+body{background:radial-gradient(1200px 500px at 10% -10%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 60%),radial-gradient(900px 400px at 100% 0,color-mix(in srgb,var(--accent-2) 8%,transparent),transparent 60%),var(--bg);background-attachment:fixed;font-size:15px;-webkit-font-smoothing:antialiased}
+header.top{background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:saturate(1.6) blur(14px);-webkit-backdrop-filter:saturate(1.6) blur(14px);border-bottom:1px solid var(--line);box-shadow:0 1px 0 rgba(255,255,255,.6) inset;padding-block:12px}
+.brand{flex-direction:row;align-items:center;gap:12px}
+.brand .logo{width:40px;height:40px;flex:none;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 6px 16px -6px color-mix(in srgb,var(--accent) 70%,transparent)}
+.brand .txt{display:flex;flex-direction:column;min-width:0;color:var(--ink);font-size:inherit}.brand .txt>span{color:var(--muted);font-size:.78rem}
+.brand h1{font-size:1.15rem;font-weight:800;letter-spacing:-.02em}
+nav.main{background:var(--sunk);border:1px solid var(--line);padding:4px;border-radius:14px;gap:2px}
+nav.main button{border-radius:10px;padding:8px 14px;font-weight:700;font-size:.88rem;transition:background .15s,color .15s,box-shadow .15s}
+nav.main button.on{background:var(--surface);color:var(--accent);box-shadow:var(--sh-1),0 0 0 1px var(--line)}
+.cloudBar{font-size:.8rem}.cloudBar .cuser{background:var(--sunk);border:1px solid var(--line);padding:4px 10px;border-radius:999px}
+main{gap:20px;padding-top:22px}
+.card{border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;box-shadow:var(--sh-1);gap:14px}
+.entry{gap:20px}@media (min-width:901px){.entry{grid-template-columns:minmax(0,400px) minmax(0,1fr)}}
+.secHead{display:flex;align-items:center;gap:12px;margin-bottom:2px}
+.secHead .step{width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;font-weight:800;font-size:.95rem;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.secHead b{display:block;font-family:var(--f-display);font-size:1.05rem;letter-spacing:-.01em}.secHead small{display:block;color:var(--muted);font-size:.8rem}
+.codeRow{border:0;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 8%,var(--surface)),color-mix(in srgb,var(--accent-2) 6%,var(--surface)));border-radius:var(--r-md);padding:12px 14px}
+.codeRow .code{font-size:1.25rem;color:var(--accent)}.codeRow .code .small{font-family:var(--f-body)!important;color:var(--muted)}
+.stamp{background:var(--surface);border-radius:999px;padding:4px 10px;font-size:.75rem}
+.fld>span{font-size:.78rem;font-weight:700;color:var(--muted);letter-spacing:.01em}
+input,select,textarea{background:var(--sunk);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;min-height:44px;transition:border-color .15s,box-shadow .15s,background .15s}
+input:hover,select:hover{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+input:focus,select:focus,textarea:focus{outline:none;background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 16%,transparent)}
+button:focus-visible,tr:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.two{gap:12px}
+.btn{border-radius:var(--r-md);padding:10px 16px;min-height:42px;transition:transform .08s,box-shadow .15s,background .15s,filter .15s}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 8px 18px -8px color-mix(in srgb,var(--accent) 80%,transparent)}
+.btn.primary:hover{filter:brightness(1.06);box-shadow:0 10px 22px -8px color-mix(in srgb,var(--accent) 90%,transparent)}
+.btn.ghost{background:var(--surface);border-color:var(--line)}.btn.ghost:hover{background:var(--sunk);border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+.btn.sm{min-height:34px;padding:6px 12px;border-radius:10px}
+.scanBtn{border-radius:var(--r-md);border:1.5px dashed color-mix(in srgb,var(--accent) 55%,transparent);background:color-mix(in srgb,var(--accent) 6%,var(--surface));color:var(--accent);min-height:50px;font-weight:700}
+.scanBtn:hover{background:color-mix(in srgb,var(--accent) 11%,var(--surface));filter:none}
+.recuBox{border-radius:var(--r-md);background:var(--sunk);padding:10px 14px}
+/* Onglets d'examens : pastilles avec point de couleur */
+.tabs{border:0;gap:8px;padding:4px;background:var(--sunk);border:1px solid var(--line);border-radius:14px}
+.tab{font-style:normal;font-family:var(--f-body);font-weight:700;font-size:.86rem;border-radius:10px;padding:9px 14px;opacity:1;background:transparent!important;color:var(--muted)!important;transition:background .15s,color .15s,box-shadow .15s}
+.tab .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.tab:hover{color:var(--ink)!important;background:color-mix(in srgb,var(--surface) 70%,transparent)!important}
+.tab.on{color:var(--ink)!important;background:var(--surface)!important;box-shadow:var(--sh-1),0 0 0 1px var(--line)}
+.tab .cnt{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);padding:1px 7px;border-radius:999px}
+.tab.f-echo .dot,.panel.f-echo{--fam:var(--dot-echo)}.tab.f-rx .dot,.panel.f-rx{--fam:var(--dot-rx)}.tab.f-dop .dot,.panel.f-dop{--fam:var(--dot-dop)}.tab.f-spe .dot,.panel.f-spe{--fam:var(--dot-spe)}.tab.f-mam .dot,.panel.f-mam{--fam:var(--dot-mam)}.tab.f-scan .dot,.panel.f-scan{--fam:var(--dot-scan)}
+.tab .dot{background:var(--fam)}
+.panel{border-radius:var(--r-lg);padding:18px;background:color-mix(in srgb,var(--fam) 7%,var(--surface))!important;color:var(--ink)!important;border:1px solid color-mix(in srgb,var(--fam) 22%,var(--line));box-shadow:inset 4px 0 0 var(--fam)}
+.plab{font-size:.74rem;letter-spacing:.08em;color:color-mix(in srgb,var(--fam) 70%,var(--ink))}
+.btn.onfam{background:var(--fam);color:#fff;border-color:transparent}.panel.f-rx .btn.onfam,.panel.f-mam .btn.onfam{color:#0b1220}
+.demande{border:1px dashed color-mix(in srgb,var(--fam) 35%,var(--line));border-radius:var(--r-md);padding:10px;min-height:110px}
+.demande li{border-radius:10px;background:var(--sunk);border:0;padding:8px 10px}
+.x{border-radius:8px;border-color:transparent;background:color-mix(in srgb,var(--err) 10%,transparent)}
+.chip{border-radius:999px;padding:5px 12px;font-weight:600}
+.summary .lab,.lab{letter-spacing:.09em}
+.actions{border-top:1px solid var(--line);padding-top:16px;gap:10px}
+.actions .btn.primary{padding-inline:22px}
+@media (max-width:900px){.actions{position:sticky;bottom:0;z-index:5;margin:0 -20px -20px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);border-radius:0 0 var(--r-lg) var(--r-lg)}.actions .btn.primary{flex:1}}
+@media (max-width:640px){.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}.tab{white-space:nowrap;flex:none}
+  header.top{gap:8px}nav.main{width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}nav.main button{flex:none;white-space:nowrap}.brand .txt>span{display:none}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.kpi{padding:10px 12px}.kpi b{font-size:1.3rem}
+  .card{padding:16px;border-radius:16px}.actions{margin:0 -16px -16px;padding-inline:16px}.panel{padding:14px}}
+/* Indicateurs et tableaux */
+.kpis{gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.kpi{border-radius:var(--r-md);padding:14px 16px;background:var(--surface);box-shadow:var(--sh-1);position:relative;overflow:hidden;gap:6px}
+.kpi::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--accent)}
+.kpi.st-prevu::before{background:var(--warn)}.kpi.st-retard::before{background:var(--err)}.kpi.st-realise::before{background:var(--ok)}.kpi.st-annule::before{background:var(--muted)}
+.kpi b{font-family:var(--f-display);font-size:1.7rem;font-weight:800;letter-spacing:-.02em}
+.tw{border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface)}
+table{font-size:.86rem}
+th{background:var(--sunk);font-size:.7rem;letter-spacing:.08em;padding:10px 10px}
+td{padding:10px;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+tr.click{transition:background .12s}tr.click:hover td{background:color-mix(in srgb,var(--accent) 5%,var(--surface));filter:none}
+.filters{background:var(--sunk);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px}
+.note{border-radius:var(--r-md);border-left-width:4px}
+.modal{border-radius:var(--r-lg);padding:22px;box-shadow:0 30px 80px -20px rgba(15,23,42,.45)}
+.mbg{background:rgba(15,23,42,.45);backdrop-filter:blur(4px)}
+.toast{border-radius:var(--r-md);box-shadow:var(--sh-2);padding:12px 16px}
+.login{margin-top:8vh;padding:28px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===================== Agenda ===================== */
+@media (min-width:901px){.entry .patient{grid-row:span 2}}
+.agenda{gap:12px}
+.agTop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.agSeg{display:inline-flex;background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px}
+.agSeg button{font:inherit;font-weight:700;font-size:.82rem;border:0;background:transparent;color:var(--muted);padding:7px 12px;border-radius:9px;cursor:pointer}
+.agSeg button.on{background:var(--surface);color:var(--accent);box-shadow:var(--sh-1),0 0 0 1px var(--line)}
+.agBar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.agNav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.agArr{font:inherit;font-size:1.3rem;line-height:1;width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.agArr:hover{background:var(--sunk)}
+.agTitre{margin:0 6px;font-size:1.05rem;letter-spacing:-.01em}.agTitre::first-letter{text-transform:uppercase}
+.agPick{width:auto;min-height:34px;padding:4px 8px;font-size:.82rem}
+.agTools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.agQ{width:200px;min-height:34px;padding:6px 10px;font-size:.85rem}
+.agFiltres{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.agFam,.agSt{display:flex;flex-wrap:wrap;gap:6px}
+.agF{font:inherit;font-size:.78rem;font-weight:700;display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;opacity:.55}
+.agF.on{opacity:1;color:var(--ink);border-color:color-mix(in srgb,var(--fam,var(--accent)) 40%,var(--line))}.agF.raz{opacity:1;color:var(--accent)}
+.agS{font-size:.76rem;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;border:1px solid var(--line);cursor:pointer;color:var(--muted)}
+.agS input{width:auto;min-height:0;margin:0;accent-color:var(--accent)}.agS.on{color:var(--ink);background:var(--sunk)}
+.agDot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block;background:var(--fam)}
+.f-echo{--fam:var(--dot-echo)}.f-rx{--fam:var(--dot-rx)}.f-dop{--fam:var(--dot-dop)}.f-spe{--fam:var(--dot-spe)}.f-mam{--fam:var(--dot-mam)}.f-scan{--fam:var(--dot-scan)}
+.agDot.f-echo,.agDot.f-rx,.agDot.f-dop,.agDot.f-spe,.agDot.f-mam,.agDot.f-scan{background:var(--fam)!important}
+[data-fam="echo"]{--fam:var(--dot-echo)}[data-fam="rx"]{--fam:var(--dot-rx)}[data-fam="dop"]{--fam:var(--dot-dop)}[data-fam="spe"]{--fam:var(--dot-spe)}[data-fam="mam"]{--fam:var(--dot-mam)}[data-fam="scan"]{--fam:var(--dot-scan)}
+.agBody{min-width:0}
+/* mois */
+.agGrid .agHd{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 2px 6px}
+.agCells{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.agCell{background:var(--surface);min-height:104px;padding:6px;display:flex;flex-direction:column;gap:4px;position:relative;transition:background .12s,box-shadow .12s}
+.agCell.we{background:color-mix(in srgb,var(--sunk) 70%,var(--surface))}.agCell.hors{background:var(--sunk)}.agCell.hors .agNum{opacity:.4}
+.agCell.passe .agList{opacity:.75}
+.agNum{font:inherit;font-weight:700;font-size:.8rem;width:26px;height:26px;border-radius:8px;border:0;background:transparent;color:var(--ink);cursor:pointer;display:grid;place-items:center}
+.agNum:hover{background:var(--sunk)}
+.agCell.auj .agNum{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.agCell.cur{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
+.agCnt{position:absolute;top:8px;right:8px;font-size:.68rem;font-weight:800;color:var(--muted)}
+.agList{display:flex;flex-direction:column;gap:3px;min-width:0}
+.agMore{font:inherit;font-size:.72rem;font-weight:700;color:var(--accent);background:none;border:0;text-align:left;padding:2px 4px;cursor:pointer}
+/* rendez-vous */
+.agEv{display:flex;align-items:center;gap:6px;min-width:0;font-size:.76rem;font-weight:600;padding:4px 7px;border-radius:8px;background:color-mix(in srgb,var(--fam) 12%,var(--surface));border-left:3px solid var(--fam);color:var(--ink);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:transform .1s,box-shadow .12s}
+.agEv:hover{box-shadow:0 2px 8px -2px rgba(15,23,42,.2);transform:translateY(-1px)}
+.agEv .agNom{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.agEv .agEx{display:block;flex-basis:100%;font-weight:500;font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.agWeek .agEv{flex-wrap:wrap}
+.agEv.st-retard{background:color-mix(in srgb,var(--err) 10%,var(--surface));border-left-color:var(--err)}
+.agEv.st-annule{opacity:.55;text-decoration:line-through}.agEv.st-realise{opacity:.65;cursor:default}.agEv.lock{cursor:pointer}
+.agEv.sel{outline:2px solid var(--accent);outline-offset:1px;background:color-mix(in srgb,var(--accent) 14%,var(--surface))}
+.agEv.pris{outline:2px dashed var(--accent);animation:agPulse 1s infinite}
+@keyframes agPulse{50%{outline-color:transparent}}
+.agCk{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--accent);display:grid;place-items:center;font-size:.6rem;color:#fff;background:var(--surface);flex:none}.agEv.sel .agCk{background:var(--accent)}
+.agGhost{position:fixed;z-index:200;pointer-events:none;box-shadow:0 12px 30px -8px rgba(15,23,42,.4);transform:rotate(-2deg);opacity:.95}
+.agSrc{opacity:.35}body.agDragging{cursor:grabbing}body.agDragging *{cursor:grabbing!important}
+.agOver{background:color-mix(in srgb,var(--accent) 12%,var(--surface))!important;box-shadow:inset 0 0 0 2px var(--accent)}
+.agOver.agNon{background:color-mix(in srgb,var(--err) 10%,var(--surface))!important;box-shadow:inset 0 0 0 2px var(--err)}
+/* semaine */
+.agWeek{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.agCol{background:var(--sunk);border:1px solid var(--line);border-radius:14px;padding:6px;min-height:220px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.agCol.auj{border-color:color-mix(in srgb,var(--accent) 50%,var(--line));background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+.agColHd{font:inherit;border:0;background:transparent;cursor:pointer;display:flex;align-items:baseline;gap:6px;padding:4px 6px;border-radius:8px;color:var(--muted)}
+.agColHd span{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em}.agColHd b{font-size:1.15rem;color:var(--ink)}.agColHd em{margin-left:auto;font-style:normal;font-size:.7rem;font-weight:800;background:var(--surface);border-radius:999px;padding:1px 7px}
+.agCol.auj .agColHd b{color:var(--accent)}.agColHd:hover{background:var(--surface)}
+.agVide{color:var(--muted);font-size:.8rem;padding:4px 6px}
+/* jour et liste */
+.agGrp{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:10px}
+.agGrpHd{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--sunk);border-bottom:1px solid var(--line)}.agGrpHd span{margin-left:auto;font-size:.75rem;font-weight:800;color:var(--muted)}
+.agGrp[data-fam] .agGrpHd{box-shadow:inset 4px 0 0 var(--fam)}
+.agLink{font:inherit;font-weight:800;background:none;border:0;color:var(--ink);cursor:pointer;padding:0}.agLink:hover{color:var(--accent)}
+.agRow{display:grid;grid-template-columns:auto minmax(140px,1.1fr) minmax(0,2fr) auto auto auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+.agRow:last-child{border-bottom:0}.agRow:not(:has(.agRk)){grid-template-columns:minmax(140px,1.1fr) minmax(0,2fr) auto auto auto}
+.agRow.sel{background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.agRow .agEv{font-size:.82rem}.agRx{font-size:.8rem;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agTel{font-family:var(--f-mono);font-size:.78rem;color:var(--accent);text-decoration:none;white-space:nowrap}
+.agQa{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}.agRk input{width:18px;height:18px;min-height:0;accent-color:var(--accent)}
+.agEmpty{display:flex;flex-direction:column;align-items:center;gap:4px;padding:34px 10px;color:var(--muted);border:1px dashed var(--line);border-radius:14px;text-align:center}.agEmpty b{color:var(--ink)}
+/* barres d'action */
+.agBulk,.agPris{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));position:sticky;top:70px;z-index:4}
+.agSep{flex:1}.agInl{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600}.agInl input,.agInl select{width:auto;min-height:34px;padding:4px 8px}
+.agAide{margin:0}
+.toast.agT{display:flex;align-items:center;gap:14px}.toast.agT button{font:inherit;font-weight:800;color:#93c5fd;background:none;border:0;cursor:pointer;padding:0}
+.agenda.plein .agCell{min-height:130px}.agenda.plein .agCol{min-height:420px}
+@media (max-width:760px){.agCell,.agenda.plein .agCell{min-height:62px;padding:3px}.agCell .agEv{padding:0;height:6px;border-radius:3px;border:0;background:var(--fam);font-size:0}.agCell .agEv .agNom,.agCell .agEv .agDot,.agCell .agEv .agCk{display:none}.agCnt{top:4px;right:4px}.agMore{font-size:.62rem;padding:0}
+  .agWeek{grid-template-columns:1fr}.agCol{min-height:0}.agRow,.agRow:not(:has(.agRk)){grid-template-columns:1fr auto;}.agRx{grid-column:1/-1;white-space:normal}.agQa{grid-column:1/-1;justify-content:flex-start}.agQ{width:100%}.agTools{width:100%}.agQ{flex:1}}
 </style>
-<header class="top"><div class="brand"><h1>Registre de l’imagerie</h1><span>CHR El Hadji Ahmadou Sakhir Ndiéguène de Thiès · service d’imagerie médicale</span></div>
+<header class="top"><div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 7v10M12 7v10M16 7v10M6 12h12"/></svg></span><span class="txt"><h1>Registre de l’imagerie</h1><span>CHR El Hadji Ahmadou Sakhir Ndiéguène de Thiès · service d’imagerie médicale</span></span></div>
 <nav class="main" aria-label="Navigation">
 <button type="button" data-act="nav" data-nav-btn data-v="saisie">Saisie</button>
 <button type="button" data-act="nav" data-nav-btn data-v="liste">Liste des examens</button>
+<button type="button" data-act="nav" data-nav-btn data-v="agenda">Agenda</button>
 <button type="button" data-act="nav" data-nav-btn data-v="rapport">Rapport mensuel</button>
 <button type="button" data-act="nav" data-nav-btn data-v="params">Paramètres</button>
 <button type="button" data-act="nav" data-nav-btn data-v="comptes" id="navComptes" hidden>Comptes d’accès</button></nav>
@@ -442,7 +610,8 @@ function canon(o){return JSON.stringify(o,(k,v)=>v&&typeof v==='object'&&!Array.
 /* Rafraîchit l'écran sans perdre une saisie en cours */
 function cloudRefresh(){clearTimeout(CL.refreshT);CL.refreshT=setTimeout(()=>{try{localStorage.setItem(STORE,JSON.stringify(S))}catch(e){}
   const a=document.activeElement,typing=a&&/INPUT|SELECT|TEXTAREA/.test(a.tagName)&&!a.closest('.filters'),modalOpen=!!$('#modalRoot .modal');
-  if(UI.view==='saisie'){if(document.getElementById('lb_jour'))refreshBlock('jour');return}
+  if(UI.view==='saisie'){if(document.getElementById('lb_jour'))refreshBlock('jour');agRefresh();return}
+  if(UI.view==='agenda'){agRefresh();return}
   if(UI.view==='liste'){if(document.getElementById('lb_liste'))refreshBlock('liste');return}
   if(typing||modalOpen){CL.stale=true;cloudBar();return}render()},700)}
 function cloudBar(){const el=document.getElementById('cloudBar');if(!el||!CLOUD)return;el.hidden=false;
@@ -870,6 +1039,7 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
   const opt=(v,l,s)=>`<option value="${esc(v)}" ${String(s)===String(v)?'selected':''}>${esc(l)}</option>`;
   return`<section class="entry">
   <form class="card patient" id="pForm" autocomplete="off">
+    <div class="secHead"><span class="step">1</span><div><b>Patient</b><small>Identité, origine et paiement</small></div></div>
     <div class="codeRow"><div><span class="lab">Code patient</span><span class="code mono">${esc(f.codePat||(ed&&ed.codePat)||'')}${f.codePat||(ed&&ed.codePat)?'':'<span class="small muted" style="font-family:inherit;font-size:13px;display:block">généré à l’enregistrement</span>'}</span>${ed||!CLOUD?`<span class="small muted mono" style="display:block">N° passage ${esc(code)}</span>`:''}</div><div class="stamp mono">${ts?frDate(ts)+' '+ts.slice(11,19):'nouveau passage'}</div></div>
     ${ed?'':`<div class="scanRow"><label class="btn scanBtn"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg> Photographier le reçu<input type="file" id="rcCam" accept="image/*" capture="environment" hidden></label><label class="btn ghost scanAlt">Choisir une image<input type="file" id="rcFile" accept="image/*" hidden></label></div>`}
     ${f.fromRecu&&!ed?`<div class="note ok small">Fiche remplie depuis le reçu ${esc(f.recu||'')} : vérifiez les champs puis enregistrez.</div>`:''}
@@ -897,8 +1067,9 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
     ${f.edit?'':`<p class="muted small" style="margin:0">Tapez au moins 2 lettres du prénom ou du nom, ou 4 chiffres du téléphone : les patients déjà enregistrés s’affichent ci-dessous.</p>`}<div id="sugg" aria-live="polite">${suggHtml()}</div>
   </form>
   <div class="card exams">
+    <div class="secHead"><span class="step">2</span><div><b>Examens demandés</b><small>Choisissez le type d’examen, puis ajoutez les actes</small></div></div>
     ${f.from&&!ed?`<div class="exHead" id="exHead"><span class="lab">Nouveau passage</span><b>${esc(f.prenom)} ${esc(f.nom)}</b> <span class="muted small">· ${esc(AGES[f.age]?.[0]||'')} · ${esc(f.sexe)} · ${esc(f.origine)}</span></div>`:''}
-    <div class="tabs" role="tablist">${FAMS.map(([k,l])=>`<button type="button" role="tab" class="tab f-${k} ${k===tab?'on':''}" data-act="tab" data-v="${k}" aria-selected="${k===tab}">${esc(l)}${f.ex[k].ids.length?`<b class="cnt">${f.ex[k].ids.length}</b>`:''}</button>`).join('')}</div>
+    <div class="tabs" role="tablist">${FAMS.map(([k,l])=>`<button type="button" role="tab" class="tab f-${k} ${k===tab?'on':''}" data-act="tab" data-v="${k}" aria-selected="${k===tab}"><i class="dot"></i>${esc(l)}${f.ex[k].ids.length?`<b class="cnt">${f.ex[k].ids.length}</b>`:''}</button>`).join('')}</div>
     <div class="panel f-${tab}" role="tabpanel">
       <div class="pgrid">
         <div class="pick"><label class="plab" for="exSel">${esc(FAMS.find(x=>x[0]===tab)[2])}</label>
@@ -915,7 +1086,7 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
       <button type="button" class="btn primary" data-act="saveRec">${ed?'Enregistrer les modifications':'Enregistrer le passage'}</button>
       <button type="button" class="btn ghost" data-act="newRec">${ed?'Annuler':'Nouveau patient'}</button>
       ${ed?`<button type="button" class="btn danger" data-act="delRec">Supprimer la fiche</button>`:''}</div>
-  </div></section>
+  </div>${agendaHtml(false)}</section>
   ${listBlock('jour')}`}
 function listTable(rows){
   return`<div class="tw"><table class="list"><thead><tr><th>Code</th><th>Heure</th><th>Prénom</th><th>Nom</th><th>Âge</th><th>Sexe</th><th>Tél.</th><th>Origine</th>${FAMS.map(([k,l])=>`<th class="h-${k}">${k==='spe'?'Exam. spéc.':k==='mam'?'Mammo':k==='echo'?'Écho':k==='rx'?'Radio':k==='scan'?'Scanner':'Doppler'}</th>`).join('')}</tr></thead><tbody>
@@ -1470,7 +1641,140 @@ function viewParams(){let used=0;try{used=(localStorage.getItem(STORE)||'').leng
    <p class="muted small">${CLOUD?'Registre commun : les fiches sont enregistrées dans la base partagée et visibles sur tous les postes connectés. Une copie est gardée dans ce navigateur pour travailler pendant une coupure ; elle est envoyée dès le retour de la connexion. Exportez quand même le registre régulièrement comme sauvegarde.':'Les fiches sont conservées dans ce navigateur uniquement : elles ne sont ni partagées entre postes ni sauvegardées ailleurs. Exportez le registre régulièrement.'}</p></section>`}
 
 /* --- Rendu et événements --- */
-const VIEWS={saisie:viewSaisie,liste:viewListe,rapport:viewRapport,params:viewParams,comptes:viewComptes};
+/* ===================== Agenda des rendez-vous ===================== */
+const AG_JOURS=['lun.','mar.','mer.','jeu.','ven.','sam.','dim.'],AG_JL=['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+const AG_MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+const agD=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d,12)};
+const agS=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const agAdd=(s,n)=>{const d=agD(s);d.setDate(d.getDate()+n);return agS(d)};
+const agDow=s=>(agD(s).getDay()+6)%7;
+const agLundi=s=>agAdd(s,-agDow(s));
+const agLong=s=>{const d=agD(s);return`${AG_JL[agDow(s)]} ${d.getDate()} ${AG_MOIS[d.getMonth()]} ${d.getFullYear()}`};
+const agCourt=s=>{const d=agD(s);return`${AG_JOURS[agDow(s)]} ${d.getDate()} ${AG_MOIS[d.getMonth()].slice(0,4)}${AG_MOIS[d.getMonth()].length>4?'.':''}`};
+function agUI(){if(!UI.ag)UI.ag={vue:'mois',date:today(),fams:[],st:['prevu','retard','annule'],q:'',sel:[],selMode:false,pris:null};return UI.ag}
+/* Tous les rendez-vous d'une période, filtrés (spécialité, état, recherche) */
+function agEvents(d1,d2){const A=agUI(),q=norm(A.q||''),out=[];
+  for(const r of S.recs){for(const[k,l]of FAMS){const e=r.ex&&r.ex[k];const st=rdvState(e);if(!st||!e.rdv)continue;if(e.rdv<d1||e.rdv>d2)continue;
+    if(A.fams.length&&!A.fams.includes(k))continue;if(!A.st.includes(st))continue;
+    if(q&&!norm(`${r.prenom} ${r.nom} ${r.tel||''} ${codeOf(r)} ${r.cle}`).includes(q))continue;
+    out.push({id:r.cle+'|'+k,cle:r.cle,k,l,st,date:e.rdv,nom:`${r.prenom||''} ${r.nom||''}`.trim()||r.cle,tel:r.tel||'',ex:e.ids.map(id=>exLabel(id)).join(' · ')})}}
+  return out.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.k<b.k?-1:a.k>b.k?1:a.nom<b.nom?-1:1)}
+function agPeriode(){const A=agUI();if(A.vue==='jour')return[A.date,A.date];if(A.vue==='semaine'){const l=agLundi(A.date);return[l,agAdd(l,6)]}
+  if(A.vue==='liste')return[A.date,agAdd(A.date,29)];const d=agD(A.date),p=agS(new Date(d.getFullYear(),d.getMonth(),1,12));const g=agLundi(p);return[g,agAdd(g,41)]}
+function agTitre(){const A=agUI(),d=agD(A.date);if(A.vue==='jour')return agLong(A.date);if(A.vue==='mois')return`${AG_MOIS[d.getMonth()]} ${d.getFullYear()}`;
+  if(A.vue==='liste')return`30 jours à partir du ${frDate(A.date)}`;const l=agLundi(A.date),f=agAdd(l,6);return`Semaine du ${agD(l).getDate()} ${AG_MOIS[agD(l).getMonth()]} au ${agD(f).getDate()} ${AG_MOIS[agD(f).getMonth()]} ${agD(f).getFullYear()}`}
+const agEditable=ev=>ev.st!=='realise';
+function agChip(ev,compact){const A=agUI(),sel=A.sel.includes(ev.id),pris=A.pris===ev.id;
+  return`<div class="agEv st-${ev.st} ${sel?'sel':''} ${pris?'pris':''} ${agEditable(ev)?'':'lock'}" data-ev="${esc(ev.id)}" data-fam="${ev.k}" title="${esc(ev.nom)} — ${esc(ev.l)} : ${esc(ev.ex)} (${RDV_ST[ev.st]})" tabindex="0" role="button">
+    ${A.selMode?`<span class="agCk">${sel?'✓':''}</span>`:`<i class="agDot f-${ev.k}"></i>`}<span class="agNom">${esc(ev.nom)}</span>${compact?'':`<span class="agEx">${esc(ev.ex)}</span>`}</div>`}
+function agMoisHtml(evs){const A=agUI(),[g]=agPeriode(),m=agD(A.date).getMonth(),t=today(),par={};evs.forEach(e=>(par[e.date]=par[e.date]||[]).push(e));
+  let h=`<div class="agGrid mois"><div class="agHd">${AG_JOURS.map(j=>`<span>${j}</span>`).join('')}</div><div class="agCells">`;
+  for(let i=0;i<42;i++){const d=agAdd(g,i),L=par[d]||[],dd=agD(d);
+    h+=`<div class="agCell ${dd.getMonth()!==m?'hors':''} ${d===t?'auj':''} ${d<t?'passe':''} ${agDow(d)>4?'we':''} ${d===A.date?'cur':''}" data-day="${d}">
+      <button type="button" class="agNum" data-act="agJour" data-v="${d}" aria-label="Voir le ${agLong(d)}">${dd.getDate()}</button>${L.length?`<span class="agCnt">${L.length}</span>`:''}
+      <div class="agList">${L.slice(0,3).map(e=>agChip(e,true)).join('')}${L.length>3?`<button type="button" class="agMore" data-act="agJour" data-v="${d}">+${L.length-3} autre${L.length>4?'s':''}</button>`:''}</div></div>`}
+  return h+'</div></div>'}
+function agSemaineHtml(evs){const A=agUI(),l=agLundi(A.date),t=today();
+  return`<div class="agWeek">${Array.from({length:7},(_,i)=>{const d=agAdd(l,i),L=evs.filter(e=>e.date===d);
+    return`<div class="agCol ${d===t?'auj':''} ${d<t?'passe':''} ${i>4?'we':''}" data-day="${d}"><button type="button" class="agColHd" data-act="agJour" data-v="${d}"><span>${AG_JOURS[i]}</span><b>${agD(d).getDate()}</b>${L.length?`<em>${L.length}</em>`:''}</button>
+      <div class="agList">${L.map(e=>agChip(e,false)).join('')||'<span class="agVide">—</span>'}</div></div>`}).join('')}</div>`}
+function agLigne(ev){const A=agUI(),sel=A.sel.includes(ev.id);
+  return`<div class="agRow ${sel?'sel':''}" data-fam="${ev.k}">${A.selMode?`<label class="agRk"><input type="checkbox" data-act="agTog" data-v="${esc(ev.id)}" ${sel?'checked':''} ${agEditable(ev)?'':'disabled'}></label>`:''}
+    ${agChip(ev,true)}<span class="agRx">${esc(ev.l)} · ${esc(ev.ex)}</span>${ev.tel?`<a class="agTel" href="tel:${esc(ev.tel.replace(/\s/g,''))}">${esc(ev.tel)}</a>`:'<span></span>'}<span class="pill st-${ev.st}">${RDV_ST[ev.st]}</span>
+    <span class="agQa">${['prevu','retard'].includes(ev.st)?`<button type="button" class="btn ghost sm" data-act="agFait" data-v="${esc(ev.id)}" title="Marquer réalisé">Réalisé</button>`:''}${agEditable(ev)?`<button type="button" class="btn ghost sm" data-act="agDemain" data-v="${esc(ev.id)}" title="Reporter au jour ouvré suivant">+1 jour</button>`:''}<button type="button" class="btn ghost sm" data-act="agOuvrir" data-v="${esc(ev.id)}">Gérer</button></span></div>`}
+function agJourHtml(evs){if(!evs.length)return`<div class="agEmpty"><b>Aucun rendez-vous</b><span>Rien de prévu ce jour avec les filtres choisis.</span></div>`;
+  return FAMS.filter(([k])=>evs.some(e=>e.k===k)).map(([k,l])=>{const L=evs.filter(e=>e.k===k);return`<div class="agGrp" data-fam="${k}"><div class="agGrpHd"><i class="agDot f-${k}"></i><b>${esc(l)}</b><span>${L.length}</span></div>${L.map(agLigne).join('')}</div>`}).join('')}
+function agListeHtml(evs){if(!evs.length)return`<div class="agEmpty"><b>Aucun rendez-vous à venir</b><span>Sur les 30 prochains jours, avec les filtres choisis.</span></div>`;
+  const ds=[...new Set(evs.map(e=>e.date))];return ds.map(d=>`<div class="agGrp" data-day="${d}"><div class="agGrpHd"><button type="button" class="agLink" data-act="agJour" data-v="${d}">${agLong(d)}</button><span>${evs.filter(e=>e.date===d).length}</span></div>${evs.filter(e=>e.date===d).map(agLigne).join('')}</div>`).join('')}
+function agendaHtml(plein){const A=agUI(),[d1,d2]=agPeriode(),evs=agEvents(d1,d2),t=today();
+  const nb={prevu:0,retard:0,annule:0,realise:0};evs.forEach(e=>nb[e.st]++);
+  const vue=A.vue==='mois'?agMoisHtml(evs):A.vue==='semaine'?agSemaineHtml(evs):A.vue==='jour'?agJourHtml(evs):agListeHtml(evs);
+  const selN=A.sel.length;
+  return`<section class="card agenda ${plein?'plein':''}" id="agenda">
+  <div class="agTop"><div class="secHead"><span class="step"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><div><b>Agenda des rendez-vous</b><small>${evs.length} rendez-vous · ${nb.prevu} prévu(s)${nb.retard?` · <span class="warnTxt">${nb.retard} dépassé(s)</span>`:''}</small></div></div>
+    <div class="agSeg" role="tablist" aria-label="Affichage">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois'],['liste','À venir']].map(([v,l])=>`<button type="button" role="tab" aria-selected="${A.vue===v}" class="${A.vue===v?'on':''}" data-act="agVue" data-v="${v}">${l}</button>`).join('')}</div></div>
+  <div class="agBar"><div class="agNav"><button type="button" class="btn ghost sm" data-act="agAuj">Aujourd’hui</button><button type="button" class="agArr" data-act="agPrev" aria-label="Période précédente">‹</button><button type="button" class="agArr" data-act="agNext" aria-label="Période suivante">›</button><h3 class="agTitre">${esc(agTitre())}</h3><input type="date" class="agPick" data-act="agDate" value="${A.date}" aria-label="Aller à une date"></div>
+    <div class="agTools"><input type="search" class="agQ" id="agQ" placeholder="Rechercher un patient…" value="${esc(A.q)}" aria-label="Rechercher un patient dans l’agenda"><button type="button" class="btn ${A.selMode?'primary':'ghost'} sm" data-act="agSelMode">${A.selMode?'Terminer la sélection':'Sélection multiple'}</button>${plein?'':`<button type="button" class="btn ghost sm" data-act="nav" data-v="agenda" title="Ouvrir l’agenda en plein écran">⤢</button>`}</div></div>
+  <div class="agFiltres"><div class="agFam">${FAMS.map(([k,l])=>`<button type="button" class="agF ${!A.fams.length||A.fams.includes(k)?'on':''}" data-act="agFam" data-v="${k}"><i class="agDot f-${k}"></i>${esc(l)}</button>`).join('')}${A.fams.length?`<button type="button" class="agF raz" data-act="agFam" data-v="">Toutes</button>`:''}</div>
+    <div class="agSt">${Object.entries(RDV_ST).map(([s,l])=>`<label class="agS st-${s} ${A.st.includes(s)?'on':''}"><input type="checkbox" data-act="agSt" data-v="${s}" ${A.st.includes(s)?'checked':''}>${l}</label>`).join('')}</div></div>
+  ${A.selMode?`<div class="agBulk"><b>${selN} sélectionné(s)</b><button type="button" class="btn ghost sm" data-act="agSelTout">Tout sélectionner (${evs.filter(agEditable).length})</button>${selN?`<button type="button" class="btn ghost sm" data-act="agSelRaz">Vider</button>
+    <span class="agSep"></span><label class="agInl">Déplacer au <input type="date" id="agBulkD" min="${t}"></label><button type="button" class="btn primary sm" data-act="agBulkMove">Déplacer</button>
+    <label class="agInl">ou décaler de <select id="agBulkN">${[1,2,3,7,14,-1,-7].map(n=>`<option value="${n}">${n>0?'+':''}${n} jour${Math.abs(n)>1?'s':''}</option>`).join('')}</select></label><button type="button" class="btn ghost sm" data-act="agBulkShift">Décaler</button>`:'<span class="muted small">Cliquez sur les rendez-vous à reprogrammer.</span>'}</div>`:''}
+  ${A.pris?`<div class="agPris">Rendez-vous sélectionné : touchez le jour de destination. <button type="button" class="btn ghost sm" data-act="agPrisRaz">Annuler</button></div>`:''}
+  <div class="agBody">${vue}</div>
+  <p class="agAide muted small">Glissez-déposez un rendez-vous sur un autre jour pour le reprogrammer (sur téléphone : appui long, puis touchez le jour). Cliquez sur un jour pour le voir en détail, sur un rendez-vous pour le gérer.</p></section>`}
+function agRefresh(){const el=document.getElementById('agenda');if(!el)return;const q=document.activeElement&&document.activeElement.id==='agQ',pos=q?document.activeElement.selectionStart:null;
+  el.outerHTML=agendaHtml(UI.view==='agenda');if(q){const i=document.getElementById('agQ');if(i){i.focus();try{i.setSelectionRange(pos,pos)}catch(e){}}}}
+/* Reprogrammation (un ou plusieurs rendez-vous), avec annulation possible */
+let AG_UNDO=null;
+function agDeplacer(ids,calc,source){const t=today(),fait=[],refus={passe:0,real:0};
+  for(const id of ids){const[cle,k]=id.split('|'),r=S.recs.find(x=>x.cle===cle);if(!r)continue;const e=r.ex[k],st=rdvState(e);if(!st)continue;if(st==='realise'){refus.real++;continue}
+    const nd=calc(e.rdv);if(!nd||nd===e.rdv)continue;if(nd<t){refus.passe++;continue}
+    fait.push({cle,k,avant:{rdv:e.rdv,rdvSt:e.rdvSt||'',motif:e.motif||'',hist:(e.hist||[]).length,modif:r.modif}});
+    e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:`Rendez-vous reporté du ${frDate(e.rdv)} au ${frDate(nd)}${source?' ('+source+')':''}`});e.rdv=nd;e.rdvSt='prevu';e.motif='';r.modif=nowLocal();
+    if(UI.f&&UI.f.edit===cle)UI.f.ex[k]=clone(e)}
+  if(fait.length){save();AG_UNDO=fait}
+  agUI().sel=agUI().sel.filter(x=>!fait.some(f=>x===f.cle+'|'+f.k));agUI().pris=null;agApres();
+  const msg=fait.length?`${fait.length} rendez-vous reprogrammé(s)`:'Aucun rendez-vous déplacé';
+  const plus=[refus.passe?`${refus.passe} refusé(s) : date passée`:'',refus.real?`${refus.real} déjà réalisé(s)`:''].filter(Boolean).join(' · ');
+  agToast(msg+(plus?' — '+plus:''),fait.length)}
+function agApres(){agRefresh();if(document.getElementById('lb_jour'))refreshBlock('jour')}
+function agToast(t,undo){document.querySelectorAll('.toast').forEach(x=>x.remove());const el=document.createElement('div');el.className='toast agT';el.setAttribute('role','status');
+  el.innerHTML=`<span>${esc(t)}</span>${undo?'<button type="button" data-act="agUndo">Annuler</button>':''}`;document.body.appendChild(el);setTimeout(()=>el.remove(),undo?7000:3500)}
+function agAnnulerDernier(){if(!AG_UNDO)return;for(const f of AG_UNDO){const r=S.recs.find(x=>x.cle===f.cle);if(!r)continue;const e=r.ex[f.k];e.rdv=f.avant.rdv;e.rdvSt=f.avant.rdvSt;e.motif=f.avant.motif;e.hist=(e.hist||[]).slice(0,f.avant.hist);r.modif=f.avant.modif;if(UI.f&&UI.f.edit===f.cle)UI.f.ex[f.k]=clone(e)}
+  const n=AG_UNDO.length;AG_UNDO=null;save();agApres();toast(`${n} déplacement(s) annulé(s)`)}
+function agJourOuvre(s){let d=agAdd(s<today()?today():s,1);while(agDow(d)>4)d=agAdd(d,1);return d}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||!/^ag/.test(t.dataset.act))return;const A=agUI(),a=t.dataset.act,v=t.dataset.v;
+  if(AG_DRAG&&AG_DRAG.fin){AG_DRAG=null;return}
+  if(a==='agVue'){A.vue=v;return agRefresh()}
+  if(a==='agAuj'){A.date=today();return agRefresh()}
+  if(a==='agPrev'||a==='agNext'){const s=a==='agPrev'?-1:1;if(A.vue==='mois'){const d=agD(A.date);A.date=agS(new Date(d.getFullYear(),d.getMonth()+s,1,12))}else A.date=agAdd(A.date,s*(A.vue==='jour'?1:A.vue==='semaine'?7:30));return agRefresh()}
+  if(a==='agJour'){if(A.pris){return agDeplacer([A.pris],()=>v,'agenda')}A.date=v;A.vue='jour';return agRefresh()}
+  if(a==='agFam'){if(!v||(A.fams.length===1&&A.fams[0]===v))A.fams=[];else if(!A.fams.length)A.fams=[v];else{A.fams=A.fams.includes(v)?A.fams.filter(x=>x!==v):[...A.fams,v];if(A.fams.length===FAMS.length)A.fams=[]}return agRefresh()}
+  if(a==='agSelMode'){A.selMode=!A.selMode;A.sel=[];A.pris=null;return agRefresh()}
+  if(a==='agSelTout'){const[d1,d2]=agPeriode();A.sel=agEvents(d1,d2).filter(agEditable).map(x=>x.id);return agRefresh()}
+  if(a==='agSelRaz'){A.sel=[];return agRefresh()}
+  if(a==='agPrisRaz'){A.pris=null;return agRefresh()}
+  if(a==='agUndo'){t.closest('.toast')?.remove();return agAnnulerDernier()}
+  if(a==='agBulkMove'){const d=(document.getElementById('agBulkD')||{}).value;if(!d){toast('Choisissez la nouvelle date.');return}if(d<today()){toast('Choisissez une date à partir d’aujourd’hui.');return}return agDeplacer(A.sel,()=>d,'reprogrammation groupée')}
+  if(a==='agBulkShift'){const n=+((document.getElementById('agBulkN')||{}).value||1);return agDeplacer(A.sel,old=>agAdd(old<today()&&n>0?today():old,n),'reprogrammation groupée')}
+  if(a==='agFait'){const[cle,k]=v.split('|'),r=S.recs.find(x=>x.cle===cle);if(!r)return;const x=r.ex[k];x.rdvSt='realise';x.date=today();x.hist=x.hist||[];x.hist.push({d:nowLocal(),a:'Rendez-vous réalisé'});r.modif=nowLocal();if(UI.f&&UI.f.edit===cle)UI.f.ex[k]=clone(x);save();agApres();toast('Rendez-vous réalisé');return}
+  if(a==='agDemain'){return agDeplacer([v],old=>agJourOuvre(old),'agenda')}
+  if(a==='agOuvrir'){return rdvModal(v.split('|')[0])}});
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!/^ag/.test(t.dataset.act||''))return;const A=agUI(),a=t.dataset.act,v=t.dataset.v;
+  if(a==='agDate'&&t.value){A.date=t.value;return agRefresh()}
+  if(a==='agSt'){A.st=t.checked?[...new Set([...A.st,v])]:A.st.filter(x=>x!==v);return agRefresh()}
+  if(a==='agTog'){A.sel=t.checked?[...A.sel,v]:A.sel.filter(x=>x!==v);return agRefresh()}});
+document.addEventListener('input',e=>{if(e.target.id!=='agQ')return;agUI().q=e.target.value;clearTimeout(agUI().tq);agUI().tq=setTimeout(agRefresh,200)});
+/* Clic sur un rendez-vous : gestion (ou sélection en mode multiple) */
+document.addEventListener('click',e=>{const c=e.target.closest('.agEv[data-ev]');if(!c||e.target.closest('[data-act]'))return;if(AG_DRAG&&AG_DRAG.fin){AG_DRAG=null;return}const A=agUI(),id=c.dataset.ev;
+  if(A.pris){if(A.pris===id){A.pris=null;agRefresh();return}const day=c.closest('[data-day]');if(day){const d=day.dataset.day;if(d<today()){toast('Impossible de déplacer un rendez-vous dans le passé.');return}agDeplacer([A.pris],()=>d,'agenda')}return}
+  if(A.selMode){if(c.classList.contains('lock')){toast('Rendez-vous déjà réalisé : il ne peut pas être reprogrammé.');return}A.sel=A.sel.includes(id)?A.sel.filter(x=>x!==id):[...A.sel,id];return agRefresh()}
+  rdvModal(id.split('|')[0])});
+/* Rendez-vous « pris » (appui long) : toucher un jour pour l'y déplacer */
+document.addEventListener('click',e=>{const A=agUI();if(!A.pris||e.target.closest('.agEv,[data-act]'))return;const day=e.target.closest('#agenda [data-day]');if(!day)return;const d=day.dataset.day;if(d<today()){toast('Impossible de déplacer un rendez-vous dans le passé.');return}agDeplacer([A.pris],()=>d,'agenda')});
+document.addEventListener('keydown',e=>{const c=e.target.closest&&e.target.closest('.agEv[data-ev]');if(c&&(e.key==='Enter'||e.key===' ')){e.preventDefault();c.click()}});
+/* Glisser-déposer (souris) et appui long (écran tactile) */
+let AG_DRAG=null;
+document.addEventListener('pointerdown',e=>{const c=e.target.closest('.agEv[data-ev]');if(!c||e.button>0||agUI().selMode||c.classList.contains('lock'))return;
+  AG_DRAG={c,id:c.dataset.ev,x:e.clientX,y:e.clientY,actif:false,tactile:e.pointerType!=='mouse'};
+  if(AG_DRAG.tactile){AG_DRAG.timer=setTimeout(()=>{if(!AG_DRAG)return;agUI().pris=AG_DRAG.id;AG_DRAG.fin=true;if(navigator.vibrate)navigator.vibrate(30);agRefresh();toast('Touchez le jour où déplacer ce rendez-vous.')},450)}});
+document.addEventListener('pointermove',e=>{const D=AG_DRAG;if(!D)return;const dx=e.clientX-D.x,dy=e.clientY-D.y;
+  if(D.tactile){if(Math.abs(dx)+Math.abs(dy)>10){clearTimeout(D.timer);if(!D.fin)AG_DRAG=null}return}
+  if(!D.actif){if(Math.abs(dx)+Math.abs(dy)<6)return;D.actif=true;D.g=D.c.cloneNode(true);D.g.classList.add('agGhost');D.g.style.width=D.c.offsetWidth+'px';document.body.appendChild(D.g);D.c.classList.add('agSrc');document.body.classList.add('agDragging')}
+  D.g.style.left=e.clientX+8+'px';D.g.style.top=e.clientY+8+'px';
+  const el=document.elementFromPoint(e.clientX,e.clientY),day=el&&el.closest('[data-day]');document.querySelectorAll('.agOver').forEach(x=>x!==day&&x.classList.remove('agOver'));
+  if(day){day.classList.add('agOver');day.classList.toggle('agNon',day.dataset.day<today())}});
+function agFinDrag(e,annule){const D=AG_DRAG;if(!D)return;clearTimeout(D.timer);if(D.tactile){if(D.fin)setTimeout(()=>{if(AG_DRAG===D)AG_DRAG=null},350);else AG_DRAG=null;return}
+  if(!D.actif){AG_DRAG=null;return}D.g.remove();D.c.classList.remove('agSrc');document.body.classList.remove('agDragging');const over=document.querySelector('.agOver');document.querySelectorAll('.agOver').forEach(x=>x.classList.remove('agOver','agNon'));
+  D.fin=true;setTimeout(()=>{if(AG_DRAG===D)AG_DRAG=null},0);
+  if(annule||!over)return;const d=over.dataset.day;if(d<today()){toast('Impossible de déplacer un rendez-vous dans le passé.');return}agDeplacer([D.id],()=>d,'glisser-déposer')}
+document.addEventListener('pointerup',e=>agFinDrag(e,false));
+document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('.agEv'))e.preventDefault()});
+document.addEventListener('pointercancel',e=>agFinDrag(e,true));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&agUI().pris){agUI().pris=null;agRefresh()}});
+
+const VIEWS={saisie:viewSaisie,liste:viewListe,rapport:viewRapport,params:viewParams,comptes:viewComptes,agenda:()=>agendaHtml(true)};
 function render(){imgSyncRef();if(cloudGate())return;cptNav();document.querySelectorAll('[data-nav-btn]').forEach(b=>{const on=b.dataset.v===UI.view;b.classList.toggle('on',on);b.setAttribute('aria-current',on?'page':'false')});
   $('#view').innerHTML=VIEWS[UI.view]();$('#demoTag').hidden=!S.demo;$('#store').textContent=persisted||CLOUD?'':'Stockage indisponible : les saisies seront perdues à la fermeture.'}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t)return;const a=t.dataset.act,v=t.dataset.v;
