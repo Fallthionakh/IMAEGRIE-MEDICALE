@@ -1465,7 +1465,7 @@ function viewParams(){let used=0;try{used=(localStorage.getItem(STORE)||'').leng
    <div id="catBox">${catTableHtml(k)}</div>`})()}</section>
   <section class="card"><div class="head"><h2>Données</h2></div>
    <p class="small">${fmt(S.recs.length)} fiche(s) ${CLOUD?'dans le registre commun':'dans ce navigateur'} · ${(used/1048576).toLocaleString('fr-FR',{maximumFractionDigits:1})} Mo utilisés${S.demo?' · <b class="warnTxt">données de démonstration (noms fictifs)</b>':''}. ${CLOUD?'':'Prochain code : IMG_'+S.seq+'.'}</p>
-   <div class="btns"><label class="btn primary" style="cursor:pointer">Importer un registre (.xlsx)<input type="file" id="impFile" accept=".xlsx,.xls,.xlsm" hidden></label><button type="button" class="btn ghost" data-act="xlsAll">Exporter tout le registre (.xlsx)</button><button type="button" class="btn danger" data-act="goReal">${CLOUD?'Vider le registre commun':S.demo?'Supprimer les données fictives et démarrer en réel':'Vider le registre'}</button>${CLOUD||!S.demo?'':'<button type="button" class="btn danger" data-act="reset">Réinitialiser la démonstration</button>'}</div>
+   <div class="btns"><label class="btn primary" style="cursor:pointer">Importer un registre (.xlsx)<input type="file" id="impFile" accept=".xlsx,.xls,.xlsm" hidden></label><button type="button" class="btn ghost" data-act="xlsAll">Exporter tout le registre (.xlsx)</button>${CLOUD&&CL.role!=='responsable'?'':`<button type="button" class="btn danger" data-act="goReal">${CLOUD?'Vider le registre commun':S.demo?'Supprimer les données fictives et démarrer en réel':'Vider le registre'}</button>`}${CLOUD||!S.demo?'':'<button type="button" class="btn danger" data-act="reset">Réinitialiser la démonstration</button>'}</div>
    <p class="muted small">L’import lit un classeur au format de votre registre (colonnes Clé primaire, PRENOM, NOM, SEXE, AGE, ORIGINE, MOIS, TEL, demanderx, Prestations, DEMANDE DOPPLER, DEMANDE EXAMENS SPECIAUX, DEMANDE MAMMO et dates d’examen et de RDV). L’export produit le même format : il peut être relu ici ou par la maquette du SIM.</p>
    <p class="muted small">${CLOUD?'Registre commun : les fiches sont enregistrées dans la base partagée et visibles sur tous les postes connectés. Une copie est gardée dans ce navigateur pour travailler pendant une coupure ; elle est envoyée dès le retour de la connexion. Exportez quand même le registre régulièrement comme sauvegarde.':'Les fiches sont conservées dans ce navigateur uniquement : elles ne sont ni partagées entre postes ni sauvegardées ailleurs. Exportez le registre régulièrement.'}</p></section>`}
 
@@ -1531,6 +1531,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
     if(a==='addItem'&&similarActs(lib,v).length){$('#simBox').innerHTML=simHtml(lib,v,true);toast('Un acte similaire existe déjà : confirmez ou annulez.');return}
     S.imgCat.push({id:'c_'+Date.now().toString(36),lib,fam:v,sys,syn,w:0,prix:0,actif:true,...(v==='scan'?{inj:$('#nInj')?.value||''}:{})});save();render();toast('Examen ajouté à la liste');return}
   if(a==='reset'){modal(`<h2>Réinitialiser la démonstration ?</h2><p>Toutes les fiches de ce navigateur seront remplacées par les données fictives d’origine. Exportez d’abord le registre si vous avez saisi des données réelles.</p><div class="btns"><button type="button" class="btn danger" data-act="resetOk">Réinitialiser</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);return}
+  if(a==='goReal'&&CLOUD&&CL.role!=='responsable'){toast('Réservé au responsable du service.');return}
   if(a==='goReal'){const nd=S.recs.filter(r=>r.demo).length,nr=S.recs.length-nd;
     modal(`<div class="head"><h2>${CLOUD?'Vider le registre commun':'Démarrer en environnement réel'}</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
     ${CLOUD?`<p>Les <b>${fmt(S.recs.length)}</b> fiche(s) du registre commun seront supprimées <b>pour tous les postes</b>. Les listes d’actes, tarifs et types de paiement sont conservés.</p>`:
@@ -1540,8 +1541,14 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
     <p class="small">Exportez d’abord le registre si vous voulez en garder une copie. Pour confirmer, tapez <b>VIDER</b> :</p>
     <input id="grOk" autocomplete="off" style="max-width:200px">
     <div class="btns" style="margin-top:10px"><button type="button" class="btn danger" data-act="goRealOk">Supprimer</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);setTimeout(()=>$('#grOk')?.focus(),0);return}
+  if(a==='goRealOk2'){if(!CLOUD||CL.role!=='responsable'){closeModal();toast('Réservé au responsable du service.');return}const n=S.recs.length;S.recs=[];save();closeModal();UI.f=blankForm();render();toast(`${fmt(n)} fiche(s) supprimée(s) du registre commun`);return}
   if(a==='goRealOk'){if(($('#grOk').value||'').trim().toUpperCase()!=='VIDER'){toast('Tapez VIDER pour confirmer.');$('#grOk').focus();return}
-    if(CLOUD){const n=S.recs.length;S.recs=[];save();closeModal();UI.f=blankForm();render();toast(`${fmt(n)} fiche(s) supprimée(s) du registre commun`);return}
+    if(CLOUD){if(CL.role!=='responsable'){closeModal();toast('Réservé au responsable du service.');return}
+      modal(`<div class="head"><h2>Dernière confirmation</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
+      <p class="note warn"><b>${fmt(S.recs.length)} fiche(s)</b> vont être supprimées <b>définitivement</b>, pour tous les postes du service. Il n’existe aucun moyen de les récupérer ensuite.</p>
+      <p>Avez-vous exporté le registre ? Sinon, faites-le maintenant :</p>
+      <div class="btns"><button type="button" class="btn ghost" data-act="xlsAll">Exporter tout le registre (.xlsx)</button></div>
+      <div class="btns" style="margin-top:14px"><button type="button" class="btn danger" data-act="goRealOk2">Oui, tout supprimer définitivement</button><button type="button" class="btn ghost" data-act="close">Non, annuler</button></div>`);return}
     const what=document.querySelector('input[name=grWhat]:checked')?.value||'all',seq=Math.max(1,Math.round(+$('#grSeq').value||1));
     const keep=what==='all'?[]:S.recs.filter(r=>!r.demo),mx=keep.reduce((m,r)=>Math.max(m,+String(r.cle).replace(/\D/g,'')||0),0);
     if(seq<=mx){toast('Ce premier code est déjà utilisé : choisissez un numéro supérieur à '+mx+'.');$('#grSeq').focus();return}
