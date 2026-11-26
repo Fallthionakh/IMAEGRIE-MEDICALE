@@ -335,6 +335,12 @@ tr.click{transition:background .12s}tr.click:hover td{background:color-mix(in sr
 .agEv{display:flex;align-items:center;gap:6px;min-width:0;font-size:.76rem;font-weight:600;padding:4px 7px;border-radius:8px;background:color-mix(in srgb,var(--fam) 12%,var(--surface));border-left:3px solid var(--fam);color:var(--ink);cursor:grab;user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:transform .1s,box-shadow .12s}
 .agEv:hover{box-shadow:0 2px 8px -2px rgba(15,23,42,.2);transform:translateY(-1px)}
 .agEv .agNom{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.agEv .agH{font-variant-numeric:tabular-nums;font-weight:700;color:var(--muted);flex:none}
+.agGhost.multi{display:flex;align-items:center;gap:6px}.agGhost .agN{background:var(--accent);color:#fff;border-radius:999px;padding:1px 7px;font-size:.72rem;flex:none}
+.mvList{margin:0;padding:0;list-style:none;max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:10px}.mvList li{padding:6px 10px;font-size:.82rem;border-bottom:1px solid var(--line)}.mvList li:last-child{border-bottom:0}
+.mvGrid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.mvGrid .fld{min-width:160px}
+.faitNote{margin:0 0 10px}
+.spSt{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}.spSt .pill{font-size:.7rem}
 .agEv .agEx{display:block;flex-basis:100%;font-weight:500;font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agWeek .agEv{flex-wrap:wrap}
 .agEv.st-retard{background:color-mix(in srgb,var(--err) 10%,var(--surface));border-left-color:var(--err)}
@@ -1196,6 +1202,8 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
   </form>
   <div class="card exams">
     <div class="secHead"><span class="step">2</span><div><b>Examens demandés</b><small>Choisissez le type d’examen, puis ajoutez les actes</small></div></div>
+    ${f.faitK&&ed?`<div class="note ok faitNote"><b>Marquer fait : ${esc(FAMS.find(x=>x[0]===f.faitK)[1])} — rendez-vous du ${frDate(ed.ex[f.faitK].rdv)}${hRdv(ed.ex[f.faitK])}</b><br><span class="small">Vérifiez ou complétez la fiche (identité, paiement, actes…). La « Date d’examen » de l’onglet ${esc(FAMS.find(x=>x[0]===f.faitK)[1])} sera la date de réalisation. Cliquez ensuite sur « Enregistrer et marquer fait ».</span></div>`:''}
+    ${f.sansRdv&&!ed?`<div class="note ok faitNote"><b>Patient venu sans rendez-vous</b><br><span class="small">Saisissez le patient et ses examens, sans date de RDV : à l’enregistrement, le passage est compté comme fait à la date d’examen (aujourd’hui par défaut).</span></div>`:''}
     ${f.from&&!ed?`<div class="exHead" id="exHead"><span class="lab">Nouveau passage</span><b>${esc(f.prenom)} ${esc(f.nom)}</b> <span class="muted small">· ${esc(AGES[f.age]?.[0]||'')} · ${esc(f.sexe)} · ${esc(f.origine)}</span></div>`:''}
     <div class="tabs" role="tablist">${FAMS.map(([k,l])=>`<button type="button" role="tab" class="tab f-${k} ${k===tab?'on':''}" data-act="tab" data-v="${k}" aria-selected="${k===tab}"><i class="dot"></i>${esc(l)}${f.ex[k].ids.length?`<b class="cnt">${f.ex[k].ids.length}</b>`:''}</button>`).join('')}</div>
     <div class="panel f-${tab}" role="tabpanel">
@@ -1206,12 +1214,12 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
           <span class="plab">Demande</span>
           <ol class="demande">${cur.ids.map((id,i)=>`<li><span>${esc(exLabel(id))}</span>${tab==='scan'?(()=>{const it=catById(id),j=cur.inj?.[i]||it?.inj||'C';return`<select class="injSel" data-act="inj" data-v="scan|${i}" aria-label="Injection pour ${esc(exLabel(id))}" ${it&&it.inj?'disabled':''}>${['C','+C'].map(x=>`<option value="${x}" ${x===j?'selected':''}>${x==='C'?'C (sans)':'+C (avec)'}</option>`).join('')}</select>`})():''}${['rx','spe','mam'].includes(tab)?`<label class="cl">Clichés <input type="number" min="0" step="1" data-act="cl" data-v="${tab}|${i}" value="${esc(cur.cl?.[i]??'')}" aria-label="Nombre de clichés pour ${esc(exLabel(id))}"></label>`:''}<span class="pxg"><label>Prix <input type="number" min="0" step="500" data-act="px" data-v="${tab}|${i}" value="${esc(cur.px?.[i]??'')}" aria-label="Prix de ${esc(exLabel(id))}"></label><label>Patient <input type="number" min="0" step="500" data-act="pp" data-v="${tab}|${i}" value="${esc(cur.pp?.[i]??'')}" aria-label="Part patient pour ${esc(exLabel(id))}"></label></span><button type="button" class="x" data-act="rmEx" data-v="${tab}|${i}" aria-label="Retirer ${esc(exLabel(id))}">×</button></li>`).join('')||'<li class="empty">Aucun examen demandé dans cet onglet.</li>'}</ol></div>
         <div class="dates"><label class="fld"><span class="plab">Date d’examen</span><input type="date" id="exDate" data-act="exDate" data-v="${tab}" value="${esc(cur.date)}"></label>
-          <label class="fld"><span class="plab">Date de RDV</span><input type="date" id="exRdv" data-act="exRdv" data-v="${tab}" value="${esc(cur.rdv)}"></label>${rdvBadge(cur)}</div>
+          <label class="fld"><span class="plab">Date de RDV</span><input type="date" id="exRdv" data-act="exRdv" data-v="${tab}" value="${esc(cur.rdv)}"></label>${cur.rdv?`<label class="fld"><span class="plab">Heure de RDV</span><input type="time" id="exRdvH" data-act="exRdvH" data-v="${tab}" value="${esc(cur.rdvH||'')}"></label>`:''}${rdvBadge(cur)}</div>
       </div></div>
     ${nTot?`<div class="money" id="moneyBox">${moneyInner(f)}</div>`:''}
     <div class="summary"><span class="lab">Examens de ce passage (${nTot})</span><div class="chips">${FAMS.flatMap(([k])=>f.ex[k].ids.map((id,i)=>`<span class="chip t-${k}">${esc(exLabel(id))}${k==='scan'?' '+esc(f.ex.scan.inj?.[i]||'C'):''}</span>`)).join('')||'<span class="muted">Ajoutez au moins un examen dans un onglet.</span>'}</div></div>
     <div class="actions">${UI.confirmDup?`<div class="note warn">${esc(UI.confirmDup)} <b>Cliquez à nouveau sur Enregistrer pour confirmer.</b></div>`:''}
-      <button type="button" class="btn primary" data-act="saveRec">${ed?'Enregistrer les modifications':'Enregistrer le passage'}</button>
+      <button type="button" class="btn primary" data-act="saveRec">${ed&&f.faitK?'Enregistrer et marquer fait':ed?'Enregistrer les modifications':'Enregistrer le passage'}</button>
       <button type="button" class="btn ghost" data-act="newRec">${ed?'Annuler':'Nouveau patient'}</button>
       ${ed?`<button type="button" class="btn danger" data-act="delRec">Supprimer la fiche</button>`:''}</div>
   </div></section>`}
@@ -1226,14 +1234,17 @@ async function saveRec(){if(CL.saving)return;readForm();const f=UI.f,err=[];
   const n=FAMS.reduce((a,[k])=>a+f.ex[k].ids.length,0);if(!n)err.push('au moins un examen');
   if(err.length){render();toast('À compléter : '+err.join(', ')+'.');(ep?$('#fPrenom'):en?$('#fNom'):null)?.focus();return}
   if(!telOk(f.tel)){toast('Téléphone : 9 chiffres commençant par 70, 75, 76, 77, 78, 30 ou 33.');return}
+  if(f.edit&&f.faitK){const e=f.ex[f.faitK];if(!e.ids.length){toast('L’onglet du rendez-vous ne contient plus d’examen : ajoutez-en un ou annulez.');return}if(!e.date){e.date=today()}if(e.date>today()){toast('La date d’examen (date de réalisation) ne peut pas être dans le futur.');UI.f.tab=f.faitK;render();return}}
   const prenom=f.prenom.trim().toUpperCase(),nom=f.nom.trim().toUpperCase(),tel=f.tel.replace(/\D/g,'');
   if(!f.edit){const dup=S.recs.find(r=>r.cree.slice(0,10)===today()&&r.prenom===prenom&&r.nom===nom&&(r.tel||'')===tel);
     const key=dup?dup.cle:null;if(dup&&UI.confirmDup!==`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`){UI.confirmDup=`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`;render();return}}
   const now=nowLocal(),ex=clone(f.ex),xf={};XF.forEach(k=>xf[k]=String(f[k]??'').trim());xf.ageU=f.ageU||'ans';xf.codePat=xf.codePat.replace(/\s+/g,'').toUpperCase();xf.recu=xf.recu.replace(/\s+/g,'');['adresse','matricule','tiers','agentEm','agentFa'].forEach(k=>xf[k]=xf[k].toUpperCase());
   if(xf.recu){const dr=S.recs.find(r=>r.recu===xf.recu&&r.cle!==f.edit);if(dr&&UI.confirmDup!=='recu:'+xf.recu){UI.confirmDup='recu:'+xf.recu;toast(`Le reçu ${xf.recu} est déjà enregistré (fiche ${codeOf(dr)}). Cliquez à nouveau sur Enregistrer pour confirmer.`);render();return}}
-  if(f.edit){const r=S.recs.find(x=>x.cle===f.edit);const auto=!xf.codePat||(r.codeAuto&&xf.codePat===r.codePat);Object.assign(r,{prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,modif:now},xf);if(!xf.codePat||auto){r.codePat=r.codeAuto||!xf.codePat?chrtCode(r.cree,prenom,nom,numOfCle(r.ancien||r.cle)):xf.codePat;r.codeAuto=true}else delete r.codeAuto;if(save())toast(`Fiche ${r.cle} mise à jour`)}
+  if(f.edit&&f.faitK){const e=ex[f.faitK];e.rdvSt='realise';e.motif='';e.hist=e.hist||[];e.hist.push({d:now,a:`Rendez-vous réalisé le ${frDate(e.date)} (fiche complétée)`})}
+  const retour=f.retour,faitMsg=f.edit&&f.faitK;
+  if(f.edit){const r=S.recs.find(x=>x.cle===f.edit);const auto=!xf.codePat||(r.codeAuto&&xf.codePat===r.codePat);Object.assign(r,{prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,modif:now},xf);if(!xf.codePat||auto){r.codePat=r.codeAuto||!xf.codePat?chrtCode(r.cree,prenom,nom,numOfCle(r.ancien||r.cle)):xf.codePat;r.codeAuto=true}else delete r.codeAuto;if(save())toast(faitMsg?`${r.prenom} ${r.nom} : rendez-vous marqué fait`:`Fiche ${r.cle} mise à jour`)}
   else{CL.saving=true;let cle;try{cle=CLOUD?await newCode():'IMG_'+(S.seq++)}finally{CL.saving=false}const rec={cle,cree:now,modif:now,prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,...xf};if(!rec.codePat){rec.codePat=chrtCode(now,prenom,nom,numOfCle(cle));rec.codeAuto=true}S.recs.push(rec);if(save())toast(`Passage enregistré · code patient ${rec.codePat}`)}
-  UI.confirmDup=null;UI.f=blankForm();render();window.scrollTo(0,0)}
+  UI.confirmDup=null;UI.f=blankForm();if(retour)UI.view=retour;render();window.scrollTo(0,0)}
 function openRec(cle){const r=S.recs.find(x=>x.cle===cle);if(!r)return;
   UI.f={edit:r.cle,prenom:r.prenom,nom:r.nom,sexe:r.sexe,age:String(r.age??''),origine:r.origine,mois:r.mois,tel:r.tel||'',pay:r.pay||'',...Object.fromEntries(XF.map(k=>[k,r[k]??''])),ageU:r.ageU||'ans',tab:FAMS.find(([k])=>r.ex[k].ids.length)?.[0]||'echo',ex:clone(r.ex),sel:{}};
   UI.view='saisie';UI.confirmDup=null;UI.ferr={prenom:nameErr(r.prenom),nom:nameErr(r.nom)};if(!UI.ferr.prenom)delete UI.ferr.prenom;if(!UI.ferr.nom)delete UI.ferr.nom;render();window.scrollTo(0,0)}
@@ -1280,7 +1291,8 @@ function listBlock(k){const F=UI[k],rows=filtRows(F),per=k==='jour'?15:50,pages=
    <p class="muted small">Cliquez sur une ligne : tant qu’un rendez-vous n’est pas réalisé (prévu, dépassé ou annulé), la gestion du RDV s’ouvre (réaliser, reporter, annuler, supprimer) ; sinon la fiche s’ouvre pour modification.</p></section>`}
 function refreshBlock(k,focusId){const el=document.getElementById('lb_'+k);if(!el){render();return}const a=document.activeElement,pos=a&&a.id===focusId&&a.selectionStart!=null?a.selectionStart:null;
   el.outerHTML=listBlock(k);if(focusId){const n=document.getElementById(focusId);if(n){n.focus();if(pos!=null)try{n.setSelectionRange(pos,pos)}catch(e){}}}}
-const rdvBadge=e=>{const st=rdvState(e);if(!st)return'';return`<div class="rdv st-${st}">${st==='realise'?'RDV réalisé le '+frDate(e.date||e.rdv):st==='annule'?'RDV annulé ('+frDate(e.rdv)+')':st==='retard'?'RDV dépassé '+frDate(e.rdv):'RDV '+frDate(e.rdv)}</div>`};
+const rdvBadge=e=>{const st=rdvState(e);if(!st)return'';return`<div class="rdv st-${st}">${st==='realise'?'RDV réalisé le '+frDate(e.date||e.rdv):st==='annule'?'RDV annulé ('+frDate(e.rdv)+')':st==='retard'?'RDV dépassé '+frDate(e.rdv)+hRdv(e):'RDV '+frDate(e.rdv)+hRdv(e)}</div>`};
+const hRdv=e=>e&&e.rdvH?' à '+e.rdvH.replace(':','h'):'';
 function openRow(cle){const r=S.recs.find(x=>x.cle===cle);if(!r)return;if(openRdv(r)){UI.delRdv=null;UI.delFiche=false;rdvModal(cle)}else openRec(cle)}
 function rdvModal(cle){const r=S.recs.find(x=>x.cle===cle);if(!r){closeModal();return}UI.rdvCle=cle;const t=today();
   modal(`<div class="head"><h2>${esc(r.prenom)} ${esc(r.nom)}</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
@@ -1288,9 +1300,9 @@ function rdvModal(cle){const r=S.recs.find(x=>x.cle===cle);if(!r){closeModal();r
   ${FAMS.filter(([k])=>r.ex[k].ids.length).map(([k,l])=>{const e=r.ex[k],st=rdvState(e);
     return`<div class="rdvBox t-${k}"><div class="head"><b>${esc(l)}</b>${st?`<span class="pill st-${st}">RDV ${RDV_ST[st].toLowerCase()}</span>`:'<span class="pill">Sans RDV</span>'}</div>
     <div>${e.ids.map(id=>esc(exLabel(id))).join(' · ')}</div>
-    <div class="small">${e.rdv?`Rendez-vous le <b>${frDate(e.rdv)}</b>`:'Pas de rendez-vous'}${e.date&&st==='realise'?` · réalisé le <b>${frDate(e.date)}</b>`:e.date?` · examen du ${frDate(e.date)}`:''}${st==='annule'&&e.motif?` · motif : ${esc(e.motif)}`:''}</div>
+    <div class="small">${e.rdv?`Rendez-vous le <b>${frDate(e.rdv)}${hRdv(e)}</b>`:'Pas de rendez-vous'}${e.date&&st==='realise'?` · réalisé le <b>${frDate(e.date)}</b>`:e.date?` · examen du ${frDate(e.date)}`:''}${st==='annule'&&e.motif?` · motif : ${esc(e.motif)}`:''}</div>
     ${st?`<div class="rdvAct">
-      ${st==='prevu'||st==='retard'?`<span class="inl"><input type="date" id="rd_${k}" max="${t}" value="${st==='retard'?e.rdv:t}" aria-label="Date de réalisation ${esc(l)}"><button type="button" class="btn primary sm" data-act="rdvDoAt" data-v="${k}">Marquer réalisé</button></span>`:''}${st==='prevu'||st==='retard'?smsLien(r.cle+'|'+k):''}
+      ${st==='prevu'||st==='retard'?`<button type="button" class="btn primary sm" data-act="agFaitFiche" data-v="${esc(r.cle+'|'+k)}">Marquer fait (ouvrir la fiche)</button><span class="inl"><input type="date" id="rd_${k}" max="${t}" value="${st==='retard'?e.rdv:t}" aria-label="Date de réalisation ${esc(l)}"><button type="button" class="btn primary sm" data-act="rdvDoAt" data-v="${k}">Réalisé à cette date</button></span>`:''}${st==='prevu'||st==='retard'?smsLien(r.cle+'|'+k):''}
       <span class="inl"><input type="date" id="rp_${k}" min="${t}" aria-label="Nouvelle date de rendez-vous ${esc(l)}"><button type="button" class="btn ghost sm" data-act="rdvMove" data-v="${k}">${st==='prevu'||st==='retard'?'Reporter':'Reprogrammer'}</button></span>
       ${st==='prevu'||st==='retard'?`<span class="inl"><input id="ra_${k}" placeholder="Motif d’annulation" aria-label="Motif d’annulation ${esc(l)}"><button type="button" class="btn ghost sm" data-act="rdvCancel" data-v="${k}">Annuler le RDV</button></span>`:''}
       <button type="button" class="btn danger sm" data-act="rdvDel" data-v="${k}">${UI.delRdv===k?'Confirmer la suppression du RDV':'Supprimer le RDV'}</button></div>`:''}
@@ -1311,12 +1323,25 @@ function findPatients(prenom,nom,tel){
   return{total:all.length,list:all.slice(0,6),searched:true}}
 function suggHtml(){const f=UI.f;if(f.edit)return'';
   if(f.from)return`<div class="note ok"><b>Nouveau passage pour ${esc(f.prenom)} ${esc(f.nom)}</b><br><span class="small">Identité reprise de ${esc(f.from.cle)} (${f.from.n} passage(s) précédent(s), dernier le ${frDate(f.from.last)}). Vérifiez l’âge et l’origine, choisissez les examens à droite puis cliquez sur « Enregistrer le passage ».</span><div class="btns" style="margin-top:6px"><button type="button" class="btn ghost sm" data-act="unFrom">Changer de patient</button></div></div>`;const g=findPatients(f.prenom,f.nom,f.tel);UI.spList=g.list;if(!g.searched)return'';if(!g.list.length)return`<div class="sugg"><span class="lab">Aucun patient déjà enregistré ne correspond</span><span class="small muted">Vérifiez l’orthographe ou cherchez avec le téléphone. Sinon, c’est un nouveau patient : complétez la fiche.</span></div>`;
-  return`<div class="sugg"><span class="lab">Patients déjà enregistrés · ${g.total>6?'6 premiers sur '+fmt(g.total):fmt(g.total)}</span>${g.list.map((p,i)=>`<div class="sp"><div class="spId"><b>${esc(p.prenom)} ${esc(p.nom)}</b> <span class="mono small">${esc(p.tel||'')}</span>
-   <div class="small muted">${p.recs.length} passage(s) · dernier le ${frDate(p.recs[0].cree)} (${esc(p.recs[0].cle)})${p.rdv?` · <b class="warnTxt">${p.rdv} RDV en attente</b>`:''}</div></div>
-   <div class="btns"><button type="button" class="btn ghost sm" data-act="spUse" data-v="${i}">Reprendre l’identité</button>${p.rdv?`<button type="button" class="btn primary sm" data-act="spRdv" data-v="${i}">Gérer le RDV</button>`:`<button type="button" class="btn ghost sm" data-act="spAll" data-v="${i}">Voir les passages</button>`}</div></div>`).join('')}</div>`}
+  return`<div class="sugg"><span class="lab">Patients déjà enregistrés · ${g.total>6?'6 premiers sur '+fmt(g.total):fmt(g.total)}</span>${g.list.map((p,i)=>{const att=[],fait=[];
+    p.recs.forEach(r=>FAMS.forEach(([k,l])=>{const e=r.ex[k];if(!e||!e.ids.length)return;const st=rdvState(e);
+      if(st==='prevu'||st==='retard')att.push({id:r.cle+'|'+k,l,st,txt:`${l} · RDV ${frDate(e.rdv)}${hRdv(e)}`});else if(st!=='annule')fait.push({l,d:e.date||r.cree.slice(0,10)})}));
+    fait.sort((a,b)=>a.d<b.d?1:-1);
+    return`<div class="sp"><div class="spId"><b>${esc(p.prenom)} ${esc(p.nom)}</b> <span class="mono small">${esc(p.tel||'')}</span>
+   <div class="small muted">${p.recs.length} passage(s) · dernier le ${frDate(p.recs[0].cree)} (${esc(p.recs[0].cle)})</div>
+   ${att.length?`<div class="small spSt"><b class="warnTxt">RDV non fait${att.length>1?'s':''} :</b> ${att.slice(0,3).map(x=>`<span class="pill st-${x.st}">${esc(x.txt)}${x.st==='retard'?' (dépassé)':''}</span>`).join(' ')}</div>`:''}
+   ${fait.length?`<div class="small spSt"><b style="color:var(--ok)">Fait${fait.length>1?'s':''} :</b> ${fait.slice(0,3).map(x=>`<span class="pill st-realise">${esc(x.l)} · ${frDate(x.d)}</span>`).join(' ')}${fait.length>3?` <span class="muted">+${fait.length-3}</span>`:''}</div>`:''}</div>
+   <div class="btns"><button type="button" class="btn ghost sm" data-act="spUse" data-v="${i}">Reprendre l’identité</button>${att.length?`<button type="button" class="btn primary sm" data-act="agFaitFiche" data-v="${esc(att[0].id)}" title="Ouvrir sa fiche, compléter puis enregistrer comme fait">Marquer fait${att.length>1?' ('+esc(att[0].l)+')':''}</button><button type="button" class="btn ghost sm" data-act="spRdv" data-v="${i}">Gérer le RDV</button>`:`<button type="button" class="btn ghost sm" data-act="spAll" data-v="${i}">Voir les passages</button>`}</div></div>`}).join('')}</div>`}
 const nameErr=v=>{const s=String(v||'').trim();if(!s)return'Obligatoire.';if(s.replace(/[^A-Za-zÀ-ÿ]/g,'').length<2)return'Au moins 2 lettres.';if(/\d/.test(s))return'Sans chiffres.';return''};
 
 /* --- Rapport mensuel (présentation du classeur FEV_MARS) --- */
+/* Pour le rapport d'activité : on ne compte que les examens faits. Un examen avec RDV prévu, dépassé ou annulé est exclu ;
+   un RDV réalisé est compté dans le mois de sa réalisation. */
+function recsFaits(recs){const out=[];for(const r of recs){const par={};
+    for(const[k]of FAMS){const e=r.ex&&r.ex[k];if(!e||!e.ids.length)continue;const st=rdvState(e);if(st&&st!=='realise')continue;
+      const m=st==='realise'&&e.date?e.date.slice(0,7):r.mois;(par[m]=par[m]||[]).push(k)}
+    for(const[m,ks]of Object.entries(par)){const ex={};for(const[k]of FAMS)ex[k]=ks.includes(k)?r.ex[k]:{...r.ex[k],ids:[],inj:[],cl:[],px:[],pp:[]};out.push({...r,mois:m,ex})}}
+  return out}
 function recsToMonths(recs){const out={months:{}};
   recs.forEach(r=>{const ym=r.mois;if(!ym)return;const M=out.months[ym]=out.months[ym]||{radio:emptyImg(),echo:emptyImg(),scan:emptyImg(),all:emptyImg(),lines:0,cube:{radio:{},echo:{},scan:{}},ccube:{},vcube:{}};M.lines++;
     const sx=r.sexe==='F'||r.sexe==='M'?r.sexe:'X',og=r.origine==='EXTERNE'?'EXT':r.origine==='INTERNE'?'INT':'X',ag=r.age===''||r.age==null?null:+r.age;
@@ -1369,7 +1394,7 @@ function famRowsC(cube,f,zero){const groups=imgGroups(IMG_FAM[f].svc).filter(g=>
   rows.push({l:'Total général',c:csum(all),k:'t'});return rows}
 const DIMT={org:'origine',sx:'sexe',age:'tranche d’âge'};
 const colTitle=(t,lv)=>lv.length===1&&lv[0]==='sx'?t:t.replace(/ et par sexe$/,'').replace(/ par sexe$/,'')+', par '+lv.map(d=>DIMT[d]).join(', ').replace(/, ([^,]*)$/,' et $1');
-function buildReport(){const o=UI.rap,P=recsToMonths(S.recs),months=o.months.filter(m=>P.months[m]).sort();
+function buildReport(){const o=UI.rap,P=recsToMonths(recsFaits(S.recs)),months=o.months.filter(m=>P.months[m]).sort();
   const data={radio:emptyImg(),echo:emptyImg(),scan:emptyImg(),all:emptyImg()};months.forEach(m=>['radio','echo','scan','all'].forEach(k=>addImg(data[k],P.months[m][k])));
   const scopes=o.svc==='all'?['radio','echo','scan']:[o.svc],tables=[];
   const cube={radio:{},echo:{},scan:{}},cc={},vc={};months.forEach(m=>{const M=P.months[m];mergeCube(cube.radio,M.cube.radio);mergeCube(cube.echo,M.cube.echo);mergeCube(cube.scan,M.cube.scan);mergeCube(cc,M.ccube);Object.entries(M.vcube).forEach(([k,n])=>vc[k]=(vc[k]||0)+n)});
@@ -1401,7 +1426,7 @@ function tableHtml(t,i){const long=t.rows.length>40,ck=j=>t.colKinds&&t.colKinds
   return`<h3>${i+1}. ${esc(t.title)}</h3><p class="muted small">${esc(t.measure)} · étiquettes de colonnes : ${t.id==='org'?'origine':t.levels?t.levels.map(d=>DIMT[d]).join(' › ')+(t.levels.includes('age')?' (tranches d’âge en années)':''):'sexe'} · lignes : actes regroupés par système</p>
   <div class="tw" ${long?'style="max-height:540px;overflow:auto"':''}><table class="pv ${multi?'wide':''}"><thead>${thead}</thead>
   <tbody>${t.rows.map(r=>`<tr class="pv-${r.k}"><td class="lcol">${esc(r.l)}</td>${r.v.map((x,j)=>`<td class="n${ck(j)} ${t.colCls?t.colCls[j]:''}">${x===''||(t.blankZero&&r.k==='r'&&x===0)?'':fmt(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${t.note?`<p class="muted small">${esc(t.note)}</p>`:''}`}
-function viewDetail(){const o=UI.rap,P=recsToMonths(S.recs),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
+function viewDetail(){const o=UI.rap,P=recsToMonths(recsFaits(S.recs)),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
   let h=`<section class="card"><div class="head"><h2>Rapport mensuel de l’imagerie</h2><span class="muted">Présentation du tableau croisé du classeur : MOIS, étiquettes de lignes, colonnes par origine, sexe et tranche d’âge, Total général</span></div>
    <div class="filters"><label class="fld"><span>Service</span><select id="rSvc" data-act="rSvc">${['all','radio','echo','scan'].map(k=>`<option value="${k}" ${o.svc===k?'selected':''}>${esc(SVCN[k])}</option>`).join('')}</select></label>
    <label class="fld"><span>Présentation des radiographies</span><select id="rMode" data-act="rMode"><option value="combo" ${o.mode==='combo'?'selected':''}>Comme le classeur (combinaisons de régions)</option><option value="exam" ${o.mode==='exam'?'selected':''}>Par examen (une région = un examen)</option></select></label>
@@ -1544,7 +1569,7 @@ const MODEL=[
  {sec:'ÉCHODOPPLER',fam:'dop',agg:'Echodoppler'}];
 const moisXl=ym=>{const[y,m]=ym.split('-');return['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc'][+m-1]+'-'+y.slice(2)};
 function modelStats(months){const st={},nr={n:0};
-  S.recs.forEach(r=>{if(!months.includes(r.mois))return;const og=r.origine==='EXTERNE'?'EXT':r.origine==='INTERNE'?'INT':'X';if(og==='X')nr.n++;
+  recsFaits(S.recs).forEach(r=>{if(!months.includes(r.mois))return;const og=r.origine==='EXTERNE'?'EXT':r.origine==='INTERNE'?'INT':'X';if(og==='X')nr.n++;
     FAMS.forEach(([f])=>{const e=r.ex[f];(e.ids||[]).forEach((id,i)=>{const s=st[id]=st[id]||{EXT:0,INT:0,X:0,cl:0};s[og]++;s.cl+=+(e.cl&&e.cl[i])||0})})});
   return{st,nr}}
 function buildModel(){const o=UI.rap,months=[...o.months].sort(),{st,nr}=modelStats(months),rows=[],used=new Set();
@@ -1594,7 +1619,7 @@ function xlsModel(M){if(!window.XLSX){toast('Module Excel non chargé : vérifie
   ws['!merges']=merges;ws['!cols']=[{wch:30},{wch:11},{wch:14},{wch:9},{wch:15}];
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'RADIOLOGIE');
   saveFile(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:XLSX_T}),`Rapport-radiologie-${M.months.map(moisCode).join('_')}.xlsx`)}
-function viewModel(){const o=UI.rap,P=recsToMonths(S.recs),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
+function viewModel(){const o=UI.rap,P=recsToMonths(recsFaits(S.recs)),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
   let h=`<section class="card"><div class="head"><h2>Rapport mensuel — modèle RADIOLOGIE</h2><span class="muted small">Nombre d’examens par acte, externes et hospitalisés, et nombre de clichés</span></div>
    <div class="mrow"><span class="lab">MOIS</span>${avail.map(m=>`<label class="mchip"><input type="checkbox" data-act="rMonth" data-v="${m}" ${o.months.includes(m)?'checked':''}> ${moisCode(m)} <span class="muted mono">${fmt(P.months[m].lines)}</span></label>`).join('')||'<span class="muted">Aucun passage enregistré.</span>'}</div>
    <label class="chk"><input type="checkbox" id="rDet" data-act="rDet" ${o.detEcho?'checked':''}> Détailler les prestations d’échographie et de doppler</label></section>`;
@@ -1605,7 +1630,7 @@ function viewModel(){const o=UI.rap,P=recsToMonths(S.recs),avail=Object.keys(P.m
 
 /* --- Rapport SCANNER au format du modèle (examens subdivisés en C et +C) --- */
 function scanModelStats(months){const st={};let nr=0;
-  S.recs.forEach(r=>{if(!months.includes(r.mois)||!r.ex.scan)return;const og=r.origine==='EXTERNE'?'EXT':r.origine==='INTERNE'?'INT':'X';const e=r.ex.scan;if(e.ids.length&&og==='X')nr++;
+  recsFaits(S.recs).forEach(r=>{if(!months.includes(r.mois)||!r.ex.scan)return;const og=r.origine==='EXTERNE'?'EXT':r.origine==='INTERNE'?'INT':'X';const e=r.ex.scan;if(e.ids.length&&og==='X')nr++;
     e.ids.forEach((id,i)=>{const it=catById(id);const k=id+'|'+(e.inj?.[i]||it?.inj||'C');const s=st[k]=st[k]||{EXT:0,INT:0,X:0};s[og]++})});return{st,nr}}
 function buildScanModel(){const months=[...UI.rap.months].sort(),{st,nr}=scanModelStats(months),rows=[],T={C:{EXT:0,INT:0,X:0},'+C':{EXT:0,INT:0,X:0}};
   const items=S.imgCat.filter(x=>x.fam==='scan'&&(x.actif!==false||Object.keys(st).some(k=>k.startsWith(x.id+'|'))));let grp='';
@@ -1642,7 +1667,7 @@ function xlsScanModel(M){if(!window.XLSX){toast('Module Excel non chargé : vér
   const ws=XLSX.utils.aoa_to_sheet(aoa);aoa.forEach((row,r)=>row.forEach((v,c)=>{const ref=XLSX.utils.encode_cell({r,c});if(!ws[ref])ws[ref]={t:'s',v:''};if(sty[r]&&sty[r][c])ws[ref].s=sty[r][c]}));
   ws['!merges']=merges;ws['!cols']=[{wch:30},{wch:11},{wch:11},{wch:14},{wch:9}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'SCANNER');
   saveFile(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:XLSX_T}),`Rapport-scanner-${M.months.map(moisCode).join('_')}.xlsx`)}
-function viewScanModel(){const o=UI.rap,P=recsToMonths(S.recs),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
+function viewScanModel(){const o=UI.rap,P=recsToMonths(recsFaits(S.recs)),avail=Object.keys(P.months).sort();o.months=o.months.filter(m=>avail.includes(m));
   let h=`<section class="card"><div class="head"><h2>Rapport mensuel — modèle SCANNER</h2><span class="muted small">Nombre d’examens par acte, sans (C) et avec injection (+C), externes et hospitalisés</span></div>
    <div class="mrow"><span class="lab">MOIS</span>${avail.map(m=>`<label class="mchip"><input type="checkbox" data-act="rMonth" data-v="${m}" ${o.months.includes(m)?'checked':''}> ${moisCode(m)}</label>`).join('')||'<span class="muted">Aucun passage enregistré.</span>'}</div></section>`;
   if(!o.months.length)return h+`<p class="note">Cochez au moins un mois.</p>`;
@@ -1844,16 +1869,16 @@ function agEvents(d1,d2){const A=agUI(),q=norm(A.q||''),out=[];
   for(const r of S.recs){for(const[k,l]of FAMS){const e=r.ex&&r.ex[k];const st=rdvState(e);if(!st||!e.rdv)continue;if(e.rdv<d1||e.rdv>d2)continue;
     if(A.fams.length&&!A.fams.includes(k))continue;if(!A.st.includes(st))continue;
     if(q&&!norm(`${r.prenom} ${r.nom} ${r.tel||''} ${codeOf(r)} ${r.cle}`).includes(q))continue;
-    out.push({id:r.cle+'|'+k,cle:r.cle,k,l,st,date:e.rdv,nom:`${r.prenom||''} ${r.nom||''}`.trim()||r.cle,tel:r.tel||'',ex:e.ids.map(id=>exLabel(id)).join(' · ')})}}
-  return out.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.k<b.k?-1:a.k>b.k?1:a.nom<b.nom?-1:1)}
+    out.push({id:r.cle+'|'+k,cle:r.cle,k,l,st,date:e.rdv,h:e.rdvH||'',nom:`${r.prenom||''} ${r.nom||''}`.trim()||r.cle,tel:r.tel||'',ex:e.ids.map(id=>exLabel(id)).join(' · ')})}}
+  return out.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.h!==b.h?(!a.h?1:!b.h?-1:a.h<b.h?-1:1):a.k<b.k?-1:a.k>b.k?1:a.nom<b.nom?-1:1)}
 function agPeriode(){const A=agUI();if(A.vue==='jour')return[A.date,A.date];if(A.vue==='semaine'){const l=agLundi(A.date);return[l,agAdd(l,6)]}
   if(A.vue==='liste')return[A.date,agAdd(A.date,29)];const d=agD(A.date),p=agS(new Date(d.getFullYear(),d.getMonth(),1,12));const g=agLundi(p);return[g,agAdd(g,41)]}
 function agTitre(){const A=agUI(),d=agD(A.date);if(A.vue==='jour')return agLong(A.date);if(A.vue==='mois')return`${AG_MOIS[d.getMonth()]} ${d.getFullYear()}`;
   if(A.vue==='liste')return`30 jours à partir du ${frDate(A.date)}`;const l=agLundi(A.date),f=agAdd(l,6);return`Semaine du ${agD(l).getDate()} ${AG_MOIS[agD(l).getMonth()]} au ${agD(f).getDate()} ${AG_MOIS[agD(f).getMonth()]} ${agD(f).getFullYear()}`}
 const agEditable=ev=>ev.st!=='realise';
 function agChip(ev,compact){const A=agUI(),sel=A.sel.includes(ev.id),pris=A.pris===ev.id;
-  return`<div class="agEv st-${ev.st} ${sel?'sel':''} ${pris?'pris':''} ${agEditable(ev)?'':'lock'}" data-ev="${esc(ev.id)}" data-fam="${ev.k}" title="${esc(ev.nom)} — ${esc(ev.l)} : ${esc(ev.ex)} (${RDV_ST[ev.st]})" tabindex="0" role="button">
-    ${A.selMode?`<span class="agCk">${sel?'✓':''}</span>`:`<i class="agDot f-${ev.k}"></i>`}<span class="agNom">${esc(ev.nom)}</span>${compact?'':`<span class="agEx">${esc(ev.ex)}</span>`}</div>`}
+  return`<div class="agEv st-${ev.st} ${sel?'sel':''} ${pris?'pris':''} ${agEditable(ev)?'':'lock'}" data-ev="${esc(ev.id)}" data-fam="${ev.k}" title="${esc(ev.nom)} — ${esc(ev.l)} : ${esc(ev.ex)}${ev.h?' · '+esc(ev.h):''} (${RDV_ST[ev.st]})" tabindex="0" role="button">
+    ${A.selMode?`<span class="agCk">${sel?'✓':''}</span>`:`<i class="agDot f-${ev.k}"></i>`}${ev.h?`<span class="agH">${esc(ev.h)}</span>`:''}<span class="agNom">${esc(ev.nom)}</span>${compact?'':`<span class="agEx">${esc(ev.ex)}</span>`}</div>`}
 function agMoisHtml(evs){const A=agUI(),[g]=agPeriode(),m=agD(A.date).getMonth(),t=today(),par={};evs.forEach(e=>(par[e.date]=par[e.date]||[]).push(e));
   let h=`<div class="agGrid mois"><div class="agHd">${AG_JOURS.map(j=>`<span>${j}</span>`).join('')}</div><div class="agCells">`;
   for(let i=0;i<42;i++){const d=agAdd(g,i),L=par[d]||[],dd=agD(d);
@@ -1868,7 +1893,7 @@ function agSemaineHtml(evs){const A=agUI(),l=agLundi(A.date),t=today();
 function agLigne(ev){const A=agUI(),sel=A.sel.includes(ev.id);
   return`<div class="agRow ${sel?'sel':''}" data-fam="${ev.k}">${A.selMode?`<label class="agRk"><input type="checkbox" data-act="agTog" data-v="${esc(ev.id)}" ${sel?'checked':''} ${agEditable(ev)?'':'disabled'}></label>`:''}
     ${agChip(ev,true)}<span class="agRx">${esc(ev.l)} · ${esc(ev.ex)}</span>${ev.tel?`<a class="agTel" href="tel:${esc(ev.tel.replace(/\s/g,''))}">${esc(ev.tel)}</a>`:'<span></span>'}<span class="pill st-${ev.st}">${RDV_ST[ev.st]}</span>
-    <span class="agQa">${['prevu','retard'].includes(ev.st)?`<button type="button" class="btn ghost sm" data-act="agFaitDlg" data-v="${esc(ev.id)}" title="Marquer réalisé à une date">Réalisé</button>`+smsLien(ev.id):''}${agEditable(ev)?`<button type="button" class="btn ghost sm" data-act="agDemain" data-v="${esc(ev.id)}" title="Reporter au jour ouvré suivant">+1 jour</button>`:''}<button type="button" class="btn ghost sm" data-act="agOuvrir" data-v="${esc(ev.id)}">Gérer</button></span></div>`}
+    <span class="agQa">${['prevu','retard'].includes(ev.st)?`<button type="button" class="btn primary sm" data-act="agFaitFiche" data-v="${esc(ev.id)}" title="Ouvrir la fiche, compléter puis enregistrer comme réalisé">Marquer fait</button>`+smsLien(ev.id):''}${agEditable(ev)?`<button type="button" class="btn ghost sm" data-act="agMoveDlg" data-v="${esc(ev.id)}" title="Changer la date et/ou l’heure">Reporter…</button><button type="button" class="btn ghost sm" data-act="agDemain" data-v="${esc(ev.id)}" title="Reporter au jour ouvré suivant">+1 jour</button>`:''}${['prevu','retard'].includes(ev.st)?`<button type="button" class="btn ghost sm" data-act="agCancelDlg" data-v="${esc(ev.id)}">Annuler…</button>`:''}<button type="button" class="btn ghost sm" data-act="agOuvrir" data-v="${esc(ev.id)}">Gérer</button></span></div>`}
 function agJourHtml(evs){if(!evs.length)return`<div class="agEmpty"><b>Aucun rendez-vous</b><span>Rien de prévu ce jour avec les filtres choisis.</span></div>`;
   return FAMS.filter(([k])=>evs.some(e=>e.k===k)).map(([k,l])=>{const L=evs.filter(e=>e.k===k);return`<div class="agGrp" data-fam="${k}"><div class="agGrpHd"><i class="agDot f-${k}"></i><b>${esc(l)}</b><span>${L.length}</span></div>${L.map(agLigne).join('')}</div>`}).join('')}
 function agListeHtml(evs){if(!evs.length)return`<div class="agEmpty"><b>Aucun rendez-vous à venir</b><span>Sur les 30 prochains jours, avec les filtres choisis.</span></div>`;
@@ -1881,24 +1906,24 @@ function agendaHtml(plein){const A=agUI(),[d1,d2]=agPeriode(),evs=agEvents(d1,d2
   <div class="agTop"><div class="secHead"><span class="step"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span><div><b>Agenda des rendez-vous</b><small>${evs.length} rendez-vous · ${nb.prevu} prévu(s)${nb.retard?` · <span class="warnTxt">${nb.retard} dépassé(s)</span>`:''}</small></div></div>
     <div class="agSeg" role="tablist" aria-label="Affichage">${[['jour','Jour'],['semaine','Semaine'],['mois','Mois'],['liste','À venir']].map(([v,l])=>`<button type="button" role="tab" aria-selected="${A.vue===v}" class="${A.vue===v?'on':''}" data-act="agVue" data-v="${v}">${l}</button>`).join('')}</div></div>
   <div class="agBar"><div class="agNav"><button type="button" class="btn ghost sm" data-act="agAuj">Aujourd’hui</button><button type="button" class="agArr" data-act="agPrev" aria-label="Période précédente">‹</button><button type="button" class="agArr" data-act="agNext" aria-label="Période suivante">›</button><h3 class="agTitre">${esc(agTitre())}</h3><input type="date" class="agPick" data-act="agDate" value="${A.date}" aria-label="Aller à une date"></div>
-    <div class="agTools"><input type="search" class="agQ" id="agQ" placeholder="Rechercher un patient…" value="${esc(A.q)}" aria-label="Rechercher un patient dans l’agenda"><button type="button" class="btn ${A.selMode?'primary':'ghost'} sm" data-act="agSelMode">${A.selMode?'Terminer la sélection':'Sélection multiple'}</button>${plein?'':`<button type="button" class="btn ghost sm" data-act="nav" data-v="agenda" title="Ouvrir l’agenda en plein écran">⤢</button>`}</div></div>
+    <div class="agTools"><button type="button" class="btn ghost sm" data-act="agSansRdv" title="Enregistrer un patient venu sans rendez-vous">+ Patient sans RDV</button><input type="search" class="agQ" id="agQ" placeholder="Rechercher un patient…" value="${esc(A.q)}" aria-label="Rechercher un patient dans l’agenda"><button type="button" class="btn ${A.selMode?'primary':'ghost'} sm" data-act="agSelMode">${A.selMode?'Terminer la sélection':'Sélection multiple'}</button>${plein?'':`<button type="button" class="btn ghost sm" data-act="nav" data-v="agenda" title="Ouvrir l’agenda en plein écran">⤢</button>`}</div></div>
   <div class="agFiltres"><div class="agFam">${FAMS.map(([k,l])=>`<button type="button" class="agF ${!A.fams.length||A.fams.includes(k)?'on':''}" data-act="agFam" data-v="${k}"><i class="agDot f-${k}"></i>${esc(l)}</button>`).join('')}${A.fams.length?`<button type="button" class="agF raz" data-act="agFam" data-v="">Toutes</button>`:''}</div>
     <div class="agSt">${Object.entries(RDV_ST).map(([s,l])=>`<label class="agS st-${s} ${A.st.includes(s)?'on':''}"><input type="checkbox" data-act="agSt" data-v="${s}" ${A.st.includes(s)?'checked':''}>${l}</label>`).join('')}</div></div>
   ${A.selMode?`<div class="agBulk"><b>${selN} sélectionné(s)</b><button type="button" class="btn ghost sm" data-act="agSelTout">Tout sélectionner (${evs.filter(agEditable).length})</button>${selN?`<button type="button" class="btn ghost sm" data-act="agSelRaz">Vider</button>
     <span class="agSep"></span><label class="agInl">Déplacer au <input type="date" id="agBulkD" min="${t}"></label><button type="button" class="btn primary sm" data-act="agBulkMove">Déplacer</button>
-    <label class="agInl">ou décaler de <select id="agBulkN">${[1,2,3,7,14,-1,-7].map(n=>`<option value="${n}">${n>0?'+':''}${n} jour${Math.abs(n)>1?'s':''}</option>`).join('')}</select></label><button type="button" class="btn ghost sm" data-act="agBulkShift">Décaler</button><button type="button" class="btn ghost sm" data-act="agBulkFaitDlg" title="Pour les rendez-vous dont l’examen a déjà été fait">Marquer réalisés…</button><button type="button" class="btn ghost sm" data-act="agBulkSms">SMS…</button>`:'<span class="muted small">Cliquez sur les rendez-vous à reprogrammer.</span>'}</div>`:''}
+    <label class="agInl">ou décaler de <select id="agBulkN">${[1,2,3,7,14,-1,-7].map(n=>`<option value="${n}">${n>0?'+':''}${n} jour${Math.abs(n)>1?'s':''}</option>`).join('')}</select></label><button type="button" class="btn ghost sm" data-act="agBulkShift">Décaler</button><button type="button" class="btn ghost sm" data-act="agBulkMoveDlg" title="Nouvelle date et/ou heure">Reporter…</button><button type="button" class="btn ghost sm" data-act="agBulkCancelDlg">Annuler les RDV…</button><button type="button" class="btn ghost sm" data-act="agBulkFaitDlg" title="Pour les rendez-vous dont l’examen a déjà été fait">Marquer réalisés…</button><button type="button" class="btn ghost sm" data-act="agBulkSms">SMS…</button>`:'<span class="muted small">Cliquez sur les rendez-vous à reprogrammer ou annuler, puis glissez-les ensemble vers un autre jour.</span>'}</div>`:''}
   ${A.pris?`<div class="agPris">Rendez-vous sélectionné : touchez le jour de destination. <button type="button" class="btn ghost sm" data-act="agPrisRaz">Annuler</button></div>`:''}
   <div class="agBody">${vue}</div>
-  <p class="agAide muted small">Glissez-déposez un rendez-vous sur un autre jour pour le reprogrammer (sur téléphone : appui long, puis touchez le jour). Cliquez sur un jour pour le voir en détail, sur un rendez-vous pour le gérer.</p></section>`}
+  <p class="agAide muted small">Glissez-déposez un rendez-vous sur un autre jour pour le reprogrammer, puis acceptez la nouvelle date et l’heure (sur téléphone : appui long, puis touchez le jour). En sélection multiple, glissez un des rendez-vous cochés pour déplacer tout le groupe. Cliquez sur un jour pour voir la liste et marquer fait, sur un rendez-vous pour le gérer.</p></section>`}
 function agRefresh(){const el=document.getElementById('agenda');if(!el)return;const q=document.activeElement&&document.activeElement.id==='agQ',pos=q?document.activeElement.selectionStart:null;
   el.outerHTML=agendaHtml(UI.view==='agenda');if(q){const i=document.getElementById('agQ');if(i){i.focus();try{i.setSelectionRange(pos,pos)}catch(e){}}}}
 /* Reprogrammation (un ou plusieurs rendez-vous), avec annulation possible */
 let AG_UNDO=null;
-function agDeplacer(ids,calc,source){const t=today(),fait=[],refus={passe:0,real:0};
+function agDeplacer(ids,calc,source,heure){const t=today(),fait=[],refus={passe:0,real:0};
   for(const id of ids){const[cle,k]=id.split('|'),r=S.recs.find(x=>x.cle===cle);if(!r)continue;const e=r.ex[k],st=rdvState(e);if(!st)continue;if(st==='realise'){refus.real++;continue}
-    const nd=calc(e.rdv);if(!nd||nd===e.rdv)continue;if(nd<t){refus.passe++;continue}
-    fait.push({cle,k,avant:{rdv:e.rdv,rdvSt:e.rdvSt||'',motif:e.motif||'',hist:(e.hist||[]).length,modif:r.modif}});
-    e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:`Rendez-vous reporté du ${frDate(e.rdv)} au ${frDate(nd)}${source?' ('+source+')':''}`});e.rdv=nd;e.rdvSt='prevu';e.motif='';r.modif=nowLocal();
+    const nd=calc(e.rdv),nh=heure===undefined?(e.rdvH||''):heure;if(!nd||(nd===e.rdv&&nh===(e.rdvH||'')&&st!=='annule'))continue;if(nd<t){refus.passe++;continue}
+    fait.push({cle,k,avant:{rdv:e.rdv,rdvH:e.rdvH||'',rdvSt:e.rdvSt||'',motif:e.motif||'',hist:(e.hist||[]).length,modif:r.modif}});
+    e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:`Rendez-vous reporté du ${frDate(e.rdv)}${hRdv(e)} au ${frDate(nd)}${hRdv({rdvH:nh})}${source?' ('+source+')':''}`});e.rdv=nd;e.rdvH=nh;e.rdvSt='prevu';e.motif='';r.modif=nowLocal();
     if(UI.f&&UI.f.edit===cle)UI.f.ex[k]=clone(e)}
   if(fait.length){save();AG_UNDO=fait}
   agUI().sel=agUI().sel.filter(x=>!fait.some(f=>x===f.cle+'|'+f.k));agUI().pris=null;agApres();
@@ -1908,15 +1933,47 @@ function agDeplacer(ids,calc,source){const t=today(),fait=[],refus={passe:0,real
 function agApres(){agRefresh();if(document.getElementById('lb_jour'))refreshBlock('jour')}
 function agToast(t,undo){document.querySelectorAll('.toast').forEach(x=>x.remove());const el=document.createElement('div');el.className='toast agT';el.setAttribute('role','status');
   el.innerHTML=`<span>${esc(t)}</span>${undo?'<button type="button" data-act="agUndo">Annuler</button>':''}`;document.body.appendChild(el);setTimeout(()=>el.remove(),undo?7000:3500)}
-function agAnnulerDernier(){if(!AG_UNDO)return;for(const f of AG_UNDO){const r=S.recs.find(x=>x.cle===f.cle);if(!r)continue;const e=r.ex[f.k];e.rdv=f.avant.rdv;e.rdvSt=f.avant.rdvSt;e.motif=f.avant.motif;e.hist=(e.hist||[]).slice(0,f.avant.hist);r.modif=f.avant.modif;if(UI.f&&UI.f.edit===f.cle)UI.f.ex[f.k]=clone(e)}
-  const n=AG_UNDO.length;AG_UNDO=null;save();agApres();toast(`${n} déplacement(s) annulé(s)`)}
+function agAnnulerDernier(){if(!AG_UNDO)return;for(const f of AG_UNDO){const r=S.recs.find(x=>x.cle===f.cle);if(!r)continue;const e=r.ex[f.k];e.rdv=f.avant.rdv;e.rdvH=f.avant.rdvH||'';e.rdvSt=f.avant.rdvSt;e.motif=f.avant.motif;e.hist=(e.hist||[]).slice(0,f.avant.hist);r.modif=f.avant.modif;if(UI.f&&UI.f.edit===f.cle)UI.f.ex[f.k]=clone(e)}
+  const n=AG_UNDO.length;AG_UNDO=null;save();agApres();toast(`${n} modification(s) annulée(s)`)}
+/* Reporter un ou plusieurs rendez-vous : nouvelle date et/ou heure, à accepter */
+function agMoveDlg(ids,dCible){const L=ids.map(smsEv).filter(x=>x&&x.st&&x.st!=='realise');if(!L.length){toast('Aucun rendez-vous modifiable dans la sélection (les rendez-vous réalisés ne se déplacent pas).');return}
+  UI.agMove=L.map(x=>x.id);const un=L.length===1,t=today(),d0=dCible||(un&&L[0].e.rdv>=t?L[0].e.rdv:'');
+  modal(`<div class="head"><h2>${un?'Reporter le rendez-vous':'Reporter '+L.length+' rendez-vous'}</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
+  <ul class="mvList">${L.map(x=>`<li><b>${esc(x.r.prenom)} ${esc(x.r.nom)}</b> · ${esc(x.l)} · actuellement le ${frDate(x.e.rdv)}${hRdv(x.e)}${x.st==='annule'?' (annulé)':''}</li>`).join('')}</ul>
+  <div class="mvGrid"><label class="fld"><span>Nouvelle date</span><input type="date" id="mvD" min="${t}" value="${d0}"></label>
+   ${un?`<label class="fld"><span>Heure</span><input type="time" id="mvH" value="${esc(L[0].e.rdvH||'')}"></label>`:
+   `<div style="display:flex;flex-direction:column;gap:6px"><label class="chk"><input type="radio" name="mvHq" value="garder" checked> Garder l’heure de chaque rendez-vous</label>
+    <label class="chk"><input type="radio" name="mvHq" value="nouv"> Mettre tous à l’heure : <input type="time" id="mvH" style="max-width:130px"></label></div>`}</div>
+  <div class="btns"><button type="button" class="btn primary" data-act="agMoveOk">Accepter</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);
+  setTimeout(()=>{const h=document.getElementById('mvH');if(h&&!un)h.addEventListener('focus',()=>{const r=document.querySelector('input[name=mvHq][value=nouv]');if(r)r.checked=true});(dCible?document.querySelector('[data-act=agMoveOk]'):document.getElementById('mvD'))?.focus()},0)}
+function agMoveOk(){const ids=UI.agMove||[],d=(document.getElementById('mvD')||{}).value,hEl=document.getElementById('mvH');if(!d){toast('Choisissez la nouvelle date.');return}if(d<today()){toast('Choisissez une date à partir d’aujourd’hui.');return}
+  let h;if(ids.length===1)h=hEl?hEl.value:undefined;else if((document.querySelector('input[name=mvHq]:checked')||{}).value==='nouv'){if(!hEl.value){toast('Indiquez l’heure.');return}h=hEl.value}
+  UI.agMove=null;closeModal();agDeplacer(ids,()=>d,ids.length>1?'report groupé':'report',h)}
+const AG_MOTIFS=['Patient absent','À la demande du patient','Examen non nécessaire','Appareil en panne','Préparation non faite','Report par le médecin'];
+function agCancelDlg(ids){const L=ids.map(smsEv).filter(x=>x&&['prevu','retard'].includes(x.st));if(!L.length){toast('Aucun rendez-vous prévu ou dépassé dans la sélection.');return}
+  UI.agCancel=L.map(x=>x.id);const un=L.length===1;
+  modal(`<div class="head"><h2>${un?'Annuler le rendez-vous':'Annuler '+L.length+' rendez-vous'}</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
+  <ul class="mvList">${L.map(x=>`<li><b>${esc(x.r.prenom)} ${esc(x.r.nom)}</b> · ${esc(x.l)} · ${frDate(x.e.rdv)}${hRdv(x.e)}</li>`).join('')}</ul>
+  <label class="fld"><span>Motif d’annulation</span><input id="cnM" list="cnML" placeholder="Choisissez ou écrivez le motif"><datalist id="cnML">${AG_MOTIFS.map(m=>`<option value="${esc(m)}">`).join('')}</datalist></label>
+  <div class="btns"><button type="button" class="btn danger" data-act="agCancelOk">Annuler ${un?'le rendez-vous':'ces rendez-vous'}</button><button type="button" class="btn ghost" data-act="close">Retour</button></div>`);
+  setTimeout(()=>document.getElementById('cnM')?.focus(),0)}
+function agCancelOk(){const m=((document.getElementById('cnM')||{}).value||'').trim();if(!m){toast('Indiquez le motif d’annulation.');document.getElementById('cnM')?.focus();return}
+  const fait=[];for(const id of UI.agCancel||[]){const x=smsEv(id);if(!x||!['prevu','retard'].includes(x.st))continue;const e=x.e;
+    fait.push({cle:x.cle,k:x.k,avant:{rdv:e.rdv,rdvH:e.rdvH||'',rdvSt:e.rdvSt||'',motif:e.motif||'',hist:(e.hist||[]).length,modif:x.r.modif}});
+    e.rdvSt='annule';e.motif=m;e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:'Rendez-vous annulé : '+m});x.r.modif=nowLocal();if(UI.f&&UI.f.edit===x.cle)UI.f.ex[x.k]=clone(e)}
+  UI.agCancel=null;closeModal();if(fait.length){save();AG_UNDO=fait}const A=agUI();A.sel=A.sel.filter(x=>!fait.some(f=>x===f.cle+'|'+f.k));agApres();if(UI.view==='liste')render();
+  agToast(`${fait.length} rendez-vous annulé(s)`,fait.length)}
+/* Marquer fait : ouvre la fiche du patient pour compléter / corriger, puis enregistrer */
+function agFaitFiche(id){const[cle,k]=id.split('|'),r=S.recs.find(x=>x.cle===cle);if(!r)return;const st=rdvState(r.ex[k]);
+  if(!['prevu','retard'].includes(st)){toast('Ce rendez-vous n’est pas en attente.');return}const retour=UI.view==='saisie'?null:UI.view;
+  closeModal();openRec(cle);const f=UI.f,e=f.ex[k];f.faitK=k;f.retour=retour;f.tab=k;if(!e.date||e.date>today())e.date=today();render();window.scrollTo(0,0)}
 function agJourOuvre(s){let d=agAdd(s<today()?today():s,1);while(agDow(d)>4)d=agAdd(d,1);return d}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||!/^ag/.test(t.dataset.act))return;const A=agUI(),a=t.dataset.act,v=t.dataset.v;
   if(AG_DRAG&&AG_DRAG.fin){AG_DRAG=null;return}
   if(a==='agVue'){A.vue=v;return agRefresh()}
   if(a==='agAuj'){A.date=today();return agRefresh()}
   if(a==='agPrev'||a==='agNext'){const s=a==='agPrev'?-1:1;if(A.vue==='mois'){const d=agD(A.date);A.date=agS(new Date(d.getFullYear(),d.getMonth()+s,1,12))}else A.date=agAdd(A.date,s*(A.vue==='jour'?1:A.vue==='semaine'?7:30));return agRefresh()}
-  if(a==='agJour'){if(A.pris){return agDeplacer([A.pris],()=>v,'agenda')}A.date=v;A.vue='jour';return agRefresh()}
+  if(a==='agJour'){if(A.pris){const id=A.pris;A.pris=null;agRefresh();return agMoveDlg([id],v)}A.date=v;A.vue='jour';return agRefresh()}
   if(a==='agFam'){if(!v||(A.fams.length===1&&A.fams[0]===v))A.fams=[];else if(!A.fams.length)A.fams=[v];else{A.fams=A.fams.includes(v)?A.fams.filter(x=>x!==v):[...A.fams,v];if(A.fams.length===FAMS.length)A.fams=[]}return agRefresh()}
   if(a==='agSelMode'){A.selMode=!A.selMode;A.sel=[];A.pris=null;return agRefresh()}
   if(a==='agSelTout'){const[d1,d2]=agPeriode();A.sel=agEvents(d1,d2).filter(agEditable).map(x=>x.id);return agRefresh()}
@@ -1929,6 +1986,14 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
     if(n)save();A.sel=[];agApres();toast(`${n} rendez-vous marqué(s) réalisé(s)`);return}
   if(a==='agFait'){const[cle,k]=v.split('|'),r=S.recs.find(x=>x.cle===cle);if(!r)return;const x=r.ex[k];x.rdvSt='realise';x.date=today();x.hist=x.hist||[];x.hist.push({d:nowLocal(),a:'Rendez-vous réalisé'});r.modif=nowLocal();if(UI.f&&UI.f.edit===cle)UI.f.ex[k]=clone(x);save();agApres();toast('Rendez-vous réalisé');return}
   if(a==='agDemain'){return agDeplacer([v],old=>agJourOuvre(old),'agenda')}
+  if(a==='agMoveDlg')return agMoveDlg([v]);
+  if(a==='agMoveOk')return agMoveOk();
+  if(a==='agCancelDlg')return agCancelDlg([v]);
+  if(a==='agCancelOk')return agCancelOk();
+  if(a==='agBulkMoveDlg')return agMoveDlg(A.sel);
+  if(a==='agBulkCancelDlg')return agCancelDlg(A.sel);
+  if(a==='agFaitFiche')return agFaitFiche(v);
+  if(a==='agSansRdv'){UI.f=blankForm();UI.f.retour='agenda';UI.f.sansRdv=true;UI.confirmDup=null;UI.view='saisie';render();window.scrollTo(0,0);return}
   if(a==='agOuvrir'){return rdvModal(v.split('|')[0])}});
 document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!/^ag/.test(t.dataset.act||''))return;const A=agUI(),a=t.dataset.act,v=t.dataset.v;
   if(a==='agDate'&&t.value){A.date=t.value;return agRefresh()}
@@ -1937,27 +2002,28 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!/^ag/.te
 document.addEventListener('input',e=>{if(e.target.id!=='agQ')return;agUI().q=e.target.value;clearTimeout(agUI().tq);agUI().tq=setTimeout(agRefresh,200)});
 /* Clic sur un rendez-vous : gestion (ou sélection en mode multiple) */
 document.addEventListener('click',e=>{const c=e.target.closest('.agEv[data-ev]');if(!c||e.target.closest('[data-act]'))return;if(AG_DRAG&&AG_DRAG.fin){AG_DRAG=null;return}const A=agUI(),id=c.dataset.ev;
-  if(A.pris){if(A.pris===id){A.pris=null;agRefresh();return}const day=c.closest('[data-day]');if(day){const d=day.dataset.day;if(d<today()){toast('Impossible de déplacer un rendez-vous dans le passé.');return}agDeplacer([A.pris],()=>d,'agenda')}return}
+  if(A.pris){if(A.pris===id){A.pris=null;agRefresh();return}const day=c.closest('[data-day]');if(day){const d=day.dataset.day;if(d<today()){toast('Impossible de déplacer un rendez-vous dans le passé.');return}const id=A.pris;A.pris=null;agRefresh();agMoveDlg([id],d)}return}
   if(A.selMode){if(c.classList.contains('lock')){toast('Rendez-vous déjà réalisé : il ne peut pas être reprogrammé.');return}A.sel=A.sel.includes(id)?A.sel.filter(x=>x!==id):[...A.sel,id];return agRefresh()}
   rdvModal(id.split('|')[0])});
 /* Rendez-vous « pris » (appui long) : toucher un jour pour l'y déplacer */
-document.addEventListener('click',e=>{const A=agUI();if(!A.pris||e.target.closest('.agEv,[data-act]'))return;const day=e.target.closest('#agenda [data-day]');if(!day)return;const d=day.dataset.day;if(d<today()){toast('Impossible de déplacer un rendez-vous dans le passé.');return}agDeplacer([A.pris],()=>d,'agenda')});
+document.addEventListener('click',e=>{const A=agUI();if(!A.pris||e.target.closest('.agEv,[data-act]'))return;const day=e.target.closest('#agenda [data-day]');if(!day)return;const d=day.dataset.day;if(d<today()){toast('Impossible de déplacer un rendez-vous dans le passé.');return}const id=A.pris;A.pris=null;agRefresh();agMoveDlg([id],d)});
 document.addEventListener('keydown',e=>{const c=e.target.closest&&e.target.closest('.agEv[data-ev]');if(c&&(e.key==='Enter'||e.key===' ')){e.preventDefault();c.click()}});
 /* Glisser-déposer (souris) et appui long (écran tactile) */
 let AG_DRAG=null;
-document.addEventListener('pointerdown',e=>{const c=e.target.closest('.agEv[data-ev]');if(!c||e.button>0||agUI().selMode||c.classList.contains('lock'))return;
-  AG_DRAG={c,id:c.dataset.ev,x:e.clientX,y:e.clientY,actif:false,tactile:e.pointerType!=='mouse'};
-  if(AG_DRAG.tactile){AG_DRAG.timer=setTimeout(()=>{if(!AG_DRAG)return;agUI().pris=AG_DRAG.id;AG_DRAG.fin=true;if(navigator.vibrate)navigator.vibrate(30);agRefresh();toast('Touchez le jour où déplacer ce rendez-vous.')},450)}});
+document.addEventListener('pointerdown',e=>{const c=e.target.closest('.agEv[data-ev]');if(!c||e.button>0||c.classList.contains('lock'))return;const A=agUI();
+  if(A.selMode&&!A.sel.includes(c.dataset.ev))return;const ids=A.selMode?A.sel.slice():[c.dataset.ev];
+  AG_DRAG={c,id:c.dataset.ev,ids,x:e.clientX,y:e.clientY,actif:false,tactile:e.pointerType!=='mouse'};
+  if(AG_DRAG.tactile&&!A.selMode){AG_DRAG.timer=setTimeout(()=>{if(!AG_DRAG)return;agUI().pris=AG_DRAG.id;AG_DRAG.fin=true;if(navigator.vibrate)navigator.vibrate(30);agRefresh();toast('Touchez le jour où déplacer ce rendez-vous.')},450)}});
 document.addEventListener('pointermove',e=>{const D=AG_DRAG;if(!D)return;const dx=e.clientX-D.x,dy=e.clientY-D.y;
   if(D.tactile){if(Math.abs(dx)+Math.abs(dy)>10){clearTimeout(D.timer);if(!D.fin)AG_DRAG=null}return}
-  if(!D.actif){if(Math.abs(dx)+Math.abs(dy)<6)return;D.actif=true;D.g=D.c.cloneNode(true);D.g.classList.add('agGhost');D.g.style.width=D.c.offsetWidth+'px';document.body.appendChild(D.g);D.c.classList.add('agSrc');document.body.classList.add('agDragging')}
+  if(!D.actif){if(Math.abs(dx)+Math.abs(dy)<6)return;D.actif=true;D.g=D.c.cloneNode(true);D.g.classList.add('agGhost');if(D.ids.length>1){D.g.classList.add('multi');D.g.insertAdjacentHTML('beforeend',`<span class="agN">${D.ids.length} RDV</span>`)}D.g.style.width=D.c.offsetWidth+'px';document.body.appendChild(D.g);D.c.classList.add('agSrc');document.body.classList.add('agDragging')}
   D.g.style.left=e.clientX+8+'px';D.g.style.top=e.clientY+8+'px';
   const el=document.elementFromPoint(e.clientX,e.clientY),day=el&&el.closest('[data-day]');document.querySelectorAll('.agOver').forEach(x=>x!==day&&x.classList.remove('agOver'));
   if(day){day.classList.add('agOver');day.classList.toggle('agNon',day.dataset.day<today())}});
 function agFinDrag(e,annule){const D=AG_DRAG;if(!D)return;clearTimeout(D.timer);if(D.tactile){if(D.fin)setTimeout(()=>{if(AG_DRAG===D)AG_DRAG=null},350);else AG_DRAG=null;return}
   if(!D.actif){AG_DRAG=null;return}D.g.remove();D.c.classList.remove('agSrc');document.body.classList.remove('agDragging');const over=document.querySelector('.agOver');document.querySelectorAll('.agOver').forEach(x=>x.classList.remove('agOver','agNon'));
   D.fin=true;setTimeout(()=>{if(AG_DRAG===D)AG_DRAG=null},0);
-  if(annule||!over)return;const d=over.dataset.day;if(d<today()){toast('Impossible de déplacer un rendez-vous dans le passé.');return}agDeplacer([D.id],()=>d,'glisser-déposer')}
+  if(annule||!over)return;const d=over.dataset.day;if(d<today()){toast('Impossible de déplacer un rendez-vous dans le passé.');return}agMoveDlg(D.ids,d)}
 document.addEventListener('pointerup',e=>agFinDrag(e,false));
 document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('.agEv'))e.preventDefault()});
 document.addEventListener('pointercancel',e=>agFinDrag(e,true));
@@ -1984,7 +2050,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
     L.recs.forEach(r0=>{const r=clone(r0);delete r.demo;r.ancien=r.ancien||r.cle;r.cle=impKey(r);if(byCle.has(r.cle)){S.recs[byCle.get(r.cle)]=r;rep++}else{byCle.set(r.cle,S.recs.length);S.recs.push(r);add++}});
     ensureCodes();save();try{L.o.migreLe=today();localStorage.setItem('registre-imagerie-chrt-v1',JSON.stringify(L.o))}catch(e){}render();toast(`${fmt(add)} fiche(s) ajoutée(s) au registre commun${rep?', '+fmt(rep)+' remplacée(s)':''}.`);return}
   if(a==='rcAgain'){closeModal();UI.rcpt=null;if(UI.view!=='saisie'){UI.view='saisie';render()}(matchMedia('(pointer:coarse)').matches?$('#rcCam'):$('#rcFile'))?.click();return}
-  if(a==='newRec'){UI.f=blankForm();UI.confirmDup=null;render();return}
+  if(a==='newRec'){const ret=UI.f&&UI.f.edit?UI.f.retour:null;UI.f=blankForm();UI.confirmDup=null;if(ret)UI.view=ret;render();return}
   if(a==='delRec'){modal(`<h2>Supprimer la fiche ${esc(UI.f.edit)} ?</h2><p>Le passage et ses examens seront retirés du registre et du rapport.</p><div class="btns"><button type="button" class="btn danger" data-act="delOk">Supprimer</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);return}
   if(a==='delOk'){S.recs=S.recs.filter(r=>r.cle!==UI.f.edit);save();toast(`Fiche ${UI.f.edit} supprimée`);UI.f=blankForm();closeModal();render();return}
   if(a==='open'){openRow(v);return}
@@ -2064,6 +2130,7 @@ document.addEventListener('change',async e=>{const t=e.target,a=t.dataset.act,v=
     e[a][+i]=val;const mb=$('#moneyBox');if(mb)mb.innerHTML=moneyInner(UI.f);return}
   if(a==='pay'){if(t.value==='__new'){t.value=UI.f.pay||'';newPayModal();return}readForm();UI.f.pay=t.value;delete UI.ferr.pay;render();return}
   if(a==='exDate'){UI.f.ex[v].date=t.value;return}
+  if(a==='exRdvH'){const e=UI.f.ex[v];if((e.rdvH||'')!==t.value){e.rdvH=t.value;if(UI.f.edit){e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:t.value?'Heure de RDV : '+t.value:'Heure de RDV retirée'})}}return}
   if(a==='exRdv'){const e=UI.f.ex[v];if(e.rdv!==t.value){e.rdv=t.value;e.rdvSt=t.value?'prevu':'';e.motif='';if(UI.f.edit){e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:t.value?'Date de RDV modifiée dans la fiche : '+frDate(t.value):'RDV retiré dans la fiche'})}}render();return}
   if(t.dataset.f){UI.f[t.dataset.f]=t.value;UI.confirmDup=null;return}
   if(t.dataset.filt){const[k,fld]=t.dataset.filt.split('|');if(fld==='q')return;UI[k][fld]=fld==='date'?(t.value||today()):t.value;UI[k].page=0;refreshBlock(k,t.id);return}
