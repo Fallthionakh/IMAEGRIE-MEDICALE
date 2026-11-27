@@ -341,6 +341,11 @@ tr.click{transition:background .12s}tr.click:hover td{background:color-mix(in sr
 .mvGrid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.mvGrid .fld{min-width:160px}
 .faitNote{margin:0 0 10px}
 .actions .note{flex-basis:100%}
+.mixBox{flex-basis:100%;max-width:620px;display:flex;flex-direction:column;gap:6px;background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.mixRow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:6px}
+.mixL{display:flex;align-items:center;gap:6px;font-weight:600;font-size:.86rem}.mixL .dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--fam,currentColor)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}.seg button{border:0;background:var(--surface);padding:6px 12px;font:inherit;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer}.seg button+button{border-left:1px solid var(--line)}
+.seg button.on.go{background:#15803d;color:#fff}.seg button.on.rdv{background:#d97706;color:#fff}
 .saveChoice{flex-basis:100%;display:flex;flex-direction:column;gap:6px;max-width:620px}
 .scRow{display:flex;align-items:center;gap:14px}
 .scTxt{font-size:.82rem;color:var(--muted);line-height:1.35}
@@ -1230,6 +1235,8 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
     ${nTot?`<div class="money" id="moneyBox">${moneyInner(f)}</div>`:''}
     <div class="summary"><span class="lab">Examens de ce passage (${nTot})</span><div class="chips">${FAMS.flatMap(([k])=>f.ex[k].ids.map((id,i)=>`<span class="chip t-${k}">${esc(exLabel(id))}${k==='scan'?' '+esc(f.ex.scan.inj?.[i]||'C'):''}</span>`)).join('')||'<span class="muted">Ajoutez au moins un examen dans un onglet.</span>'}</div></div>
     <div class="actions">${UI.confirmDup?`<div class="note warn">${esc(UI.confirmDup)} <b>Cliquez à nouveau sur Enregistrer pour confirmer.</b></div>`:''}
+      ${(()=>{const fs=FAMS.filter(([k])=>f.ex[k].ids.length);if(fs.length<2)return'';return`<div class="mixBox"><b>Plusieurs types d’examens dans ce passage</b><span class="small muted">Vous pouvez choisir pour chacun. Si vous ne choisissez rien, c’est le bouton cliqué en bas qui décide.</span>
+        ${fs.map(([k,l])=>{const e=f.ex[k],m=e.m||'';return`<div class="mixRow"><span class="mixL"><i class="dot f-${k}"></i>${esc(l)} <span class="muted small">· ${e.ids.length} examen(s) · ${frDate(fD(e))}</span></span><span class="seg"><button type="button" class="${m==='fait'?'on go':''}" data-act="exMode" data-v="${k}|fait">Fait</button><button type="button" class="${m==='rdv'?'on rdv':''}" data-act="exMode" data-v="${k}|rdv">Rendez-vous</button></span></div>`}).join('')}</div>`})()}
       <div class="saveChoice">
         <div class="scRow"><button type="button" class="btn rdv big" data-act="saveRec" data-v="rdv"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Rendez-vous</button>
           <span class="scTxt"><b>Examen à faire plus tard.</b> Il est enregistré dans les rendez-vous, à la date choisie.</span></div>
@@ -1252,11 +1259,11 @@ async function saveRec(mode){if(CL.saving)return;readForm();const f=UI.f,err=[];
   if(err.length){render();toast('À compléter : '+err.join(', ')+'.');(ep?$('#fPrenom'):en?$('#fNom'):null)?.focus();return}
   if(!telOk(f.tel)){toast('Téléphone : 9 chiffres commençant par 70, 75, 76, 77, 78, 30 ou 33.');return}
   if(f.edit&&f.faitK&&!f.ex[f.faitK].ids.length){toast('L’onglet du rendez-vous ne contient plus d’examen : ajoutez-en un ou annulez.');return}
-  {const t=today();let nR=0;for(const[k,l]of FAMS){const e=f.ex[k];if(!e.ids.length)continue;const d=fD(e),st=rdvState(e),dejaFait=!!f.edit&&(st==='realise'||(!st&&!!e.date));
+  {const t=today();let nR=0;for(const[k,l]of FAMS){const e=f.ex[k];if(!e.ids.length)continue;const em=e.m||mode,d=fD(e),st=rdvState(e),dejaFait=!e.m&&!!f.edit&&(st==='realise'||(!st&&!!e.date));
     const ko=m=>{UI.f.tab=k;render();toast(l+' : '+m);setTimeout(()=>$('#exD')?.focus(),0)};
     if(!d)return ko('indiquez la date.');
-    if(mode==='fait'&&d>t)return ko(`la date (${frDate(d)}) est dans le futur. Pour un examen à faire plus tard, cliquez sur « Rendez-vous ».`);
-    if(mode==='rdv'&&!dejaFait){if(d<t&&!(['prevu','retard'].includes(st)&&d===e.rdv))return ko(`la date (${frDate(d)}) est passée. Pour un examen déjà fait, cliquez sur « Enregistrer ».`);nR++}}
+    if(em==='fait'&&d>t)return ko(`la date (${frDate(d)}) est dans le futur. Pour un examen à faire plus tard, choisissez « Rendez-vous ».`);
+    if(em==='rdv'&&!dejaFait){if(d<t&&!(['prevu','retard'].includes(st)&&d===e.rdv))return ko(`la date (${frDate(d)}) est passée. Pour un examen déjà fait, choisissez « Fait » / « Enregistrer ».`);nR++}}
     if(mode==='rdv'&&!nR){toast('Tous les examens de cette fiche sont déjà faits : il n’y a pas de rendez-vous à enregistrer.');return}}
   const prenom=f.prenom.trim().toUpperCase(),nom=f.nom.trim().toUpperCase(),tel=f.tel.replace(/\D/g,'');
   if(!f.edit){const dup=S.recs.find(r=>r.cree.slice(0,10)===today()&&r.prenom===prenom&&r.nom===nom&&(r.tel||'')===tel);
@@ -1264,15 +1271,16 @@ async function saveRec(mode){if(CL.saving)return;readForm();const f=UI.f,err=[];
   const now=nowLocal(),ex=clone(f.ex),xf={};XF.forEach(k=>xf[k]=String(f[k]??'').trim());xf.ageU=f.ageU||'ans';xf.codePat=xf.codePat.replace(/\s+/g,'').toUpperCase();xf.recu=xf.recu.replace(/\s+/g,'');['adresse','matricule','tiers','agentEm','agentFa'].forEach(k=>xf[k]=xf[k].toUpperCase());
   if(xf.recu){const dr=S.recs.find(r=>r.recu===xf.recu&&r.cle!==f.edit);if(dr&&UI.confirmDup!=='recu:'+xf.recu){UI.confirmDup='recu:'+xf.recu;toast(`Le reçu ${xf.recu} est déjà enregistré (fiche ${codeOf(dr)}). Cliquez à nouveau sur Enregistrer pour confirmer.`);render();return}}
   const rdvDates=[];
-  for(const[k]of FAMS){const e=ex[k];const d=fD(e);delete e.d;if(!e.ids.length)continue;const st=rdvState(e),h=m=>{if(f.edit){e.hist=e.hist||[];e.hist.push({d:now,a:m})}};
-    if(mode==='fait'){if(['prevu','retard','annule'].includes(st)){e.rdvSt='realise';e.motif='';h(`Rendez-vous réalisé le ${frDate(d)}${f.faitK===k?' (fiche complétée)':''}`)}
+  const nFait=[];
+  for(const[k,l]of FAMS){const e=ex[k];const d=fD(e),em=e.m||mode,expl=!!e.m;delete e.d;delete e.m;if(!e.ids.length)continue;const st=rdvState(e),h=m=>{if(f.edit){e.hist=e.hist||[];e.hist.push({d:now,a:m})}};
+    if(em==='fait'){nFait.push(l);if(['prevu','retard','annule'].includes(st)){e.rdvSt='realise';e.motif='';h(`Rendez-vous réalisé le ${frDate(d)}${f.faitK===k?' (fiche complétée)':''}`)}
       else if(st!=='realise'){e.rdv='';e.rdvSt='';e.rdvH='';e.motif=''}e.date=d}
-    else{if(f.edit&&(st==='realise'||(!st&&e.date)))continue;
+    else{if(!expl&&f.edit&&(st==='realise'||(!st&&e.date)))continue;
       if(!e.rdv)h(`Rendez-vous fixé au ${frDate(d)}${hRdv(e)}`);else if(e.rdv!==d||st==='annule')h(`Rendez-vous ${st==='annule'?'reprogrammé':'reporté'} du ${frDate(e.rdv)} au ${frDate(d)}${hRdv(e)}`);
       if(e.rdv!==d||st==='annule'){e.rdvSt='prevu';e.motif=''}e.rdv=d;e.date='';rdvDates.push(d)}}
-  const retour=f.retour,faitMsg=f.edit&&f.faitK&&mode==='fait',rdvMsg=mode==='rdv'?` · rendez-vous le ${[...new Set(rdvDates)].sort().map(frDate).join(', ')}`:'';
+  const retour=f.retour,faitMsg=f.edit&&f.faitK&&ex[f.faitK].rdvSt==='realise',rdvMsg=rdvDates.length?` · rendez-vous le ${[...new Set(rdvDates)].sort().map(frDate).join(', ')}`:'';
   if(f.edit){const r=S.recs.find(x=>x.cle===f.edit);const auto=!xf.codePat||(r.codeAuto&&xf.codePat===r.codePat);Object.assign(r,{prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,modif:now},xf);if(!xf.codePat||auto){r.codePat=r.codeAuto||!xf.codePat?chrtCode(r.cree,prenom,nom,numOfCle(r.ancien||r.cle)):xf.codePat;r.codeAuto=true}else delete r.codeAuto;if(save())toast(faitMsg?`${r.prenom} ${r.nom} : rendez-vous marqué fait`:`Fiche ${r.cle} mise à jour${rdvMsg}`)}
-  else{CL.saving=true;let cle;try{cle=CLOUD?await newCode():'IMG_'+(S.seq++)}finally{CL.saving=false}const rec={cle,cree:now,modif:now,prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,...xf};if(!rec.codePat){rec.codePat=chrtCode(now,prenom,nom,numOfCle(cle));rec.codeAuto=true}S.recs.push(rec);if(save())toast(mode==='rdv'?`Rendez-vous enregistré pour le ${[...new Set(rdvDates)].sort().map(frDate).join(', ')} · code patient ${rec.codePat}`:`Examen enregistré · code patient ${rec.codePat}`)}
+  else{CL.saving=true;let cle;try{cle=CLOUD?await newCode():'IMG_'+(S.seq++)}finally{CL.saving=false}const rec={cle,cree:now,modif:now,prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,...xf};if(!rec.codePat){rec.codePat=chrtCode(now,prenom,nom,numOfCle(cle));rec.codeAuto=true}S.recs.push(rec);if(save())toast(rdvDates.length&&nFait.length?`Enregistré : ${nFait.join(', ')} fait${rdvMsg} · code patient ${rec.codePat}`:rdvDates.length?`Rendez-vous enregistré pour le ${[...new Set(rdvDates)].sort().map(frDate).join(', ')} · code patient ${rec.codePat}`:`Examen enregistré · code patient ${rec.codePat}`)}
   UI.confirmDup=null;UI.f=blankForm();if(retour)UI.view=retour;render();window.scrollTo(0,0)}
 function openRec(cle){const r=S.recs.find(x=>x.cle===cle);if(!r)return;
   UI.f={edit:r.cle,prenom:r.prenom,nom:r.nom,sexe:r.sexe,age:String(r.age??''),origine:r.origine,mois:r.mois,tel:r.tel||'',pay:r.pay||'',...Object.fromEntries(XF.map(k=>[k,r[k]??''])),ageU:r.ageU||'ans',tab:FAMS.find(([k])=>r.ex[k].ids.length)?.[0]||'echo',ex:clone(r.ex),sel:{}};
@@ -2072,6 +2080,7 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
   if(a==='addEx'){readForm();const id=UI.f.sel[v]||$('#exSel').value;if(!id){toast('Choisissez un examen dans la liste.');return}UI.f.ex[v].ids.push(id);if(v==='scan'){const e=UI.f.ex.scan;e.inj=e.inj||[];e.inj[e.ids.length-1]=catById(id)?.inj||document.querySelector('input[name=injSel]:checked')?.value||'C'}{const e=UI.f.ex[v],i=e.ids.length-1;e.px=e.px||[];e.pp=e.pp||[];e.px[i]=tarifOf(id,v==='scan'?e.inj[i]:'')||'';e.pp[i]=''}if(UI.f.ex[v].d===undefined&&!dispDate(UI.f.ex[v]))UI.f.ex[v].d=today();UI.f.sel[v]='';UI.confirmDup=null;render();$('#exSel')?.focus();return}
   if(a==='rmEx'){readForm();const[f,i]=v.split('|');UI.f.ex[f].ids.splice(+i,1);if(UI.f.ex[f].cl)UI.f.ex[f].cl.splice(+i,1);if(UI.f.ex[f].inj)UI.f.ex[f].inj.splice(+i,1);['px','pp'].forEach(k=>{if(UI.f.ex[f][k])UI.f.ex[f][k].splice(+i,1)});render();return}
   if(a==='saveRec'){saveRec(v==='rdv'?'rdv':'fait');return}
+  if(a==='exMode'){readForm();const[k,m]=v.split('|'),e=UI.f.ex[k];e.m=e.m===m?'':m;render();return}
   if(a==='rcApply'){rcptApply();return}
   if(a==='rcConf'){rcptConf(v);return}
   if(a==='rcPick'){const i=v.indexOf('|'),k=v.slice(0,i),val=v.slice(i+1),P=UI.rcpt.p;P[k]=k==='ageV'?+val:val;if(P.doubt)delete P.doubt[k];if(k==='tel')P.telDoute=false;rcptKeep();return}
