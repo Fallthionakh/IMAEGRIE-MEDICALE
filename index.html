@@ -340,6 +340,17 @@ tr.click{transition:background .12s}tr.click:hover td{background:color-mix(in sr
 .mvList{margin:0;padding:0;list-style:none;max-height:180px;overflow:auto;border:1px solid var(--line);border-radius:10px}.mvList li{padding:6px 10px;font-size:.82rem;border-bottom:1px solid var(--line)}.mvList li:last-child{border-bottom:0}
 .mvGrid{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}.mvGrid .fld{min-width:160px}
 .faitNote{margin:0 0 10px}
+.actions .note{flex-basis:100%}
+.saveChoice{flex-basis:100%;display:flex;flex-direction:column;gap:6px;max-width:620px}
+.scRow{display:flex;align-items:center;gap:14px}
+.scTxt{font-size:.82rem;color:var(--muted);line-height:1.35}
+.scOu{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;max-width:190px}.scOu::before,.scOu::after{content:"";flex:1;border-top:1px dashed var(--line)}
+.btn.big{min-width:190px;justify-content:center;padding:11px 18px;font-size:.95rem;display:inline-flex;align-items:center;gap:8px}
+.btn.big svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.btn.rdv{background:#d97706;border-color:#d97706;color:#fff}.btn.rdv:hover{background:#b45309;border-color:#b45309}
+.btn.go{background:#15803d;border-color:#15803d;color:#fff}.btn.go:hover{background:#166534;border-color:#166534}
+.scSec{flex-basis:100%;display:flex;gap:8px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:10px;margin-top:4px}
+@media (max-width:900px){.scRow{flex-direction:column;align-items:stretch;gap:4px}.btn.big{width:100%}.scTxt{font-size:.76rem}.scOu{max-width:none}.saveChoice{gap:4px}}
 .spSt{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}.spSt .pill{font-size:.7rem}
 .agEv .agEx{display:block;flex-basis:100%;font-weight:500;font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .agWeek .agEv{flex-wrap:wrap}
@@ -1201,9 +1212,9 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
     ${f.edit?'':`<p class="muted small" style="margin:0">Tapez au moins 2 lettres du prénom ou du nom, ou 4 chiffres du téléphone : les patients déjà enregistrés s’affichent ci-dessous.</p>`}<div id="sugg" aria-live="polite">${suggHtml()}</div>
   </form>
   <div class="card exams">
-    <div class="secHead"><span class="step">2</span><div><b>Examens demandés</b><small>Choisissez le type d’examen, puis ajoutez les actes</small></div></div>
-    ${f.faitK&&ed?`<div class="note ok faitNote"><b>Marquer fait : ${esc(FAMS.find(x=>x[0]===f.faitK)[1])} — rendez-vous du ${frDate(ed.ex[f.faitK].rdv)}${hRdv(ed.ex[f.faitK])}</b><br><span class="small">Vérifiez ou complétez la fiche (identité, paiement, actes…). La « Date d’examen » de l’onglet ${esc(FAMS.find(x=>x[0]===f.faitK)[1])} sera la date de réalisation. Cliquez ensuite sur « Enregistrer et marquer fait ».</span></div>`:''}
-    ${f.sansRdv&&!ed?`<div class="note ok faitNote"><b>Patient venu sans rendez-vous</b><br><span class="small">Saisissez le patient et ses examens, sans date de RDV : à l’enregistrement, le passage est compté comme fait à la date d’examen (aujourd’hui par défaut).</span></div>`:''}
+    <div class="secHead"><span class="step">2</span><div><b>Examens demandés</b><small>Choisissez le type d’examen, puis ajoutez les examens</small></div></div>
+    ${f.faitK&&ed?`<div class="note ok faitNote"><b>Marquer fait : ${esc(FAMS.find(x=>x[0]===f.faitK)[1])} — rendez-vous du ${frDate(ed.ex[f.faitK].rdv)}${hRdv(ed.ex[f.faitK])}</b><br><span class="small">Vérifiez ou complétez la fiche (identité, paiement, examens…). La « Date » de l’onglet ${esc(FAMS.find(x=>x[0]===f.faitK)[1])} sera la date de réalisation. Cliquez ensuite sur le bouton vert « Enregistrer ».</span></div>`:''}
+    ${f.sansRdv&&!ed?`<div class="note ok faitNote"><b>Patient venu sans rendez-vous</b><br><span class="small">Saisissez le patient et ses examens, puis cliquez sur le bouton vert « Enregistrer » : le passage est compté comme fait à la date choisie (aujourd’hui par défaut).</span></div>`:''}
     ${f.from&&!ed?`<div class="exHead" id="exHead"><span class="lab">Nouveau passage</span><b>${esc(f.prenom)} ${esc(f.nom)}</b> <span class="muted small">· ${esc(AGES[f.age]?.[0]||'')} · ${esc(f.sexe)} · ${esc(f.origine)}</span></div>`:''}
     <div class="tabs" role="tablist">${FAMS.map(([k,l])=>`<button type="button" role="tab" class="tab f-${k} ${k===tab?'on':''}" data-act="tab" data-v="${k}" aria-selected="${k===tab}"><i class="dot"></i>${esc(l)}${f.ex[k].ids.length?`<b class="cnt">${f.ex[k].ids.length}</b>`:''}</button>`).join('')}</div>
     <div class="panel f-${tab}" role="tabpanel">
@@ -1213,15 +1224,21 @@ function viewSaisie(){const f=UI.f,ed=f.edit?S.recs.find(r=>r.cle===f.edit):null
           ${tab==='scan'?(()=>{const it=catById(f.sel.scan||''),fix=it&&it.inj,cur2=fix||f.injSel||'C';return`<div class="injRow" role="radiogroup" aria-label="Injection"><span class="plab">Injection</span>${['C','+C'].map(j=>`<label class="injOpt ${cur2===j?'on':''}"><input type="radio" name="injSel" data-act="injSel" value="${j}" ${cur2===j?'checked':''} ${fix&&fix!==j?'disabled':''}> ${esc(INJ_L[j])}</label>`).join('')}${fix?'<span class="small">imposée par l’intitulé</span>':''}</div>`})():''}
           <span class="plab">Demande</span>
           <ol class="demande">${cur.ids.map((id,i)=>`<li><span>${esc(exLabel(id))}</span>${tab==='scan'?(()=>{const it=catById(id),j=cur.inj?.[i]||it?.inj||'C';return`<select class="injSel" data-act="inj" data-v="scan|${i}" aria-label="Injection pour ${esc(exLabel(id))}" ${it&&it.inj?'disabled':''}>${['C','+C'].map(x=>`<option value="${x}" ${x===j?'selected':''}>${x==='C'?'C (sans)':'+C (avec)'}</option>`).join('')}</select>`})():''}${['rx','spe','mam'].includes(tab)?`<label class="cl">Clichés <input type="number" min="0" step="1" data-act="cl" data-v="${tab}|${i}" value="${esc(cur.cl?.[i]??'')}" aria-label="Nombre de clichés pour ${esc(exLabel(id))}"></label>`:''}<span class="pxg"><label>Prix <input type="number" min="0" step="500" data-act="px" data-v="${tab}|${i}" value="${esc(cur.px?.[i]??'')}" aria-label="Prix de ${esc(exLabel(id))}"></label><label>Patient <input type="number" min="0" step="500" data-act="pp" data-v="${tab}|${i}" value="${esc(cur.pp?.[i]??'')}" aria-label="Part patient pour ${esc(exLabel(id))}"></label></span><button type="button" class="x" data-act="rmEx" data-v="${tab}|${i}" aria-label="Retirer ${esc(exLabel(id))}">×</button></li>`).join('')||'<li class="empty">Aucun examen demandé dans cet onglet.</li>'}</ol></div>
-        <div class="dates"><label class="fld"><span class="plab">Date d’examen</span><input type="date" id="exDate" data-act="exDate" data-v="${tab}" value="${esc(cur.date)}"></label>
-          <label class="fld"><span class="plab">Date de RDV</span><input type="date" id="exRdv" data-act="exRdv" data-v="${tab}" value="${esc(cur.rdv)}"></label>${cur.rdv?`<label class="fld"><span class="plab">Heure de RDV</span><input type="time" id="exRdvH" data-act="exRdvH" data-v="${tab}" value="${esc(cur.rdvH||'')}"></label>`:''}${rdvBadge(cur)}</div>
+        <div class="dates"><label class="fld"><span class="plab">Date</span><input type="date" id="exD" data-act="exD" data-v="${tab}" value="${esc(fD(cur))}"></label>
+          <label class="fld"><span class="plab">Heure <span class="muted" style="text-transform:none;font-weight:500">(si rendez-vous, facultatif)</span></span><input type="time" id="exRdvH" data-act="exRdvH" data-v="${tab}" value="${esc(cur.rdvH||'')}"></label>${rdvBadge(cur)}</div>
       </div></div>
     ${nTot?`<div class="money" id="moneyBox">${moneyInner(f)}</div>`:''}
     <div class="summary"><span class="lab">Examens de ce passage (${nTot})</span><div class="chips">${FAMS.flatMap(([k])=>f.ex[k].ids.map((id,i)=>`<span class="chip t-${k}">${esc(exLabel(id))}${k==='scan'?' '+esc(f.ex.scan.inj?.[i]||'C'):''}</span>`)).join('')||'<span class="muted">Ajoutez au moins un examen dans un onglet.</span>'}</div></div>
     <div class="actions">${UI.confirmDup?`<div class="note warn">${esc(UI.confirmDup)} <b>Cliquez à nouveau sur Enregistrer pour confirmer.</b></div>`:''}
-      <button type="button" class="btn primary" data-act="saveRec">${ed&&f.faitK?'Enregistrer et marquer fait':ed?'Enregistrer les modifications':'Enregistrer le passage'}</button>
-      <button type="button" class="btn ghost" data-act="newRec">${ed?'Annuler':'Nouveau patient'}</button>
-      ${ed?`<button type="button" class="btn danger" data-act="delRec">Supprimer la fiche</button>`:''}</div>
+      <div class="saveChoice">
+        <div class="scRow"><button type="button" class="btn rdv big" data-act="saveRec" data-v="rdv"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Rendez-vous</button>
+          <span class="scTxt"><b>Examen à faire plus tard.</b> Il est enregistré dans les rendez-vous, à la date choisie.</span></div>
+        <div class="scOu"><span>ou</span></div>
+        <div class="scRow"><button type="button" class="btn go big" data-act="saveRec" data-v="fait"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Enregistrer</button>
+          <span class="scTxt"><b>Examen fait.</b> Il est enregistré dans les examens de la date choisie.</span></div>
+      </div>
+      <div class="scSec"><button type="button" class="btn ghost" data-act="newRec">${ed?'Annuler':'Nouveau patient'}</button>
+      ${ed?`<button type="button" class="btn danger" data-act="delRec">Supprimer la fiche</button>`:''}</div></div>
   </div></section>`}
 function listTable(rows){
   return`<div class="tw"><table class="list"><thead><tr><th>Code</th><th>Heure</th><th>Prénom</th><th>Nom</th><th>Âge</th><th>Sexe</th><th>Tél.</th><th>Origine</th>${FAMS.map(([k,l])=>`<th class="h-${k}">${k==='spe'?'Exam. spéc.':k==='mam'?'Mammo':k==='echo'?'Écho':k==='rx'?'Radio':k==='scan'?'Scanner':'Doppler'}</th>`).join('')}</tr></thead><tbody>
@@ -1229,21 +1246,33 @@ function listTable(rows){
    ${FAMS.map(([k])=>{const e=r.ex[k];return`<td class="c-${k} ${e.ids.length?'on':''}" data-l="${esc(FAMS.find(x=>x[0]===k)[1])}">${e.ids.map((id,i)=>esc(exLabel(id))+(k==='scan'?' <b>'+esc(e.inj?.[i]||'C')+'</b>':'')).join('<br>')}${rdvBadge(e)}</td>`}).join('')}</tr>`).join('')||`<tr><td colspan="14" class="muted">Aucun passage.</td></tr>`}</tbody></table></div>`}
 function readForm(){const f=UI.f;document.querySelectorAll('[data-f]').forEach(el=>{f[el.dataset.f]=el.value})}
 function telOk(t){const d=t.replace(/\D/g,'');return!d||/^(7[05678]|3[03])\d{7}$/.test(d)}
-async function saveRec(){if(CL.saving)return;readForm();const f=UI.f,err=[];
+async function saveRec(mode){if(CL.saving)return;readForm();const f=UI.f,err=[];mode=mode||'fait';
   UI.ferr={};const ep=nameErr(f.prenom),en=nameErr(f.nom);if(ep){UI.ferr.prenom=ep;err.push('le prénom')}if(en){UI.ferr.nom=en;err.push('le nom')}if(!f.sexe)err.push('le sexe');if(f.age==='')err.push('l’âge');if(!f.pay){UI.ferr.pay='Obligatoire.';err.push('le type de paiement')}
   const n=FAMS.reduce((a,[k])=>a+f.ex[k].ids.length,0);if(!n)err.push('au moins un examen');
   if(err.length){render();toast('À compléter : '+err.join(', ')+'.');(ep?$('#fPrenom'):en?$('#fNom'):null)?.focus();return}
   if(!telOk(f.tel)){toast('Téléphone : 9 chiffres commençant par 70, 75, 76, 77, 78, 30 ou 33.');return}
-  if(f.edit&&f.faitK){const e=f.ex[f.faitK];if(!e.ids.length){toast('L’onglet du rendez-vous ne contient plus d’examen : ajoutez-en un ou annulez.');return}if(!e.date){e.date=today()}if(e.date>today()){toast('La date d’examen (date de réalisation) ne peut pas être dans le futur.');UI.f.tab=f.faitK;render();return}}
+  if(f.edit&&f.faitK&&!f.ex[f.faitK].ids.length){toast('L’onglet du rendez-vous ne contient plus d’examen : ajoutez-en un ou annulez.');return}
+  {const t=today();let nR=0;for(const[k,l]of FAMS){const e=f.ex[k];if(!e.ids.length)continue;const d=fD(e),st=rdvState(e),dejaFait=!!f.edit&&(st==='realise'||(!st&&!!e.date));
+    const ko=m=>{UI.f.tab=k;render();toast(l+' : '+m);setTimeout(()=>$('#exD')?.focus(),0)};
+    if(!d)return ko('indiquez la date.');
+    if(mode==='fait'&&d>t)return ko(`la date (${frDate(d)}) est dans le futur. Pour un examen à faire plus tard, cliquez sur « Rendez-vous ».`);
+    if(mode==='rdv'&&!dejaFait){if(d<t&&!(['prevu','retard'].includes(st)&&d===e.rdv))return ko(`la date (${frDate(d)}) est passée. Pour un examen déjà fait, cliquez sur « Enregistrer ».`);nR++}}
+    if(mode==='rdv'&&!nR){toast('Tous les examens de cette fiche sont déjà faits : il n’y a pas de rendez-vous à enregistrer.');return}}
   const prenom=f.prenom.trim().toUpperCase(),nom=f.nom.trim().toUpperCase(),tel=f.tel.replace(/\D/g,'');
   if(!f.edit){const dup=S.recs.find(r=>r.cree.slice(0,10)===today()&&r.prenom===prenom&&r.nom===nom&&(r.tel||'')===tel);
     const key=dup?dup.cle:null;if(dup&&UI.confirmDup!==`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`){UI.confirmDup=`Déjà enregistré aujourd’hui : ${dup.cle} (${prenom} ${nom}).`;render();return}}
   const now=nowLocal(),ex=clone(f.ex),xf={};XF.forEach(k=>xf[k]=String(f[k]??'').trim());xf.ageU=f.ageU||'ans';xf.codePat=xf.codePat.replace(/\s+/g,'').toUpperCase();xf.recu=xf.recu.replace(/\s+/g,'');['adresse','matricule','tiers','agentEm','agentFa'].forEach(k=>xf[k]=xf[k].toUpperCase());
   if(xf.recu){const dr=S.recs.find(r=>r.recu===xf.recu&&r.cle!==f.edit);if(dr&&UI.confirmDup!=='recu:'+xf.recu){UI.confirmDup='recu:'+xf.recu;toast(`Le reçu ${xf.recu} est déjà enregistré (fiche ${codeOf(dr)}). Cliquez à nouveau sur Enregistrer pour confirmer.`);render();return}}
-  if(f.edit&&f.faitK){const e=ex[f.faitK];e.rdvSt='realise';e.motif='';e.hist=e.hist||[];e.hist.push({d:now,a:`Rendez-vous réalisé le ${frDate(e.date)} (fiche complétée)`})}
-  const retour=f.retour,faitMsg=f.edit&&f.faitK;
-  if(f.edit){const r=S.recs.find(x=>x.cle===f.edit);const auto=!xf.codePat||(r.codeAuto&&xf.codePat===r.codePat);Object.assign(r,{prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,modif:now},xf);if(!xf.codePat||auto){r.codePat=r.codeAuto||!xf.codePat?chrtCode(r.cree,prenom,nom,numOfCle(r.ancien||r.cle)):xf.codePat;r.codeAuto=true}else delete r.codeAuto;if(save())toast(faitMsg?`${r.prenom} ${r.nom} : rendez-vous marqué fait`:`Fiche ${r.cle} mise à jour`)}
-  else{CL.saving=true;let cle;try{cle=CLOUD?await newCode():'IMG_'+(S.seq++)}finally{CL.saving=false}const rec={cle,cree:now,modif:now,prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,...xf};if(!rec.codePat){rec.codePat=chrtCode(now,prenom,nom,numOfCle(cle));rec.codeAuto=true}S.recs.push(rec);if(save())toast(`Passage enregistré · code patient ${rec.codePat}`)}
+  const rdvDates=[];
+  for(const[k]of FAMS){const e=ex[k];const d=fD(e);delete e.d;if(!e.ids.length)continue;const st=rdvState(e),h=m=>{if(f.edit){e.hist=e.hist||[];e.hist.push({d:now,a:m})}};
+    if(mode==='fait'){if(['prevu','retard','annule'].includes(st)){e.rdvSt='realise';e.motif='';h(`Rendez-vous réalisé le ${frDate(d)}${f.faitK===k?' (fiche complétée)':''}`)}
+      else if(st!=='realise'){e.rdv='';e.rdvSt='';e.rdvH='';e.motif=''}e.date=d}
+    else{if(f.edit&&(st==='realise'||(!st&&e.date)))continue;
+      if(!e.rdv)h(`Rendez-vous fixé au ${frDate(d)}${hRdv(e)}`);else if(e.rdv!==d||st==='annule')h(`Rendez-vous ${st==='annule'?'reprogrammé':'reporté'} du ${frDate(e.rdv)} au ${frDate(d)}${hRdv(e)}`);
+      if(e.rdv!==d||st==='annule'){e.rdvSt='prevu';e.motif=''}e.rdv=d;e.date='';rdvDates.push(d)}}
+  const retour=f.retour,faitMsg=f.edit&&f.faitK&&mode==='fait',rdvMsg=mode==='rdv'?` · rendez-vous le ${[...new Set(rdvDates)].sort().map(frDate).join(', ')}`:'';
+  if(f.edit){const r=S.recs.find(x=>x.cle===f.edit);const auto=!xf.codePat||(r.codeAuto&&xf.codePat===r.codePat);Object.assign(r,{prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,modif:now},xf);if(!xf.codePat||auto){r.codePat=r.codeAuto||!xf.codePat?chrtCode(r.cree,prenom,nom,numOfCle(r.ancien||r.cle)):xf.codePat;r.codeAuto=true}else delete r.codeAuto;if(save())toast(faitMsg?`${r.prenom} ${r.nom} : rendez-vous marqué fait`:`Fiche ${r.cle} mise à jour${rdvMsg}`)}
+  else{CL.saving=true;let cle;try{cle=CLOUD?await newCode():'IMG_'+(S.seq++)}finally{CL.saving=false}const rec={cle,cree:now,modif:now,prenom,nom,sexe:f.sexe,age:+f.age,origine:f.origine,mois:f.mois,tel,pay:f.pay,ex,...xf};if(!rec.codePat){rec.codePat=chrtCode(now,prenom,nom,numOfCle(cle));rec.codeAuto=true}S.recs.push(rec);if(save())toast(mode==='rdv'?`Rendez-vous enregistré pour le ${[...new Set(rdvDates)].sort().map(frDate).join(', ')} · code patient ${rec.codePat}`:`Examen enregistré · code patient ${rec.codePat}`)}
   UI.confirmDup=null;UI.f=blankForm();if(retour)UI.view=retour;render();window.scrollTo(0,0)}
 function openRec(cle){const r=S.recs.find(x=>x.cle===cle);if(!r)return;
   UI.f={edit:r.cle,prenom:r.prenom,nom:r.nom,sexe:r.sexe,age:String(r.age??''),origine:r.origine,mois:r.mois,tel:r.tel||'',pay:r.pay||'',...Object.fromEntries(XF.map(k=>[k,r[k]??''])),ageU:r.ageU||'ans',tab:FAMS.find(([k])=>r.ex[k].ids.length)?.[0]||'echo',ex:clone(r.ex),sel:{}};
@@ -1292,6 +1321,9 @@ function listBlock(k){const F=UI[k],rows=filtRows(F),per=k==='jour'?15:50,pages=
 function refreshBlock(k,focusId){const el=document.getElementById('lb_'+k);if(!el){render();return}const a=document.activeElement,pos=a&&a.id===focusId&&a.selectionStart!=null?a.selectionStart:null;
   el.outerHTML=listBlock(k);if(focusId){const n=document.getElementById(focusId);if(n){n.focus();if(pos!=null)try{n.setSelectionRange(pos,pos)}catch(e){}}}}
 const rdvBadge=e=>{const st=rdvState(e);if(!st)return'';return`<div class="rdv st-${st}">${st==='realise'?'RDV réalisé le '+frDate(e.date||e.rdv):st==='annule'?'RDV annulé ('+frDate(e.rdv)+')':st==='retard'?'RDV dépassé '+frDate(e.rdv)+hRdv(e):'RDV '+frDate(e.rdv)+hRdv(e)}</div>`};
+/* Date affichée dans la fiche : date du RDV s'il est en attente, sinon date de l'examen fait */
+const dispDate=e=>{const st=rdvState(e);return ['prevu','retard','annule'].includes(st)?e.rdv:(e.date||e.rdv||'')};
+const fD=e=>e.d!==undefined?e.d:(dispDate(e)||today());
 const hRdv=e=>e&&e.rdvH?' à '+e.rdvH.replace(':','h'):'';
 function openRow(cle){const r=S.recs.find(x=>x.cle===cle);if(!r)return;if(openRdv(r)){UI.delRdv=null;UI.delFiche=false;rdvModal(cle)}else openRec(cle)}
 function rdvModal(cle){const r=S.recs.find(x=>x.cle===cle);if(!r){closeModal();return}UI.rdvCle=cle;const t=today();
@@ -1543,7 +1575,7 @@ function xlsFinance(F){if(!window.XLSX){toast('Module Excel non chargé : vérif
     aoa.forEach((row,r)=>{if(r<2){const c=ws[XLSX.utils.encode_cell({r,c:0})];if(c)c.s=st({bold:r===0,h:'left',nb:true});return}row.forEach((v,c)=>{const ref=XLSX.utils.encode_cell({r,c});if(!ws[ref])ws[ref]={t:'s',v:''};ws[ref].s=st({bold:r===2,h:r===2?'center':c>=7?'right':'left',num:c>=7&&r>2,fill:r===2?'EEF1F4':null})})});
     ws['!cols']=[{wch:11},{wch:17},{wch:18},{wch:26},{wch:10},{wch:16},{wch:50},{wch:9},{wch:15},{wch:15},{wch:15}];XLSX.utils.book_append_sheet(wb,ws,'Liste des passages')}
   saveFile(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:XLSX_T}),`Rapport-financier-imagerie-${UI.fin.d1||UI.fin.d2?[UI.fin.d1,UI.fin.d2].filter(Boolean).join('_au_'):F.months.map(moisCode).join('_')}.xlsx`)}
-function moneyInner(f){const m=passMoney(f.ex);return`<span><span class="lab">Montant des actes</span><b>${fcfa(m.px)}</b></span><span><span class="lab">Payé par le patient</span><b class="pay">${fcfa(m.pp)}</b></span><span><span class="lab">Prise en charge</span><b>${fcfa(m.pec)}</b></span>`}
+function moneyInner(f){const m=passMoney(f.ex);return`<span><span class="lab">Montant des examens</span><b>${fcfa(m.px)}</b></span><span><span class="lab">Payé par le patient</span><b class="pay">${fcfa(m.pp)}</b></span><span><span class="lab">Prise en charge</span><b>${fcfa(m.pec)}</b></span>`}
 function newPayModal(){modal(`<div class="head"><h2>Nouveau type de paiement</h2><button type="button" class="btn ghost sm" data-act="close">Fermer</button></div>
   <div class="fgrid"><label class="fld"><span>Libellé <i>*</i></span><input id="mpL" placeholder="ex. IPM, ASSURANCE"></label></div>
   <div class="btns"><button type="button" class="btn primary" data-act="mpOk">Ajouter</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);setTimeout(()=>$('#mpL')?.focus(),0)}
@@ -1966,7 +1998,7 @@ function agCancelOk(){const m=((document.getElementById('cnM')||{}).value||'').t
 /* Marquer fait : ouvre la fiche du patient pour compléter / corriger, puis enregistrer */
 function agFaitFiche(id){const[cle,k]=id.split('|'),r=S.recs.find(x=>x.cle===cle);if(!r)return;const st=rdvState(r.ex[k]);
   if(!['prevu','retard'].includes(st)){toast('Ce rendez-vous n’est pas en attente.');return}const retour=UI.view==='saisie'?null:UI.view;
-  closeModal();openRec(cle);const f=UI.f,e=f.ex[k];f.faitK=k;f.retour=retour;f.tab=k;if(!e.date||e.date>today())e.date=today();render();window.scrollTo(0,0)}
+  closeModal();openRec(cle);const f=UI.f,e=f.ex[k];f.faitK=k;f.retour=retour;f.tab=k;e.d=e.date&&e.date<=today()?e.date:today();render();window.scrollTo(0,0)}
 function agJourOuvre(s){let d=agAdd(s<today()?today():s,1);while(agDow(d)>4)d=agAdd(d,1);return d}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||!/^ag/.test(t.dataset.act))return;const A=agUI(),a=t.dataset.act,v=t.dataset.v;
   if(AG_DRAG&&AG_DRAG.fin){AG_DRAG=null;return}
@@ -2037,9 +2069,9 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
   if(a==='close'){closeModal();return}
   if(a==='nav'){UI.view=v;render();window.scrollTo(0,0);return}
   if(a==='tab'){readForm();UI.f.tab=v;render();return}
-  if(a==='addEx'){readForm();const id=UI.f.sel[v]||$('#exSel').value;if(!id){toast('Choisissez un examen dans la liste.');return}UI.f.ex[v].ids.push(id);if(v==='scan'){const e=UI.f.ex.scan;e.inj=e.inj||[];e.inj[e.ids.length-1]=catById(id)?.inj||document.querySelector('input[name=injSel]:checked')?.value||'C'}{const e=UI.f.ex[v],i=e.ids.length-1;e.px=e.px||[];e.pp=e.pp||[];e.px[i]=tarifOf(id,v==='scan'?e.inj[i]:'')||'';e.pp[i]=''}if(!UI.f.ex[v].date&&!UI.f.ex[v].rdv)UI.f.ex[v].date=today();UI.f.sel[v]='';UI.confirmDup=null;render();$('#exSel')?.focus();return}
+  if(a==='addEx'){readForm();const id=UI.f.sel[v]||$('#exSel').value;if(!id){toast('Choisissez un examen dans la liste.');return}UI.f.ex[v].ids.push(id);if(v==='scan'){const e=UI.f.ex.scan;e.inj=e.inj||[];e.inj[e.ids.length-1]=catById(id)?.inj||document.querySelector('input[name=injSel]:checked')?.value||'C'}{const e=UI.f.ex[v],i=e.ids.length-1;e.px=e.px||[];e.pp=e.pp||[];e.px[i]=tarifOf(id,v==='scan'?e.inj[i]:'')||'';e.pp[i]=''}if(UI.f.ex[v].d===undefined&&!dispDate(UI.f.ex[v]))UI.f.ex[v].d=today();UI.f.sel[v]='';UI.confirmDup=null;render();$('#exSel')?.focus();return}
   if(a==='rmEx'){readForm();const[f,i]=v.split('|');UI.f.ex[f].ids.splice(+i,1);if(UI.f.ex[f].cl)UI.f.ex[f].cl.splice(+i,1);if(UI.f.ex[f].inj)UI.f.ex[f].inj.splice(+i,1);['px','pp'].forEach(k=>{if(UI.f.ex[f][k])UI.f.ex[f][k].splice(+i,1)});render();return}
-  if(a==='saveRec'){saveRec();return}
+  if(a==='saveRec'){saveRec(v==='rdv'?'rdv':'fait');return}
   if(a==='rcApply'){rcptApply();return}
   if(a==='rcConf'){rcptConf(v);return}
   if(a==='rcPick'){const i=v.indexOf('|'),k=v.slice(0,i),val=v.slice(i+1),P=UI.rcpt.p;P[k]=k==='ageV'?+val:val;if(P.doubt)delete P.doubt[k];if(k==='tel')P.telDoute=false;rcptKeep();return}
@@ -2130,6 +2162,7 @@ document.addEventListener('change',async e=>{const t=e.target,a=t.dataset.act,v=
     e[a][+i]=val;const mb=$('#moneyBox');if(mb)mb.innerHTML=moneyInner(UI.f);return}
   if(a==='pay'){if(t.value==='__new'){t.value=UI.f.pay||'';newPayModal();return}readForm();UI.f.pay=t.value;delete UI.ferr.pay;render();return}
   if(a==='exDate'){UI.f.ex[v].date=t.value;return}
+  if(a==='exD'){UI.f.ex[v].d=t.value;return}
   if(a==='exRdvH'){const e=UI.f.ex[v];if((e.rdvH||'')!==t.value){e.rdvH=t.value;if(UI.f.edit){e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:t.value?'Heure de RDV : '+t.value:'Heure de RDV retirée'})}}return}
   if(a==='exRdv'){const e=UI.f.ex[v];if(e.rdv!==t.value){e.rdv=t.value;e.rdvSt=t.value?'prevu':'';e.motif='';if(UI.f.edit){e.hist=e.hist||[];e.hist.push({d:nowLocal(),a:t.value?'Date de RDV modifiée dans la fiche : '+frDate(t.value):'RDV retiré dans la fiche'})}}render();return}
   if(t.dataset.f){UI.f[t.dataset.f]=t.value;UI.confirmDup=null;return}
