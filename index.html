@@ -342,7 +342,9 @@ tr.click{transition:background .12s}tr.click:hover td{background:color-mix(in sr
 .faitNote{margin:0 0 10px}
 .actions .note{flex-basis:100%}
 .sjCard{margin-top:18px}.sjQ{width:100%;font-size:1rem;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--sunk)}.sjQ:focus{outline:2px solid var(--accent);background:var(--surface)}
-.sjRes{margin-top:10px}.sjRes .lab{display:block;margin-bottom:6px}.sjRes td .btn+.btn{margin-left:4px}
+.sjRes{margin-top:10px}
+.sjRes mark{border-radius:3px;padding:0 1px;color:inherit}.sjRes mark.hx{background:#fde047;font-weight:700}.sjRes mark.hp{background:#e2e8f0}
+.sjRes tr.sjEx td:first-child{box-shadow:inset 3px 0 0 #eab308}.apTag{font-size:.66rem;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 6px;margin-left:4px;vertical-align:middle}.sjRes .lab{display:block;margin-bottom:6px}.sjRes td .btn+.btn{margin-left:4px}
 .mixBox{flex-basis:100%;max-width:620px;display:flex;flex-direction:column;gap:6px;background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .mixRow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:6px}
 .mixL{display:flex;align-items:center;gap:6px;font-weight:600;font-size:.86rem}.mixL .dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--fam,currentColor)}
@@ -1370,16 +1372,39 @@ function sjStatut(p){const att=[],fait=[];p.recs.forEach(r=>FAMS.forEach(([k,l])
     if(st==='prevu'||st==='retard')att.push(`<span class="pill st-${st}">${esc(l)} · RDV ${frDate(e.rdv)}${hRdv(e)}${st==='retard'?' (dépassé)':''}</span>`);else if(st!=='annule')fait.push({l,d:e.date||r.cree.slice(0,10)})}));
   fait.sort((a,b)=>a.d<b.d?1:-1);
   return att.slice(0,2).join(' ')+(att.length>2?` <span class="muted small">+${att.length-2}</span>`:'')+(fait.length?` <span class="pill st-realise">Fait : ${esc(fait[0].l)} · ${frDate(fait[0].d)}</span>`:'')}
-function sjResHtml(){const q=(UI.sjQ||'').trim();if(!q)return'';const g=findPatients(q.replace(/\d/g,' '),'',q,30);UI.sjList=g.list;
-  if(!g.searched)return`<p class="muted small" style="margin:8px 0 0">Tapez au moins 2 lettres du nom ou du prénom, ou 4 chiffres du téléphone.</p>`;
-  if(!g.list.length)return`<div class="note" style="margin-top:8px">Aucun patient trouvé pour « ${esc(q)} ». C’est peut-être un nouveau patient : remplissez la fiche en haut.</div>`;
-  return`<div class="sjRes"><span class="lab">${fmt(g.total)} patient(s) trouvé(s)${g.total>30?' · 30 premiers':''}</span><div class="tw"><table class="list"><thead><tr><th>Patient</th><th>Tél.</th><th>Âge · sexe</th><th>Passages</th><th>Statut</th><th></th></tr></thead><tbody>
-  ${g.list.map((p,i)=>{const r=p.recs[0];return`<tr class="click ${p.rdv?'has-rdv':''}" data-act="sjOpen" data-v="${i}" tabindex="0" title="${p.rdv?'Gérer le rendez-vous':'Charger ses informations pour un nouveau passage'}">
-    <td data-l="Patient"><b>${esc(p.prenom)} ${esc(p.nom)}</b><div class="mono small muted">${esc(codeOf(r))}</div></td><td class="mono nw" data-l="Tél.">${esc(p.tel||'—')}</td>
+/* Recherche « contient » : normalisation caractère par caractère pour pouvoir surligner exactement le texte d'origine */
+const sjc=c=>{const x=c.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();return /^[a-z0-9]$/.test(x)?x:' '};
+function sjmap(t){t=String(t||'');let n='',m=[];for(let i=0;i<t.length;i++){const c=sjc(t[i]);if(c===' '&&(n===''||n.endsWith(' ')))continue;n+=c;m.push(i)}return{n,m,t}}
+const sq=q=>sjmap(q).n.trim();
+/* surligne dans t toutes les occurrences des aiguilles (la 1re = correspondance exacte) */
+function sjhl(t,needles){const M=sjmap(t);if(!M.t)return'—';const marks=[];
+  needles.forEach(([nd,cls])=>{if(!nd)return;let i=M.n.indexOf(nd);while(i>=0){const a=M.m[i],b=M.m[i+nd.length-1]+1;if(!marks.some(x=>a<x.b&&b>x.a))marks.push({a,b,cls});i=M.n.indexOf(nd,i+1)}});
+  marks.sort((x,y)=>x.a-y.a);let out='',p=0;marks.forEach(x=>{out+=esc(M.t.slice(p,x.a))+`<mark class="${x.cls}">${esc(M.t.slice(x.a,x.b))}</mark>`;p=x.b});return out+esc(M.t.slice(p))}
+/* plus longue suite de chiffres commune (téléphones proches) */
+function lcsDig(a,b){let best='';for(let i=0;i<a.length;i++)for(let j=i+best.length+1;j<=a.length;j++){const sub=a.slice(i,j);if(b.includes(sub))best=sub;else break}return best}
+function sjSearch(q){const Q=sq(q),qd=q.replace(/\D/g,''),digitsOnly=!!qd&&/^[\d\s.\-+]+$/.test(q.trim()),toks=Q.split(' ').filter(Boolean);
+  if(Q.replace(/ /g,'').length<2)return{searched:false,list:[],total:0};
+  const map=new Map();
+  for(const r of S.recs){const tel=String(r.tel||'').replace(/\D/g,''),code=codeOf(r),pn=sq(r.prenom),nm=sq(r.nom),cd=sq(code)+' '+sq(r.cle);
+    const fields=[pn,nm,pn+' '+nm,nm+' '+pn,cd];let sc=0,ex='',part=[];
+    if(digitsOnly&&qd.length>=2){if(tel.includes(qd)){sc=3;ex=qd}else if(cd.includes(Q)){sc=3;ex=Q}else if(qd.length>=5&&tel){const c=lcsDig(qd,tel);if(c.length>=Math.max(4,qd.length-3)){sc=1;part=[c]}}}
+    else{if(fields.some(f=>f.includes(Q))){sc=3;ex=Q}else{const h=fields.join(' ')+' '+tel;if(toks.length>1&&toks.every(t=>h.includes(t))){sc=2;part=toks}}}
+    if(!sc)continue;if(fields.some(f=>f.startsWith(Q))||(qd&&tel.startsWith(qd)))sc+=.5;
+    const key=r.prenom+'|'+r.nom+'|'+(r.tel||'');let g=map.get(key);if(!g){g={prenom:r.prenom,nom:r.nom,tel:r.tel,recs:[],sc:0,ex:'',part:[]};map.set(key,g)}
+    g.recs.push(r);if(sc>g.sc){g.sc=sc;g.ex=ex;g.part=part}}
+  const all=[...map.values()].map(g=>{g.recs.sort((a,b)=>a.cree<b.cree?1:-1);g.rdv=g.recs.reduce((a,r)=>a+pendingRdv(r),0);return g}).sort((a,b)=>b.sc-a.sc||b.rdv-a.rdv||(a.recs[0].cree<b.recs[0].cree?1:-1));
+  return{searched:true,total:all.length,exact:all.filter(g=>g.sc>=3).length,list:all.slice(0,30)}}
+function sjResHtml(){const q=(UI.sjQ||'').trim();if(!q)return'';const g=sjSearch(q);UI.sjList=g.list;
+  if(!g.searched)return`<p class="muted small" style="margin:8px 0 0">Tapez au moins 2 caractères : une partie du nom, du prénom, du téléphone ou du code.</p>`;
+  if(!g.list.length)return`<div class="note" style="margin-top:8px">Aucun patient ne contient « ${esc(q)} ». C’est peut-être un nouveau patient : remplissez la fiche en haut.</div>`;
+  const nApp=g.total-g.exact;
+  return`<div class="sjRes"><span class="lab">${g.exact?`${fmt(g.exact)} patient(s) contenant exactement « ${esc(q)} »`:`Aucun patient ne contient exactement « ${esc(q)} »`}${nApp?` · ${fmt(nApp)} résultat(s) approchant(s)`:''}${g.total>30?' · 30 premiers affichés':''}</span><div class="tw"><table class="list"><thead><tr><th>Patient</th><th>Tél.</th><th>Âge · sexe</th><th>Passages</th><th>Statut</th><th></th></tr></thead><tbody>
+  ${g.list.map((p,i)=>{const r=p.recs[0],N=[[p.ex,'hx'],...p.part.map(x=>[x,'hp'])],exact=p.sc>=3;return`<tr class="click ${p.rdv?'has-rdv':''} ${exact?'sjEx':'sjAp'}" data-act="sjOpen" data-v="${i}" tabindex="0" title="${p.rdv?'Gérer le rendez-vous':'Charger ses informations pour un nouveau passage'}">
+    <td data-l="Patient"><b>${sjhl(p.prenom,N)} ${sjhl(p.nom,N)}</b>${exact?'':' <span class="apTag">approchant</span>'}<div class="mono small muted">${sjhl(codeOf(r),N)}</div></td><td class="mono nw" data-l="Tél.">${p.tel?sjhl(p.tel,N):'—'}</td>
     <td class="nw" data-l="Âge · sexe">${esc(AGES[r.age]?.[0]||'—')} · ${esc(r.sexe||'—')}</td><td class="nw" data-l="Passages">${p.recs.length} · dernier le ${frDate(r.cree)}</td>
     <td data-l="Statut"><div class="spSt" style="margin:0">${sjStatut(p)}</div></td>
     <td class="nw"><button type="button" class="btn ${p.rdv?'rdv':'go'} sm" data-act="sjOpen" data-v="${i}">${p.rdv?'Rendez-vous…':'Nouveau passage'}</button>${p.rdv?` <button type="button" class="btn ghost sm" data-act="sjUse" data-v="${i}" title="Enregistrer d’autres prestations pour ce patient">Nouveau passage</button>`:''}</td></tr>`}).join('')}</tbody></table></div>
-  <p class="muted small">Cliquez sur un patient : s’il a un rendez-vous en attente, la gestion du rendez-vous s’ouvre ; sinon ses informations sont chargées dans la fiche pour enregistrer ses nouvelles prestations.</p></div>`}
+  <p class="muted small">En jaune : la suite de caractères recherchée, trouvée exactement. En gris : correspondance approchante (mots dans un autre ordre, ou téléphone proche). Cliquez sur un patient : s’il a un rendez-vous en attente, la gestion du rendez-vous s’ouvre ; sinon ses informations sont chargées dans la fiche pour enregistrer ses nouvelles prestations.</p></div>`}
 function sjJourHtml(){const rows=S.recs.filter(r=>r.cree.slice(0,10)===today()).sort((a,b)=>a.cree<b.cree?1:-1),per=15,pages=Math.max(1,Math.ceil(rows.length/per));UI.sjPage=Math.min(UI.sjPage||0,pages-1);
   const st={prevu:0,retard:0,realise:0,annule:0};rows.forEach(r=>FAMS.forEach(([k])=>{const s=rdvState(r.ex[k]);if(s)st[s]++}));
   return`<div class="sjJour"><div class="head" style="margin-top:14px"><h2 style="font-size:1rem">Enregistrements du jour</h2><span class="muted">${frDate(today())} · ${fmt(rows.length)} passage(s)</span></div>
