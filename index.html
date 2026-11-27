@@ -1318,6 +1318,12 @@ async function saveRec(mode){if(CL.saving)return;readForm();const f=UI.f,err=[];
   const n=FAMS.reduce((a,[k])=>a+f.ex[k].ids.length,0);if(!n)err.push('au moins un examen');
   if(err.length){render();toast('À compléter : '+err.join(', ')+'.');(ep?$('#fPrenom'):en?$('#fNom'):null)?.focus();return}
   if(!telOk(f.tel)){toast('Téléphone : 9 chiffres commençant par 70, 75, 76, 77, 78, 30 ou 33.');return}
+  /* contrôle du mois et des dates : refuse les valeurs invalides ou trop éloignées */
+  {const t=today(),ym=t.slice(0,7),ref=f.edit?((S.recs.find(x=>x.cle===f.edit)||{}).cree||t).slice(0,7):ym,mAdd=(m,n)=>{const[y,mo]=m.split('-').map(Number),d=new Date(y,mo-1+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+    const dOk=d=>/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(d)&&!isNaN(new Date(d+'T12:00:00'))&&new Date(d+'T12:00:00').toISOString().slice(0,10)===d;
+    if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(f.mois||'')||f.mois<mAdd(ref,-3)||f.mois>mAdd(ref>ym?ref:ym,0)){toast(`Mois invalide (${/^\d{4}-\d{2}$/.test(f.mois||'')?moisCode(f.mois):(f.mois||'vide')}) : choisissez un mois entre ${moisCode(mAdd(ref,-3))} et ${moisCode(ref>ym?ref:ym)}.`);$('#fMois')?.focus();return}
+    for(const[k,l]of FAMS){const e=f.ex[k];if(!e.ids.length)continue;const d=fD(e);if(!d)continue;
+      if(!dOk(d)||d<'2025-01-01'||d>mAdd(ym,13)+'-01'){UI.f.tab=k;render();toast(`${l} : la date ${d} n’est pas valide. Vérifiez le jour, le mois et l’année.`);setTimeout(()=>$('#exD')?.focus(),0);return}}}
   if(f.edit&&f.faitK&&!f.ex[f.faitK].ids.length){toast('L’onglet du rendez-vous ne contient plus d’examen : ajoutez-en un ou annulez.');return}
   {const t=today();let nR=0;for(const[k,l]of FAMS){const e=f.ex[k];if(!e.ids.length)continue;const em=e.m||mode,d=fD(e),st=rdvState(e),dejaFait=!e.m&&!!f.edit&&(st==='realise'||(!st&&!!e.date));
     const ko=m=>{UI.f.tab=k;render();toast(l+' : '+m);setTimeout(()=>$('#exD')?.focus(),0)};
