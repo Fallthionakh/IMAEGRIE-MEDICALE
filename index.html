@@ -293,6 +293,57 @@ tr.click{transition:background .12s}tr.click:hover td{background:color-mix(in sr
 .login{margin-top:8vh;padding:28px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
+/* ===================== Finition moderne (v3) ===================== */
+:root{--f-body:"Inter","Plus Jakarta Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--r-xl:22px;
+  --sh-1:0 1px 2px rgba(15,23,42,.04),0 4px 14px -4px rgba(15,23,42,.06);--sh-2:0 18px 40px -18px rgba(15,23,42,.25);--sh-h:0 10px 28px -12px rgba(37,99,235,.28)}
+body{font-feature-settings:"cv11","ss01";letter-spacing:-.003em}
+main{gap:20px}
+.card{border-color:color-mix(in srgb,var(--line) 70%,transparent);border-radius:var(--r-xl);box-shadow:var(--sh-1);transition:box-shadow .2s}
+.card:hover{box-shadow:0 1px 2px rgba(15,23,42,.04),0 10px 30px -14px rgba(15,23,42,.14)}
+.card>.head h2,.secHead b{letter-spacing:-.02em}
+.secHead .step{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:0 6px 14px -6px color-mix(in srgb,var(--accent) 70%,transparent)}
+.btn{border-radius:12px;font-weight:650;letter-spacing:-.005em}
+.btn:hover{transform:translateY(-1px)}.btn:active{transform:translateY(0)}
+.btn.ghost:hover{border-color:color-mix(in srgb,var(--accent) 35%,var(--line));color:var(--accent)}
+.btn.rdv,.btn.go{box-shadow:0 8px 18px -10px rgba(0,0,0,.45)}
+.btn.rdv{background:linear-gradient(135deg,#f59e0b,#d97706);border-color:transparent}.btn.rdv:hover{background:linear-gradient(135deg,#f59e0b,#b45309)}
+.btn.go{background:linear-gradient(135deg,#22c55e,#15803d);border-color:transparent}.btn.go:hover{background:linear-gradient(135deg,#16a34a,#166534)}
+input,select,textarea{border-radius:12px}
+/* tableaux */
+.tw{border-radius:16px;border:1px solid var(--line);overflow:auto;background:var(--surface)}
+table.list thead th{position:sticky;top:0;z-index:1;background:color-mix(in srgb,var(--sunk) 92%,var(--surface));backdrop-filter:blur(6px);font-size:.7rem;letter-spacing:.08em}
+table.list tbody tr.click{cursor:pointer}
+table.list tbody tr.click:hover td{background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+/* KPI : tuiles colorées, cliquables */
+.kpi{border:1px solid color-mix(in srgb,var(--line) 80%,transparent);background:linear-gradient(160deg,var(--surface),color-mix(in srgb,var(--accent) 4%,var(--surface)))}
+.kpi.st-prevu{background:linear-gradient(160deg,var(--surface),color-mix(in srgb,#f59e0b 10%,var(--surface)))}
+.kpi.st-retard{background:linear-gradient(160deg,var(--surface),color-mix(in srgb,#ef4444 9%,var(--surface)))}
+.kpi.st-realise{background:linear-gradient(160deg,var(--surface),color-mix(in srgb,#22c55e 9%,var(--surface)))}
+.kpi.st-annule{background:linear-gradient(160deg,var(--surface),color-mix(in srgb,#64748b 9%,var(--surface)))}
+button.kpi{font:inherit;text-align:left;cursor:pointer;transition:transform .12s,box-shadow .15s,border-color .15s}
+button.kpi:hover{transform:translateY(-2px);box-shadow:var(--sh-h);border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+button.kpi.on{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+button.kpi.on .lab::after{content:" · filtre";text-transform:none;letter-spacing:0;font-weight:600;color:var(--accent)}
+button.kpi:not(.st-prevu):not(.st-retard):not(.st-realise):not(.st-annule).on .lab::after{content:""}
+/* pastilles */
+.pill{border-radius:999px;padding:3px 10px;font-weight:650;letter-spacing:.005em;display:inline-flex;align-items:center;gap:5px;line-height:1.35;border:1px solid transparent}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85;flex:none}
+button.pill.pk{font:inherit;font-size:.72rem;font-weight:650;cursor:pointer;transition:transform .1s,box-shadow .15s,border-color .15s}
+button.pill.pk:hover{transform:translateY(-1px);border-color:currentColor;box-shadow:0 4px 12px -6px currentColor}
+button.pill.pk::after{content:"›";font-weight:800;margin-left:1px;opacity:.6}
+.rdv.pkr{display:inline-flex;align-items:center;gap:4px;margin-top:3px;padding:1px 8px;border-radius:999px;font-size:.72rem;font-weight:700;background:color-mix(in srgb,currentColor 12%,var(--surface));transition:box-shadow .15s}
+tr.click:hover .rdv.pkr{box-shadow:0 0 0 1px currentColor}
+.lnk{font:inherit;background:none;border:0;padding:0;color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+/* fenêtres et notifications */
+.mbg{background:rgba(15,23,42,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:fadeIn .15s ease-out}
+.modal{border-radius:24px;animation:popIn .18s cubic-bezier(.2,.9,.3,1.2)}
+.toast{border-radius:14px;animation:slideUp .2s ease-out}
+@keyframes fadeIn{from{opacity:0}}@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.98)}}@keyframes slideUp{from{opacity:0;transform:translateY(10px)}}
+.note{border-radius:14px}
+.sjQ{border-radius:14px;padding:14px 16px 14px 44px;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") 14px 50%/20px no-repeat;box-shadow:var(--sh-1)}
+.sjQ:focus{box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 16%,transparent)}
+@media (prefers-reduced-motion:reduce){.modal,.toast,.mbg{animation:none}.btn:hover,button.kpi:hover,button.pill.pk:hover{transform:none}}
+
 /* ===================== Agenda ===================== */
 @media (min-width:901px){.entry .patient{grid-row:span 2}}
 .agenda{gap:12px}
@@ -1331,13 +1382,13 @@ function listBlock(k){const F=UI[k],rows=filtRows(F),per=k==='jour'?15:50,pages=
   const title=k==='jour'?(F.mode==='rdv'?'Rendez-vous du jour':F.mode==='all'?'Recherche dans tout le registre':'Liste des examens du jour'):(F.mode==='rdv'?'Rendez-vous prévus le '+frDate(F.date):F.mode==='all'?'Tout le registre':'Passages du '+frDate(F.date));
   return`<section class="card" id="lb_${k}"><div class="head"><h2>${esc(title)}</h2><span class="muted">${F.mode!=='all'?frDate(k==='jour'?today():F.date)+' · ':''}${fmt(rows.length)} passage(s)${filtActive(F)?' correspondant aux filtres':''}</span>${k==='jour'&&UI.view!=='liste'?`<button type="button" class="btn ghost sm" data-act="nav" data-v="liste">Liste complète</button>`:''}</div>
    ${filtBar(F)}
-   <div class="kpis"><div class="kpi"><span class="lab">Passages</span><b>${fmt(rows.length)}</b></div>${Object.entries(st).map(([s,n])=>`<div class="kpi st-${s}"><span class="lab">RDV ${RDV_ST[s].toLowerCase()}${s==='retard'?'s':s==='prevu'?'s':'s'}</span><b>${fmt(n)}</b></div>`).join('')}</div>
+   <div class="kpis"><button type="button" class="kpi kc ${F.rst?'':'on'}" data-act="kpiSt" data-v="${k}|" title="Tous les passages"><span class="lab">Passages</span><b>${fmt(rows.length)}</b></button>${Object.entries(st).map(([s,n])=>`<button type="button" class="kpi kc st-${s} ${F.rst===s?'on':''}" data-act="kpiSt" data-v="${k}|${s}" title="${F.rst===s?'Retirer le filtre':'Afficher seulement les RDV '+RDV_ST[s].toLowerCase()+'s'}"><span class="lab">RDV ${RDV_ST[s].toLowerCase()}s</span><b>${fmt(n)}</b></button>`).join('')}</div>
    ${listTable(rows.slice(F.page*per,F.page*per+per))}
    ${pages>1?`<div class="pager"><button type="button" class="btn ghost sm" data-act="pg" data-v="${k}|-1" ${F.page?'':'disabled'}>Précédent</button><span>Page ${F.page+1} / ${pages}</span><button type="button" class="btn ghost sm" data-act="pg" data-v="${k}|1" ${F.page<pages-1?'':'disabled'}>Suivant</button></div>`:''}
    <p class="muted small">Cliquez sur une ligne : tant qu’un rendez-vous n’est pas réalisé (prévu, dépassé ou annulé), la gestion du RDV s’ouvre (réaliser, reporter, annuler, supprimer) ; sinon la fiche s’ouvre pour modification.</p></section>`}
 function refreshBlock(k,focusId){const el=document.getElementById('lb_'+k);if(!el){render();return}const a=document.activeElement,pos=a&&a.id===focusId&&a.selectionStart!=null?a.selectionStart:null;
   el.outerHTML=listBlock(k);if(focusId){const n=document.getElementById(focusId);if(n){n.focus();if(pos!=null)try{n.setSelectionRange(pos,pos)}catch(e){}}}}
-const rdvBadge=e=>{const st=rdvState(e);if(!st)return'';return`<div class="rdv st-${st}">${st==='realise'?'RDV réalisé le '+frDate(e.date||e.rdv):st==='annule'?'RDV annulé ('+frDate(e.rdv)+')':st==='retard'?'RDV dépassé '+frDate(e.rdv)+hRdv(e):'RDV '+frDate(e.rdv)+hRdv(e)}</div>`};
+const rdvBadge=e=>{const st=rdvState(e);if(!st)return'';return`<div class="rdv pkr st-${st}">${st==='realise'?'RDV réalisé le '+frDate(e.date||e.rdv):st==='annule'?'RDV annulé ('+frDate(e.rdv)+')':st==='retard'?'RDV dépassé '+frDate(e.rdv)+hRdv(e):'RDV '+frDate(e.rdv)+hRdv(e)}</div>`};
 /* Date affichée dans la fiche : date du RDV s'il est en attente, sinon date de l'examen fait */
 const dispDate=e=>{const st=rdvState(e);return ['prevu','retard','annule'].includes(st)?e.rdv:(e.date||e.rdv||'')};
 const fD=e=>e.d!==undefined?e.d:(dispDate(e)||today());
@@ -1372,9 +1423,9 @@ function findPatients(prenom,nom,tel,lim){
   return{total:all.length,list:all.slice(0,lim||6),searched:true}}
 /* --- Bas de la saisie : recherche multicritère + enregistrements du jour --- */
 function sjStatut(p){const att=[],fait=[];p.recs.forEach(r=>FAMS.forEach(([k,l])=>{const e=r.ex[k];if(!e||!e.ids.length)return;const st=rdvState(e);
-    if(st==='prevu'||st==='retard')att.push(`<span class="pill st-${st}">${esc(l)} · RDV ${frDate(e.rdv)}${hRdv(e)}${st==='retard'?' (dépassé)':''}</span>`);else if(st!=='annule')fait.push({l,d:e.date||r.cree.slice(0,10)})}));
+    if(st==='prevu'||st==='retard')att.push(`<button type="button" class="pill pk st-${st}" data-act="pillOpen" data-v="${esc(r.cle)}" title="Gérer ce rendez-vous">${esc(l)} · RDV ${frDate(e.rdv)}${hRdv(e)}${st==='retard'?' (dépassé)':''}</button>`);else if(st!=='annule')fait.push({l,d:e.date||r.cree.slice(0,10),cle:r.cle})}));
   fait.sort((a,b)=>a.d<b.d?1:-1);
-  return att.slice(0,2).join(' ')+(att.length>2?` <span class="muted small">+${att.length-2}</span>`:'')+(fait.length?` <span class="pill st-realise">Fait : ${esc(fait[0].l)} · ${frDate(fait[0].d)}</span>`:'')}
+  return att.slice(0,2).join(' ')+(att.length>2?` <span class="muted small">+${att.length-2}</span>`:'')+(fait.length?` <button type="button" class="pill pk st-realise" data-act="pillOpen" data-v="${esc(fait[0].cle)}" title="Voir ce passage">Fait : ${esc(fait[0].l)} · ${frDate(fait[0].d)}</button>`:'')}
 /* Recherche « contient » : normalisation caractère par caractère pour pouvoir surligner exactement le texte d'origine */
 const sjc=c=>{const x=c.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();return /^[a-z0-9]$/.test(x)?x:' '};
 function sjmap(t){t=String(t||'');let n='',m=[];for(let i=0;i<t.length;i++){const c=sjc(t[i]);if(c===' '&&(n===''||n.endsWith(' ')))continue;n+=c;m.push(i)}return{n,m,t}}
@@ -1408,10 +1459,10 @@ function sjResHtml(){const q=(UI.sjQ||'').trim();if(!q)return'';const g=sjSearch
     <td data-l="Statut"><div class="spSt" style="margin:0">${sjStatut(p)}</div></td>
     <td class="nw"><button type="button" class="btn ${p.rdv?'rdv':'go'} sm" data-act="sjOpen" data-v="${i}">${p.rdv?'Rendez-vous…':'Nouveau passage'}</button>${p.rdv?` <button type="button" class="btn ghost sm" data-act="sjUse" data-v="${i}" title="Enregistrer d’autres prestations pour ce patient">Nouveau passage</button>`:''}</td></tr>`}).join('')}</tbody></table></div>
   <p class="muted small">En jaune : la suite de caractères recherchée, trouvée exactement. En gris : correspondance approchante (mots dans un autre ordre, ou téléphone proche). Cliquez sur un patient : s’il a un rendez-vous en attente, la gestion du rendez-vous s’ouvre ; sinon ses informations sont chargées dans la fiche pour enregistrer ses nouvelles prestations.</p></div>`}
-function sjJourHtml(){const rows=S.recs.filter(r=>r.cree.slice(0,10)===today()).sort((a,b)=>a.cree<b.cree?1:-1),per=15,pages=Math.max(1,Math.ceil(rows.length/per));UI.sjPage=Math.min(UI.sjPage||0,pages-1);
-  const st={prevu:0,retard:0,realise:0,annule:0};rows.forEach(r=>FAMS.forEach(([k])=>{const s=rdvState(r.ex[k]);if(s)st[s]++}));
-  return`<div class="sjJour"><div class="head" style="margin-top:14px"><h2 style="font-size:1rem">Enregistrements du jour</h2><span class="muted">${frDate(today())} · ${fmt(rows.length)} passage(s)</span></div>
-   <div class="kpis"><div class="kpi"><span class="lab">Passages</span><b>${fmt(rows.length)}</b></div>${Object.entries(st).map(([s,n])=>`<div class="kpi st-${s}"><span class="lab">RDV ${RDV_ST[s].toLowerCase()}s</span><b>${fmt(n)}</b></div>`).join('')}</div>
+function sjJourHtml(){const tous=S.recs.filter(r=>r.cree.slice(0,10)===today()).sort((a,b)=>a.cree<b.cree?1:-1),f=UI.sjSt||'',rows=f?tous.filter(r=>FAMS.some(([k])=>rdvState(r.ex[k])===f)):tous,per=15,pages=Math.max(1,Math.ceil(rows.length/per));UI.sjPage=Math.min(UI.sjPage||0,pages-1);
+  const st={prevu:0,retard:0,realise:0,annule:0};tous.forEach(r=>FAMS.forEach(([k])=>{const s=rdvState(r.ex[k]);if(s)st[s]++}));
+  return`<div class="sjJour"><div class="head" style="margin-top:14px"><h2 style="font-size:1rem">Enregistrements du jour</h2><span class="muted">${frDate(today())} · ${fmt(rows.length)} passage(s)${f?` avec RDV ${RDV_ST[f].toLowerCase()} · <button type="button" class="lnk" data-act="kpiSt" data-v="sj|">tout afficher</button>`:''}</span></div>
+   <div class="kpis"><button type="button" class="kpi kc ${f?'':'on'}" data-act="kpiSt" data-v="sj|" title="Tous les passages du jour"><span class="lab">Passages</span><b>${fmt(tous.length)}</b></button>${Object.entries(st).map(([s,n])=>`<button type="button" class="kpi kc st-${s} ${f===s?'on':''}" data-act="kpiSt" data-v="sj|${s}" title="${f===s?'Retirer le filtre':'Afficher seulement les RDV '+RDV_ST[s].toLowerCase()+'s'}"><span class="lab">RDV ${RDV_ST[s].toLowerCase()}s</span><b>${fmt(n)}</b></button>`).join('')}</div>
    ${listTable(rows.slice(UI.sjPage*per,UI.sjPage*per+per))}
    ${pages>1?`<div class="pager"><button type="button" class="btn ghost sm" data-act="sjPg" data-v="-1" ${UI.sjPage?'':'disabled'}>Précédent</button><span>Page ${UI.sjPage+1} / ${pages}</span><button type="button" class="btn ghost sm" data-act="sjPg" data-v="1" ${UI.sjPage<pages-1?'':'disabled'}>Suivant</button></div>`:''}</div>`}
 function sjBlock(){return`<section class="card sjCard" id="sjCard"><div class="head"><h2>Rechercher un patient</h2><span class="muted small">téléphone, nom, prénom ou code</span></div>
@@ -1422,12 +1473,12 @@ function suggHtml(){const f=UI.f;if(f.edit)return'';
   if(f.from)return`<div class="note ok"><b>Nouveau passage pour ${esc(f.prenom)} ${esc(f.nom)}</b><br><span class="small">Identité reprise de ${esc(f.from.cle)} (${f.from.n} passage(s) précédent(s), dernier le ${frDate(f.from.last)}). Vérifiez l’âge et l’origine, choisissez les examens à droite puis cliquez sur « Rendez-vous » ou « Enregistrer ».</span><div class="btns" style="margin-top:6px"><button type="button" class="btn ghost sm" data-act="unFrom">Changer de patient</button></div></div>`;const g=findPatients(f.prenom,f.nom,f.tel);UI.spList=g.list;if(!g.searched)return'';if(!g.list.length)return`<div class="sugg"><span class="lab">Aucun patient déjà enregistré ne correspond</span><span class="small muted">Vérifiez l’orthographe ou cherchez avec le téléphone. Sinon, c’est un nouveau patient : complétez la fiche.</span></div>`;
   return`<div class="sugg"><span class="lab">Patients déjà enregistrés · ${g.total>6?'6 premiers sur '+fmt(g.total):fmt(g.total)}</span>${g.list.map((p,i)=>{const att=[],fait=[];
     p.recs.forEach(r=>FAMS.forEach(([k,l])=>{const e=r.ex[k];if(!e||!e.ids.length)return;const st=rdvState(e);
-      if(st==='prevu'||st==='retard')att.push({id:r.cle+'|'+k,l,st,txt:`${l} · RDV ${frDate(e.rdv)}${hRdv(e)}`});else if(st!=='annule')fait.push({l,d:e.date||r.cree.slice(0,10)})}));
+      if(st==='prevu'||st==='retard')att.push({id:r.cle+'|'+k,l,st,txt:`${l} · RDV ${frDate(e.rdv)}${hRdv(e)}`});else if(st!=='annule')fait.push({l,d:e.date||r.cree.slice(0,10),cle:r.cle})}));
     fait.sort((a,b)=>a.d<b.d?1:-1);
     return`<div class="sp"><div class="spId"><b>${esc(p.prenom)} ${esc(p.nom)}</b> <span class="mono small">${esc(p.tel||'')}</span>
    <div class="small muted">${p.recs.length} passage(s) · dernier le ${frDate(p.recs[0].cree)} (${esc(p.recs[0].cle)})</div>
-   ${att.length?`<div class="small spSt"><b class="warnTxt">RDV non fait${att.length>1?'s':''} :</b> ${att.slice(0,3).map(x=>`<span class="pill st-${x.st}">${esc(x.txt)}${x.st==='retard'?' (dépassé)':''}</span>`).join(' ')}</div>`:''}
-   ${fait.length?`<div class="small spSt"><b style="color:var(--ok)">Fait${fait.length>1?'s':''} :</b> ${fait.slice(0,3).map(x=>`<span class="pill st-realise">${esc(x.l)} · ${frDate(x.d)}</span>`).join(' ')}${fait.length>3?` <span class="muted">+${fait.length-3}</span>`:''}</div>`:''}</div>
+   ${att.length?`<div class="small spSt"><b class="warnTxt">RDV non fait${att.length>1?'s':''} :</b> ${att.slice(0,3).map(x=>`<button type="button" class="pill pk st-${x.st}" data-act="pillOpen" data-v="${esc(x.id.split('|')[0])}" title="Gérer ce rendez-vous">${esc(x.txt)}${x.st==='retard'?' (dépassé)':''}</button>`).join(' ')}</div>`:''}
+   ${fait.length?`<div class="small spSt"><b style="color:var(--ok)">Fait${fait.length>1?'s':''} :</b> ${fait.slice(0,3).map(x=>`<button type="button" class="pill pk st-realise" data-act="pillOpen" data-v="${esc(x.cle)}" title="Voir ce passage">${esc(x.l)} · ${frDate(x.d)}</button>`).join(' ')}${fait.length>3?` <span class="muted">+${fait.length-3}</span>`:''}</div>`:''}</div>
    <div class="btns"><button type="button" class="btn ghost sm" data-act="spUse" data-v="${i}">Reprendre l’identité</button>${att.length?`<button type="button" class="btn primary sm" data-act="agFaitFiche" data-v="${esc(att[0].id)}" title="Ouvrir sa fiche, compléter puis enregistrer comme fait">Marquer fait${att.length>1?' ('+esc(att[0].l)+')':''}</button><button type="button" class="btn ghost sm" data-act="spRdv" data-v="${i}">Gérer le RDV</button>`:`<button type="button" class="btn ghost sm" data-act="spAll" data-v="${i}">Voir les passages</button>`}</div></div>`}).join('')}</div>`}
 const nameErr=v=>{const s=String(v||'').trim();if(!s)return'Obligatoire.';if(s.replace(/[^A-Za-zÀ-ÿ]/g,'').length<2)return'Au moins 2 lettres.';if(/\d/.test(s))return'Sans chiffres.';return''};
 
@@ -2154,6 +2205,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(
   if(a==='delRec'){modal(`<h2>Supprimer la fiche ${esc(UI.f.edit)} ?</h2><p>Le passage et ses examens seront retirés du registre et du rapport.</p><div class="btns"><button type="button" class="btn danger" data-act="delOk">Supprimer</button><button type="button" class="btn ghost" data-act="close">Annuler</button></div>`);return}
   if(a==='delOk'){S.recs=S.recs.filter(r=>r.cle!==UI.f.edit);save();toast(`Fiche ${UI.f.edit} supprimée`);UI.f=blankForm();closeModal();render();return}
   if(a==='open'){openRow(v);return}
+  if(a==='pillOpen'){UI.delRdv=null;UI.delFiche=false;openRow(v);return}
+  if(a==='kpiSt'){const[k,st]=v.split('|');if(k==='sj'){UI.sjSt=UI.sjSt===st?'':st;UI.sjPage=0;sjRefresh();return}UI[k].rst=st===''||UI[k].rst===st?'':st;UI[k].page=0;refreshBlock(k);return}
   if(a==='pg'){const[k,d]=v.split('|');UI[k].page+=+d;refreshBlock(k);return}
   if(a==='fReset'){const o=UI[v];UI[v]=defFilt(v,o.mode);UI[v].date=o.date;refreshBlock(v);return}
   if(a==='rdvDo'){rdvAct(v,e=>{e.rdvSt='realise';e.date=today()},'Rendez-vous réalisé');return}
